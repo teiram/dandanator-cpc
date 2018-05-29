@@ -13,18 +13,12 @@ import com.grelobites.romgenerator.view.util.RecursiveTreeItem;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -33,12 +27,9 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
-import javafx.util.Callback;
-import javafx.util.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +37,8 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class DandanatorMiniFrameController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DandanatorMiniFrameController.class);
+public class DandanatorCpcFrameController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DandanatorCpcFrameController.class);
 
     private static final String BLUE_BAR_STYLE = "blue-bar";
     private static final String RED_BAR_STYLE = "red-bar";
@@ -124,7 +115,7 @@ public class DandanatorMiniFrameController {
 
     @FXML
     private void initialize() {
-        LOGGER.debug("Initializing DandanatorMiniFrameController");
+        LOGGER.debug("Initializing DandanatorCpcFrameController");
         romUsage.progressProperty().bind(applicationContext.romUsageProperty());
         Tooltip romUsageDetail = new Tooltip();
         romUsage.setTooltip(romUsageDetail);

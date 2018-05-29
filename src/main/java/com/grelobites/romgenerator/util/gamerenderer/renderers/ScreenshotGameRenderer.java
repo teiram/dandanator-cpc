@@ -21,7 +21,7 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
     private ImageView targetView;
 
     private void initializeImages() throws IOException {
-        setDefaultImage(Configuration.getInstance().getTapLoaderTarget(), false);
+        setDefaultImage(false);
         cartridgeImage = ImageUtil.scrLoader(
                 ImageUtil.newScreenshot(), 1,
                 ScreenshotGameRenderer.class.getClassLoader()
@@ -40,17 +40,9 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
         }
     }
 
-    private void setDefaultImage(String tapLoaderTarget, boolean update) {
-        switch (HardwareMode.valueOf(tapLoaderTarget)) {
-            case HW_128K:
-                loadDefaultImage("128k.scr");
-                break;
-            case HW_PLUS2A:
-                loadDefaultImage("plus2a.scr");
-                break;
-            default:
-                loadDefaultImage("sinclair-1982.scr");
-        }
+    private void setDefaultImage(boolean update) {
+        loadDefaultImage("cpc6128.scr");
+
         if (update) {
             targetView.setImage(spectrum48kImage);
         }
@@ -58,10 +50,6 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
 
     public ScreenshotGameRenderer() throws IOException {
         initializeImages();
-        Configuration.getInstance().tapLoaderTargetProperty()
-                .addListener((observable, oldValue, newValue) -> {
-            setDefaultImage(newValue, targetView.getImage() == spectrum48kImage);
-        });
     }
 
     @Override

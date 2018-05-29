@@ -27,9 +27,6 @@ public class DandanatorCpcConstants {
     public static final int DANDANATOR_PIC_FW_SIZE = 3072;
     public static final int MAX_POKES_PER_TRAINER = 6;
     public static final int MAX_TRAINERS_PER_GAME = 8;
-    public static final String DANDANATOR_PIC_FW_HEADER = "DNTRMFW-Up";
-    public static final int DANDANATOR_PIC_FW_SIZE_0 = 1526;
-    public static final int DANDANATOR_PIC_FW_SIZE_1 = 1546;
     public static final String DEFAULT_EXTRAROMKEY_MESSAGE = LocaleUtil.i18n("extraRomDefaultMessage");
     public static final String DEFAULT_TOGGLEPOKESKEY_MESSAGE = LocaleUtil.i18n("togglePokesDefaultMessage");
     public static final String DEFAULT_LAUNCHGAME_MESSAGE = LocaleUtil.i18n("launchGameDefaultMessage");
@@ -39,10 +36,7 @@ public class DandanatorCpcConstants {
     public static final int LAUNCH_GAME_MESSAGE_MAXLENGTH = 23;
     public static final int SELECT_POKE_MESSAGE_MAXLENGTH = 23;
     private static final String DANDANATOR_ROM_RESOURCE = "dandanator-cpc/dandanator-mini.rom";
-    private static final String DANDANATOR_PIC_FW_RESOURCE = "dandanator-cpc/dandanator-pic-fw.bin";
     private static final String EXTRA_ROM_RESOURCE = "dandanator-cpc/test.rom";
-    private static final String DIVIDE_LOADER_RESOURCE = "dandanator-cpc/divide-loader.bin";
-    private static final String SLOT1_ROM_RESOURCE = "dandanator-cpc/slot1.rom";
 
     public static final int POKE_TARGET_ADDRESS = 49284;
     public static final int GAME_CHUNK_SIZE = 256;
@@ -53,23 +47,11 @@ public class DandanatorCpcConstants {
     public static final int GAME_LAUNCH_SIZE = 18;
     public static final int BASEROM_SIZE = 3584;
 
-    public static final int PORT1FFD_DEFAULT_VALUE = 0x04;
-    public static final int AUTHENTIC_VALUE_FLAG = 0x80;
-    public static final int PORT7FFD_DEFAULT_VALUE = 0x10;
-    public static final int PORT7FFD_FORCED_48KMODE_BITS = 0x20;
-
-    public static final int SLOT1_RESERVED_SIZE = 300;
     private static byte[] DANDANATOR_ROM;
     private static byte[] EXTRA_ROM;
-    private static byte[] DEFAULT_DANDANATOR_PIC_FW;
-    private static byte[] DIVIDE_LOADER;
-    private static byte[] SLOT1_ROM;
 
-    public static final Game INTERNAL_ROM_GAME = new VirtualGame(GameType.ROM, "Internal ROM");
-    public static final Game EXTRA_ROM_GAME = new VirtualGame(GameType.ROM, "Extra ROM");
-
-    private static PreferencesProvider providerRegister = new PreferencesProvider("Dandanator Mini",
-            "/com/grelobites/romgenerator/handlers/dandanatorcpc/view/dandanatorminipreferences.fxml",
+    private static PreferencesProvider providerRegister = new PreferencesProvider("Dandanator CPC",
+            "/com/grelobites/romgenerator/handlers/dandanatorcpc/view/dandanatorcpcpreferences.fxml",
             PreferencesProvider.PRECEDENCE_HANDLERS);
 
     public static byte[] getDandanatorRom() throws IOException {
@@ -82,16 +64,6 @@ public class DandanatorCpcConstants {
         return DANDANATOR_ROM;
     }
 
-    public static byte[] getSlot1Rom() throws IOException {
-        if (SLOT1_ROM == null) {
-            SLOT1_ROM = Util.fromInputStream(
-                    DandanatorCpcConstants.class.getClassLoader()
-                            .getResourceAsStream(SLOT1_ROM_RESOURCE),
-                    SLOT1_RESERVED_SIZE);
-        }
-        return SLOT1_ROM;
-    }
-
     public static byte[] getExtraRom() throws IOException {
         if (EXTRA_ROM == null) {
             EXTRA_ROM = Util.fromInputStream(
@@ -100,25 +72,6 @@ public class DandanatorCpcConstants {
                     Constants.SLOT_SIZE);
         }
         return EXTRA_ROM;
-    }
-
-    public static byte[] getDefaultDandanatorPicFirmware() throws IOException {
-        if (DEFAULT_DANDANATOR_PIC_FW == null) {
-            DEFAULT_DANDANATOR_PIC_FW = Util.fromInputStream(
-                    DandanatorCpcConstants.class.getClassLoader()
-                            .getResourceAsStream(DANDANATOR_PIC_FW_RESOURCE),
-                    DANDANATOR_PIC_FW_SIZE);
-        }
-        return DEFAULT_DANDANATOR_PIC_FW;
-    }
-
-    public static byte[] getDivIdeLoader() throws IOException {
-        if (DIVIDE_LOADER == null) {
-            DIVIDE_LOADER = Util.fromInputStream(
-                    DandanatorCpcConstants.class.getClassLoader()
-                            .getResourceAsStream(DIVIDE_LOADER_RESOURCE));
-        }
-        return DIVIDE_LOADER;
     }
 
 }

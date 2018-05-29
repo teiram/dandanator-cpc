@@ -183,17 +183,5 @@ public class GameUtil {
         return value;
     }
 
-    public static int encodeAsAuthentic(Integer value, int defaultValue) {
-        return value != null ? value | DandanatorCpcConstants.AUTHENTIC_VALUE_FLAG : defaultValue;
-    }
-
-    public static Integer resetNonAuthentic(Integer value) {
-        return (value & DandanatorCpcConstants.AUTHENTIC_VALUE_FLAG) == 0 ? null : value;
-    }
-    public static Integer decodeAsAuthentic(int value) {
-        return value & (DandanatorCpcConstants.AUTHENTIC_VALUE_FLAG - 1);
-    }
-
-
 
 }

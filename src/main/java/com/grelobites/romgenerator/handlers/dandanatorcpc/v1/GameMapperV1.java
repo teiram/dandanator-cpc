@@ -142,29 +142,6 @@ public class GameMapperV1 implements GameMapper {
         return trainerCount;
     }
 
-    private Game getRomFromSlot(int slot) {
-        LOGGER.debug("getRomFromSlot " + slot);
-        Game activeRom;
-        //Compatibility with 6.n n < 1
-        if (slot == 0) {
-            slot = V1Constants.INTERNAL_ROM_SLOT;
-        }
-
-        if (slot >= V1Constants.EXTRA_ROM_SLOT) {
-            activeRom =  slot == V1Constants.EXTRA_ROM_SLOT ? DandanatorCpcConstants.EXTRA_ROM_GAME :
-                    DandanatorCpcConstants.INTERNAL_ROM_GAME;
-        } else {
-            activeRom = slotZero.getGameMappers().stream()
-                    .filter(g -> g.getGameType().equals(GameType.ROM))
-                    .limit(V1Constants.EXTRA_ROM_SLOT - slot)
-                    .reduce((a, b) -> b)
-                    .orElseThrow(() -> new RuntimeException("Unable to find assigned ROM"))
-                    .getGame();
-        }
-        LOGGER.debug("Calculated Active ROM as " + activeRom);
-        return activeRom;
-    }
-
     @Override
     public GameType getGameType() {
         return gameType;

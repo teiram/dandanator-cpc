@@ -308,11 +308,6 @@ public class PlayerController {
             resetPlayerAndRomSet();
         });
 
-        DandanatorCpcConfiguration.getInstance().autobootProperty()
-                .addListener(e -> {
-                    resetPlayerAndRomSet();
-                });
-
         DandanatorCpcConfiguration.getInstance().extraRomPathProperty()
                 .addListener(e -> {
                     resetPlayerAndRomSet();

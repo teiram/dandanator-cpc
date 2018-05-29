@@ -1,6 +1,5 @@
 package com.grelobites.romgenerator.util.tap;
 
-import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.compress.zx7.Zx7OutputStream;
 import com.grelobites.romgenerator.util.player.StandardWavOutputFormat;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class TapUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapUtil.class);
@@ -80,35 +78,4 @@ public class TapUtil {
         }
     }
 
-    public static void upgradeTapLoader(InputStream oldTap, OutputStream newTap) throws IOException {
-        //Read the first block header and validate
-        ByteBuffer header = ByteBuffer.wrap(Util.fromInputStream(oldTap, 21));
-        header.order(ByteOrder.LITTLE_ENDIAN);
-        int headerLength = Short.valueOf(header.getShort()).intValue();
-        int headerFlag = Byte.valueOf(header.get()).intValue();
-        int headerType = Byte.valueOf(header.get()).intValue();
-        byte[] nameByteArray = new byte[10];
-        header.get(nameByteArray);
-        String headerName = new String(nameByteArray);
-        int length = Short.valueOf(header.getShort()).intValue();
-        //Add length bytes, flag and checksum
-        length += 4;
-        LOGGER.debug("Found header with length: " + headerLength + ", flag: " + headerFlag
-            + ", type: " + headerType + ", name: " + headerName + ", dataLength: " + length);
-        if (!LOADER_NAME.equals(headerName)) {
-            throw new IllegalArgumentException("The provided file is not a TAP DivIDE Loader");
-        }
-        LOGGER.debug("Skipping " + length + " bytes");
-        oldTap.skip(length);
-
-        TapUtil.getLoaderTap(new ByteArrayInputStream(DandanatorCpcConstants
-                .getDivIdeLoader()), newTap, 0);
-
-        byte[] buffer = new byte[1024];
-        int len;
-        while ((len = oldTap.read(buffer)) != -1) {
-            newTap.write(buffer, 0, len);
-        }
-        newTap.flush();
-    }
 }

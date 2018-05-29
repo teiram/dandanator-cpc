@@ -8,7 +8,6 @@ import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
@@ -20,8 +19,8 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 
-public class DandanatorMiniPreferencesController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DandanatorMiniPreferencesController.class);
+public class DandanatorCpcPreferencesController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DandanatorCpcPreferencesController.class);
 
     @FXML
     private TextField launchGamesMessage;
@@ -57,28 +56,14 @@ public class DandanatorMiniPreferencesController {
     private Button resetExtraRomButton;
 
     @FXML
-    private Label dandanatorMiniRomPath;
+    private Label dandanatorCpcRomPath;
 
     @FXML
-    private Button changeDandanatorMiniRomButton;
+    private Button changeDandanatorCpcRomButton;
 
     @FXML
-    private Button resetDandanatorMiniRomButton;
+    private Button resetDandanatorCpcRomButton;
 
-    @FXML
-    private Label dandanatorPicFirmwarePath;
-
-    @FXML
-    private Button changeDandanatorPicFirmwareButton;
-
-    @FXML
-    private Button resetDandanatorPicFirmwareButton;
-
-    @FXML
-    private CheckBox disableBorderEffect;
-
-    @FXML
-    private CheckBox autoboot;
 
     private static String getRomFileName(String name) {
         int extensionLocation = name.lastIndexOf(".");
@@ -109,19 +94,6 @@ public class DandanatorMiniPreferencesController {
             DandanatorCpcConfiguration.getInstance().setDandanatorRomPath(dandanatorRom.getAbsolutePath());
         } else {
             throw new IllegalArgumentException("Invalid ROM file provided");
-        }
-    }
-
-    private boolean isDandanatorPicFirmwareValid(File dandanatorPicFile) {
-        return dandanatorPicFile.canRead() && dandanatorPicFile.isFile()
-                && dandanatorPicFile.length() == DandanatorCpcConstants.DANDANATOR_PIC_FW_SIZE;
-    }
-
-    private void updateDandanatorPicFirmware(File dandanatorPicFirmware) {
-        if (isDandanatorPicFirmwareValid(dandanatorPicFirmware)) {
-            DandanatorCpcConfiguration.getInstance().setDandanatorPicFirmwarePath(dandanatorPicFirmware.getAbsolutePath());
-        } else {
-            throw new IllegalArgumentException("Invalid PIC Firmware file provided");
         }
     }
 
@@ -250,26 +222,12 @@ public class DandanatorMiniPreferencesController {
                     extraRomMessage.setText(DandanatorCpcConstants.DEFAULT_EXTRAROMKEY_MESSAGE);
                 });
 
-        setupFileBasedParameter(changeDandanatorMiniRomButton,
+        setupFileBasedParameter(changeDandanatorCpcRomButton,
                 LocaleUtil.i18n("selectDandanatorRomMessage"),
-                dandanatorMiniRomPath,
+                dandanatorCpcRomPath,
                 DandanatorCpcConfiguration.getInstance().dandanatorRomPathProperty(),
-                resetDandanatorMiniRomButton,
+                resetDandanatorCpcRomButton,
                 this::updateDandanatorRom,
                 null);
-
-        setupFileBasedParameter(changeDandanatorPicFirmwareButton,
-                LocaleUtil.i18n("selectDandanatorPicFirmwareMessage"),
-                dandanatorPicFirmwarePath,
-                DandanatorCpcConfiguration.getInstance().dandanatorPicFirmwarePathProperty(),
-                resetDandanatorPicFirmwareButton,
-                this::updateDandanatorPicFirmware,
-                null);
-
-        disableBorderEffect.selectedProperty().bindBidirectional(
-                DandanatorCpcConfiguration.getInstance().disableBorderEffectProperty());
-
-        autoboot.selectedProperty().bindBidirectional(
-                DandanatorCpcConfiguration.getInstance().autobootProperty());
     }
 }

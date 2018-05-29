@@ -2,17 +2,14 @@ package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.model.HardwareMode;
-import com.grelobites.romgenerator.model.RomSet;
-import com.grelobites.romgenerator.util.*;
+import com.grelobites.romgenerator.util.CpcColor;
+import com.grelobites.romgenerator.util.FontViewer;
+import com.grelobites.romgenerator.util.ImageUtil;
+import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.view.util.DialogUtil;
-import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Pagination;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
@@ -50,20 +47,6 @@ public class PreferencesController {
     @FXML
     private Button resetCharSetButton;
 
-    @FXML
-    private ComboBox<RomSet> plus2ARomSetCombo;
-
-    @FXML
-    private RadioButton tapMode48K;
-
-    @FXML
-    private RadioButton tapMode128K;
-
-    @FXML
-    private RadioButton tapModePlus2A;
-
-    @FXML
-    private ToggleGroup tapLoaderToggleGroup;
 
     private void initializeImages() throws IOException {
         backgroundImage = ImageUtil.scrLoader(
@@ -214,52 +197,6 @@ public class PreferencesController {
 
     }
 
-    private void plus2ARomSetComboSetup() {
-        plus2ARomSetCombo.setItems(FXCollections.observableArrayList(
-                RomSet.values()));
-        plus2ARomSetCombo.getSelectionModel().select(Configuration.getInstance()
-                .getPlus2ARomSet());
-        plus2ARomSetCombo.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> {
-                    Configuration.getInstance().setPlus2ARomSet(newValue);
-                });
-    }
-
-    private void setTapTargetMode(String hwMode) {
-        switch (HardwareMode.valueOf(hwMode)) {
-            case HW_48K:
-                tapLoaderToggleGroup.selectToggle(tapMode48K);
-                break;
-            case HW_128K:
-                tapLoaderToggleGroup.selectToggle(tapMode128K);
-                break;
-            case HW_PLUS2A:
-                tapLoaderToggleGroup.selectToggle(tapModePlus2A);
-                break;
-            default:
-                LOGGER.warn("Invalid hardware mode selected as TAP target");
-        }
-    }
-    private void tapTargetModeSetup() {
-        Configuration configuration = Configuration.getInstance();
-
-        tapMode48K.setUserData(HardwareMode.HW_48K);
-        tapMode128K.setUserData(HardwareMode.HW_128K);
-        tapModePlus2A.setUserData(HardwareMode.HW_PLUS2A);
-
-        setTapTargetMode(configuration.getTapLoaderTarget());
-
-        configuration.tapLoaderTargetProperty().addListener((observable, oldValue, newValue) -> {
-            setTapTargetMode(newValue);
-        });
-
-        tapLoaderToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue)  -> {
-            LOGGER.debug("Changed TAP mode toggle to " + newValue);
-                configuration.setTapLoaderTarget(
-                        ((HardwareMode) newValue.getUserData()).name());
-        });
-    }
-
     @FXML
     private void initialize() throws IOException {
         initializeImages();
@@ -267,10 +204,5 @@ public class PreferencesController {
         backgroundImageSetup();
 
         charSetSetup();
-
-        plus2ARomSetComboSetup();
-
-        tapTargetModeSetup();
-
     }
 }

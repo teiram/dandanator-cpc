@@ -4,8 +4,6 @@ import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.util.compress.Compressor;
 import com.grelobites.romgenerator.util.compress.CompressorFactory;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.slf4j.Logger;
@@ -29,17 +27,13 @@ public class DandanatorCpcConfiguration {
 
     private StringProperty dandanatorRomPath;
     private StringProperty extraRomPath;
-    private StringProperty dandanatorPicFirmwarePath;
     private StringProperty togglePokesMessage;
     private StringProperty extraRomMessage;
     private StringProperty launchGameMessage;
     private StringProperty selectPokesMessage;
-    private BooleanProperty disableBorderEffect;
-    private BooleanProperty autoboot;
 
     private byte[] dandanatorRom;
     private byte[] extraRom;
-    private byte[] dandanatorPicFirmware;
 
     private static Compressor compressor = CompressorFactory.getDefaultCompressor();
 
@@ -68,31 +62,10 @@ public class DandanatorCpcConfiguration {
     private DandanatorCpcConfiguration() {
         dandanatorRomPath = new SimpleStringProperty();
         extraRomPath = new SimpleStringProperty();
-        dandanatorPicFirmwarePath = new SimpleStringProperty();
         togglePokesMessage = new SimpleStringProperty();
         extraRomMessage = new SimpleStringProperty();
         launchGameMessage = new SimpleStringProperty();
         selectPokesMessage = new SimpleStringProperty();
-        disableBorderEffect = new SimpleBooleanProperty(false);
-        autoboot = new SimpleBooleanProperty(false);
-
-
-        /*
-        setPersistenceListenerOnPropertyChange(dandanatorRomPath, DANDANATORROMPATH_PROPERTY,
-                null);
-        setPersistenceListenerOnPropertyChange(extraRomPath, EXTRAROMPATH_PROPERTY,
-                null);
-        setPersistenceListenerOnPropertyChange(dandanatorPicFirmwarePath, DANDANATORPICFIRMWAREPATH_PROPERTY,
-                null);
-        setPersistenceListenerOnPropertyChange(togglePokesMessage, TOGGLEPOKESMESSAGE_PROPERTY,
-                DandanatorCpcConstants.DEFAULT_TOGGLEPOKESKEY_MESSAGE);
-        setPersistenceListenerOnPropertyChange(extraRomMessage, EXTRAROMMESSAGE_PROPERTY,
-                DandanatorCpcConstants.DEFAULT_EXTRAROMKEY_MESSAGE);
-        setPersistenceListenerOnPropertyChange(launchGameMessage, LAUNCHGAMEMESSAGE_PROPERTY,
-                DandanatorCpcConstants.DEFAULT_LAUNCHGAME_MESSAGE);
-        setPersistenceListenerOnPropertyChange(selectPokesMessage, SELECTPOKESMESSAGE_PROPERTY,
-                DandanatorCpcConstants.DEFAULT_SELECTPOKE_MESSAGE);
-                */
     }
 
     private static boolean validConfigurationValue(String value) {
@@ -112,21 +85,6 @@ public class DandanatorCpcConfiguration {
 
     public StringProperty dandanatorRomPathProperty() {
         return dandanatorRomPath;
-    }
-
-    public String getDandanatorPicFirmwarePath() {
-        return dandanatorPicFirmwarePath.get();
-    }
-
-    public StringProperty dandanatorPicFirmwarePathProperty() {
-        return dandanatorPicFirmwarePath;
-    }
-
-    public void setDandanatorPicFirmwarePath(String dandanatorPicFirmwarePath) {
-        if (!Constants.ROMSET_PROVIDED.equals(dandanatorPicFirmwarePath)) {
-            dandanatorPicFirmware = null;
-        }
-        this.dandanatorPicFirmwarePath.set(dandanatorPicFirmwarePath);
     }
 
     public String getExtraRomPath() {
@@ -246,52 +204,8 @@ public class DandanatorCpcConfiguration {
         this.selectPokesMessage.set(selectPokesMessage);
     }
 
-    public boolean isDisableBorderEffect() {
-        return disableBorderEffect.get();
-    }
-
-    public BooleanProperty disableBorderEffectProperty() {
-        return disableBorderEffect;
-    }
-
-    public void setDisableBorderEffect(boolean disableBorderEffect) {
-        this.disableBorderEffect.set(disableBorderEffect);
-    }
-
-    public boolean isAutoboot() {
-        return autoboot.get();
-    }
-
-    public BooleanProperty autobootProperty() {
-        return autoboot;
-    }
-
-    public void setAutoboot(boolean autoboot) {
-        this.autoboot.set(autoboot);
-    }
-
-    public void setDandanatorPicFirmware(byte[] dandanatorPicFirmware) {
-        this.dandanatorPicFirmware = dandanatorPicFirmware;
-    }
-
     public Compressor getCompressor() {
         return compressor;
-    }
-
-    public byte[] getDandanatorPicFirmware() throws IOException {
-        if (dandanatorPicFirmware == null) {
-            if (validConfigurationValue(getDandanatorPicFirmwarePath())) {
-                try {
-                    dandanatorPicFirmware = Files.readAllBytes(Paths.get(dandanatorPicFirmwarePath.get()));
-                } catch (Exception e) {
-                    LOGGER.error("Unable to load Dandanator PIC Firmware from " + dandanatorPicFirmwarePath, e);
-                    dandanatorPicFirmware = DandanatorCpcConstants.getDefaultDandanatorPicFirmware();
-                }
-            } else {
-                dandanatorPicFirmware = DandanatorCpcConstants.getDefaultDandanatorPicFirmware();
-            }
-        }
-        return dandanatorPicFirmware;
     }
 
     @Override
@@ -299,16 +213,12 @@ public class DandanatorCpcConfiguration {
         return "DandanatorCpcConfiguration{" +
                 "dandanatorRomPath=" + dandanatorRomPath +
                 ", extraRomPath=" + extraRomPath +
-                ", dandanatorPicFirmwarePath=" + dandanatorPicFirmwarePath +
                 ", togglePokesMessage=" + togglePokesMessage +
                 ", extraRomMessage=" + extraRomMessage +
                 ", launchGameMessage=" + launchGameMessage +
                 ", selectPokesMessage=" + selectPokesMessage +
-                ", disableBorderEffect=" + disableBorderEffect +
-                ", autoboot=" + autoboot +
                 ", dandanatorRom=" + dandanatorRom +
                 ", extraRom=" + extraRom +
-                ", dandanatorPicFirmware=" + dandanatorPicFirmware +
                 '}';
     }
 
@@ -327,8 +237,6 @@ public class DandanatorCpcConfiguration {
                 p.get(EXTRAROMMESSAGE_PROPERTY, null));
         configuration.togglePokesMessage.set(
                 p.get(TOGGLEPOKESMESSAGE_PROPERTY, null));
-        configuration.dandanatorPicFirmwarePath.set(
-                p.get(DANDANATORPICFIRMWAREPATH_PROPERTY, null));
         return configuration;
     }
 

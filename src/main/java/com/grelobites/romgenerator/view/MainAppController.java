@@ -3,8 +3,6 @@ package com.grelobites.romgenerator.view;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.PlayerConfiguration;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.model.SnapshotGame;
@@ -162,6 +160,8 @@ public class MainAppController {
     private void initialize() throws IOException {
         menuPreview = new ImageView();
         menuPagination.getStyleClass().add(Pagination.STYLE_CLASS_BULLET);
+        menuPagination.setVisible(false);   //Do not show this so far, but maybe we need it
+                                            //in the near future
         menuPagination.setPageFactory((index) -> {
             switch (index) {
                 case 0:

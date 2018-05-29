@@ -5,23 +5,17 @@ import com.grelobites.romgenerator.PlayerConfiguration;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.compress.zx7.Zx7InputStream;
 import com.grelobites.romgenerator.util.player.AudioDataPlayerSupport;
-import com.grelobites.romgenerator.util.tap.TapOutputStream;
-import com.grelobites.romgenerator.util.tap.TapUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -37,36 +31,6 @@ public class RomSetUtil {
     private static final int BLOCK_COUNT = 16;
     private static final String BLOCK_NAME_PREFIX = "block";
     private static final String MULTILOADER_SIGNATURE = "MLD";
-
-    public static void exportToDivideAsTap(InputStream romsetStream, OutputStream out) throws IOException {
-        TapOutputStream tos = TapUtil.getLoaderTap(new ByteArrayInputStream(DandanatorCpcConstants
-                .getDivIdeLoader()), out, 0);
-
-        byte[] buffer = new byte[BLOCK_SIZE + 3];
-        for (int i = 0; i <  BLOCK_COUNT; i++) {
-            System.arraycopy(Util.fromInputStream(romsetStream, BLOCK_SIZE), 0, buffer, 0, BLOCK_SIZE);
-            buffer[BLOCK_SIZE] = Integer.valueOf(i + 1).byteValue();
-            Util.writeAsLittleEndian(buffer, BLOCK_SIZE + 1, Util.getBlockCrc16(buffer, BLOCK_SIZE + 1));
-
-
-            tos.addCodeStream(
-                    String.format("%s%02d", BLOCK_NAME_PREFIX, i),
-                    LOAD_ADDRESS, false, buffer);
-        }
-        out.flush();
-    }
-
-    public static void upgradeDivideTapLoader(Path divideFile) throws IOException {
-        Path backup = Files.move(divideFile, divideFile
-                .resolveSibling(divideFile.getFileName() + ".back"));
-        try (FileInputStream oldTap = new FileInputStream(backup.toFile());
-                FileOutputStream newTap = new FileOutputStream(divideFile.toFile())) {
-            TapUtil.upgradeTapLoader(oldTap, newTap);
-        } catch (Exception e) {
-            Files.move(backup, divideFile, StandardCopyOption.REPLACE_EXISTING);
-            throw e;
-        }
-    }
 
     public static void exportToZippedWavFiles(InputStream romsetStream, OutputStream out) throws IOException {
         ZipOutputStream zos = new ZipOutputStream(out);

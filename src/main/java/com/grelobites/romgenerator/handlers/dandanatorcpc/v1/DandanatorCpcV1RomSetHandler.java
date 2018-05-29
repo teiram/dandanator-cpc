@@ -11,7 +11,7 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcRomSetHan
 import com.grelobites.romgenerator.handlers.dandanatorcpc.ExtendedCharSet;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameChunk;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.view.DandanatorMiniFrameController;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.view.DandanatorCpcFrameController;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameHeaderOffsets;
 import com.grelobites.romgenerator.model.GameType;
@@ -66,7 +66,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     private static RamGameCompressor ramGameCompressor = new DandanatorCpcRamGameCompressor();
     private DoubleProperty currentRomUsage;
 
-    protected DandanatorMiniFrameController dandanatorMiniFrameController;
+    protected DandanatorCpcFrameController dandanatorCpcFrameController;
     protected Pane dandanatorMiniFrame;
     protected MenuItem exportPokesMenuItem;
     protected MenuItem importPokesMenuItem;
@@ -282,7 +282,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     private void dumpGameHeaders(ByteArrayOutputStream os, GameChunk[] gameChunkTable) throws IOException {
         int index = 0;
         //forwardOffset after the slot zero
-        int forwardOffset = Constants.SLOT_SIZE + DandanatorCpcConstants.SLOT1_RESERVED_SIZE;
+        int forwardOffset = Constants.SLOT_SIZE;
         //backwardsOffset starts before the test ROM
         int backwardsOffset = Constants.SLOT_SIZE * (DandanatorCpcConstants.GAME_SLOTS + 1);
         for (Game game : getApplicationContext().getGameList()) {
@@ -462,12 +462,10 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             cblocksOffset += compressedPokeData.length;
 
             ExtendedCharSet extendedCharset = new ExtendedCharSet(configuration.getCharSet());
-            byte[] compressedCharSetAndFirmware = Util.compress(extendedCharset.getCharSet(),
-                    DandanatorCpcConstants.DANDANATOR_PIC_FW_HEADER.getBytes(),
-                    dmConfiguration.getDandanatorPicFirmware());
+            byte[] compressedCharSet = Util.compress(extendedCharset.getCharSet());
             cBlocksTable.write(asLittleEndianWord(cblocksOffset));
-            cBlocksTable.write(asLittleEndianWord(compressedCharSetAndFirmware.length));
-            cblocksOffset += compressedCharSetAndFirmware.length;
+            cBlocksTable.write(asLittleEndianWord(compressedCharSet.length));
+            cblocksOffset += compressedCharSet.length;
 
             GameChunk[] gameChunkTable = calculateGameChunkTable(games, cblocksOffset);
             dumpGameHeaders(os, gameChunkTable);
@@ -476,7 +474,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write(compressedScreen);
             os.write(compressedScreenTexts);
             os.write(compressedPokeData);
-            os.write(compressedCharSetAndFirmware);
+            os.write(compressedCharSet);
 
             for (GameChunk gameChunk : gameChunkTable) {
                 os.write(gameChunk.getData());
@@ -513,19 +511,9 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write(cBlocksTable.toByteArray());
             LOGGER.debug("Dumped CBlocks table. Offset " + os.size());
 
-            os.write(dmConfiguration.isDisableBorderEffect() ? 1 : 0);
-            LOGGER.debug("Dumped border effect flag. Offset: " + os.size());
-
-            os.write(dmConfiguration.isAutoboot() ? 1 : 0);
-            LOGGER.debug("Dumped autoboot configuration. Offset: " + os.size());
-
             Util.fillWithValue(os, (byte) 0, Constants.SLOT_SIZE - os.size());
 
             LOGGER.debug("Slot zero completed. Offset: " + os.size());
-
-            byte[] slot1Rom = DandanatorCpcConstants.getSlot1Rom();
-            os.write(slot1Rom);
-            LOGGER.debug("Slot one header completed. Offset: " + os.size());
 
             for (Game game : games) {
                 if (isGameCompressed(game)) {
@@ -592,7 +580,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     protected double calculateRomUsage() {
-        int size = DandanatorCpcConstants.SLOT1_RESERVED_SIZE;
+        int size = 0;
         for (Game game : getApplicationContext().getGameList()) {
             try {
                 size += getGameSize(game);
@@ -609,7 +597,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     @Override
     public RomSetHandlerType type() {
-        return RomSetHandlerType.DDNTR_V7;
+        return RomSetHandlerType.DDNTR_V1;
     }
 
     protected String generateRomUsageDetail() {
@@ -850,24 +838,24 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
-    protected DandanatorMiniFrameController getDandanatorMiniFrameController(ApplicationContext applicationContext) {
-        if (dandanatorMiniFrameController == null) {
-            dandanatorMiniFrameController = new DandanatorMiniFrameController();
+    protected DandanatorCpcFrameController getDandanatorMiniFrameController(ApplicationContext applicationContext) {
+        if (dandanatorCpcFrameController == null) {
+            dandanatorCpcFrameController = new DandanatorCpcFrameController();
         }
-        dandanatorMiniFrameController.setApplicationContext(applicationContext);
-        return dandanatorMiniFrameController;
+        dandanatorCpcFrameController.setApplicationContext(applicationContext);
+        return dandanatorCpcFrameController;
     }
 
     protected Pane getDandanatorMiniFrame(ApplicationContext applicationContext) {
         try {
             if (dandanatorMiniFrame == null) {
                 FXMLLoader loader = new FXMLLoader();
-                loader.setLocation(DandanatorMiniFrameController.class.getResource("dandanatorminiframe.fxml"));
+                loader.setLocation(DandanatorCpcFrameController.class.getResource("dandanatorcpcframe.fxml"));
                 loader.setController(getDandanatorMiniFrameController(applicationContext));
                 loader.setResources(LocaleUtil.getBundle());
                 dandanatorMiniFrame = loader.load();
             } else {
-                dandanatorMiniFrameController.setApplicationContext(applicationContext);
+                dandanatorCpcFrameController.setApplicationContext(applicationContext);
             }
             return dandanatorMiniFrame;
         } catch (Exception e) {

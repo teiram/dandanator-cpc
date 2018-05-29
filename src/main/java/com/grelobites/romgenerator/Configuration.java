@@ -1,7 +1,5 @@
 package com.grelobites.romgenerator;
 
-import com.grelobites.romgenerator.model.HardwareMode;
-import com.grelobites.romgenerator.model.RomSet;
 import com.grelobites.romgenerator.util.CharSetFactory;
 import com.grelobites.romgenerator.util.RamGameCompressor;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
@@ -23,12 +21,8 @@ public class Configuration {
     private static final String MODE_PROPERTY = "mode";
     private static final String BACKGROUNDIMAGEPATH_PROPERTY = "backgroundImagePath";
     private static final String CHARSETPATH_PROPERTY = "charSetPath";
-    private static final String TAPLOADERTARGET_PROPERTY = "tapLoaderTarget";
-    private static final String PLUS2AROMSET_PROPERTY = "plus2ARomSet";
-    private static final String DEFAULT_TAPLOADER_TARGET = HardwareMode.HW_48K.name();
-    private static final RomSet DEFAULT_PLUS2AROMSET = RomSet.PLUS2A_40_EN;
     public static final String INTERNAL_CHARSET_PREFIX= "internal://";
-    private static final String DEFAULT_MODE = RomSetHandlerType.DDNTR_V7.name();
+    private static final String DEFAULT_MODE = RomSetHandlerType.DDNTR_V1.name();
 
     byte[] charSet;
     byte[] backgroundImage;
@@ -41,7 +35,6 @@ public class Configuration {
     private RamGameCompressor ramGameCompressor;
     private BooleanProperty allowExperimentalGames;
     private StringProperty tapLoaderTarget;
-    private RomSet plus2ARomSet = DEFAULT_PLUS2AROMSET;
 
     private static Configuration INSTANCE;
 
@@ -64,7 +57,6 @@ public class Configuration {
            charSetPathExternallyProvided.set(isCharSetExternallyProvided(newValue));
         });
         this.charSetFactory = new CharSetFactory();
-        this.tapLoaderTarget = new SimpleStringProperty(DEFAULT_TAPLOADER_TARGET);
     }
 
     public static Configuration getInstance() {
@@ -212,28 +204,6 @@ public class Configuration {
         this.allowExperimentalGames.set(allowExperimentalGames);
     }
 
-    public String getTapLoaderTarget() {
-        return tapLoaderTarget.get();
-    }
-
-    public StringProperty tapLoaderTargetProperty() {
-        return tapLoaderTarget;
-    }
-
-    public RomSet getPlus2ARomSet() {
-        return plus2ARomSet;
-    }
-
-    public void setPlus2ARomSet(RomSet plus2ARomSet) {
-        this.plus2ARomSet = plus2ARomSet;
-        persistConfigurationValue(PLUS2AROMSET_PROPERTY, plus2ARomSet.name());
-    }
-
-    public void setTapLoaderTarget(String tapLoaderTarget) {
-        this.tapLoaderTarget.set(tapLoaderTarget);
-        persistConfigurationValue(TAPLOADERTARGET_PROPERTY, tapLoaderTarget);
-    }
-
     public static Preferences getApplicationPreferences() {
         return Preferences.userNodeForPackage(Configuration.class);
     }
@@ -252,10 +222,6 @@ public class Configuration {
 
     private static Configuration setFromPreferences(Configuration configuration) {
         Preferences p = getApplicationPreferences();
-        configuration.tapLoaderTarget.set(p.get(TAPLOADERTARGET_PROPERTY,
-                DEFAULT_TAPLOADER_TARGET));
-        configuration.plus2ARomSet = RomSet.valueOf(
-                p.get(PLUS2AROMSET_PROPERTY, DEFAULT_PLUS2AROMSET.name()));
         return configuration;
     }
 
