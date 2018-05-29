@@ -156,7 +156,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 .put(compressedWriter).array();
     }
 
-    private static byte[] getGamePaddedSnaHeader(Game game) throws IOException {
+    private static byte[] getPaddedGameHeader(Game game) throws IOException {
         byte[] paddedHeader = new byte[V1Constants.GAME_HEADER_SIZE];
         Arrays.fill(paddedHeader, Constants.B_00);
         if (game instanceof SnapshotGame) {
@@ -265,13 +265,15 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     private int dumpGameHeader(OutputStream os, int index, Game game,
                                GameChunk gameChunk, int offset) throws IOException {
-        os.write(getGamePaddedSnaHeader(game));
-        dumpGameName(os, game, index);
-        os.write(getGameHardwareMode(game));
+        os.write(getPaddedGameHeader(game));
+        os.write(game.getType().typeId());
+
         os.write(isGameCompressed(game) ? Constants.B_01 : Constants.B_00);
         os.write(game.getType().typeId());
         os.write(isGameScreenHold(game) ? Constants.B_01 : Constants.B_00);
         dumpGameLaunchCode(os, game, index);
+        dumpGameName(os, game, index);
+
         os.write(asLittleEndianWord(gameChunk.getAddress()));
         os.write(asLittleEndianWord(gameChunk.getData().length));
         return isGameCompressed(game) ?
