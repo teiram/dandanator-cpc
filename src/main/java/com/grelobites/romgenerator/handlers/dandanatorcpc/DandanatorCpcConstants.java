@@ -38,11 +38,11 @@ public class DandanatorCpcConstants {
     public static final int EXTRA_ROM_MESSAGE_MAXLENGTH = 23;
     public static final int LAUNCH_GAME_MESSAGE_MAXLENGTH = 23;
     public static final int SELECT_POKE_MESSAGE_MAXLENGTH = 23;
-    private static final String DANDANATOR_ROM_RESOURCE = "dandanator-mini/dandanator-mini.rom";
-    private static final String DANDANATOR_PIC_FW_RESOURCE = "dandanator-mini/dandanator-pic-fw.bin";
-    private static final String EXTRA_ROM_RESOURCE = "dandanator-mini/test.rom";
-    private static final String DIVIDE_LOADER_RESOURCE = "dandanator-mini/divide-loader.bin";
-    private static final String SLOT1_ROM_RESOURCE = "dandanator-mini/slot1.rom";
+    private static final String DANDANATOR_ROM_RESOURCE = "dandanator-cpc/dandanator-mini.rom";
+    private static final String DANDANATOR_PIC_FW_RESOURCE = "dandanator-cpc/dandanator-pic-fw.bin";
+    private static final String EXTRA_ROM_RESOURCE = "dandanator-cpc/test.rom";
+    private static final String DIVIDE_LOADER_RESOURCE = "dandanator-cpc/divide-loader.bin";
+    private static final String SLOT1_ROM_RESOURCE = "dandanator-cpc/slot1.rom";
 
     public static final int POKE_TARGET_ADDRESS = 49284;
     public static final int GAME_CHUNK_SIZE = 256;
