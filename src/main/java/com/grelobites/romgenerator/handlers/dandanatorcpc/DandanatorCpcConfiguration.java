@@ -4,6 +4,8 @@ import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.util.compress.Compressor;
 import com.grelobites.romgenerator.util.compress.CompressorFactory;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.slf4j.Logger;
@@ -31,6 +33,8 @@ public class DandanatorCpcConfiguration {
     private StringProperty extraRomMessage;
     private StringProperty launchGameMessage;
     private StringProperty selectPokesMessage;
+    private BooleanProperty autoboot;
+
 
     private byte[] dandanatorRom;
     private byte[] extraRom;
@@ -66,6 +70,7 @@ public class DandanatorCpcConfiguration {
         extraRomMessage = new SimpleStringProperty();
         launchGameMessage = new SimpleStringProperty();
         selectPokesMessage = new SimpleStringProperty();
+        autoboot = new SimpleBooleanProperty(false);
     }
 
     private static boolean validConfigurationValue(String value) {
@@ -172,6 +177,18 @@ public class DandanatorCpcConfiguration {
 
     public StringProperty extraRomMessageProperty() {
         return extraRomMessage;
+    }
+
+    public boolean isAutoboot() {
+        return autoboot.get();
+    }
+
+    public BooleanProperty autobootProperty() {
+        return autoboot;
+    }
+
+    public void setAutoboot(boolean autoboot) {
+        this.autoboot.set(autoboot);
     }
 
     public String getLaunchGameMessage() {

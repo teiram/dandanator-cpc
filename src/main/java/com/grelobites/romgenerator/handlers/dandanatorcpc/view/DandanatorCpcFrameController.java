@@ -94,9 +94,6 @@ public class DandanatorCpcFrameController {
     @FXML
     private ProgressBar romUsage;
 
-    @FXML
-    private Label hardwareMode;
-
     private ApplicationContext applicationContext;
 
     private InvalidationListener currentGameCompressedChangeListener;
@@ -274,11 +271,6 @@ public class DandanatorCpcFrameController {
             gameName.textProperty().bindBidirectional(game.nameProperty());
             gameType.textProperty().set(game.getType().screenName());
             compressedSize.textProperty().bind(getGameSizeProperty(game).asString());
-            if (game instanceof RamGame) {
-                RamGame ramGame = (RamGame) game;
-                LOGGER.debug("Binding hardware mode to " + ramGame.getHardwareMode().displayName());
-                hardwareMode.textProperty().set(ramGame.getHardwareMode().displayName());
-            }
             if (game instanceof SnapshotGame) {
                 SnapshotGame snapshotGame = (SnapshotGame) game;
                 gameHoldScreenAttribute.selectedProperty().bindBidirectional(snapshotGame.holdScreenProperty());
@@ -308,13 +300,6 @@ public class DandanatorCpcFrameController {
         }
     }
 
-    private void styleHardwareMode(RamGame game) {
-        hardwareMode.getStyleClass().removeAll(
-                game.getHardwareMode().supported() ? HW_MODE_UNSUPPORTED : HW_MODE_SUPPORTED);
-        hardwareMode.getStyleClass().add(game.getHardwareMode().supported() ?
-            HW_MODE_SUPPORTED : HW_MODE_UNSUPPORTED);
-    }
-
     private void onGameSelection(Game oldGame, Game newGame) {
         LOGGER.debug("onGameSelection oldGame=" + oldGame + ", newGame=" + newGame);
         unbindInfoPropertiesFromGame(oldGame);
@@ -327,9 +312,6 @@ public class DandanatorCpcFrameController {
         } else {
             if (newGame instanceof RamGame) {
                 RamGame ramGame = (RamGame) newGame;
-                hardwareMode.setVisible(true);
-                styleHardwareMode(ramGame);
-
                 if (newGame instanceof SnapshotGame) {
                     SnapshotGame snapshotGame = (SnapshotGame) newGame;
                     addPokeButton.setDisable(false);
@@ -350,7 +332,6 @@ public class DandanatorCpcFrameController {
                 pokesTab.setDisable(true);
                 gameHoldScreenAttribute.setVisible(false);
                 gameCompressedAttribute.setVisible(false);
-                hardwareMode.setVisible(false);
             }
             gameInfoTabPane.setVisible(true);
         }

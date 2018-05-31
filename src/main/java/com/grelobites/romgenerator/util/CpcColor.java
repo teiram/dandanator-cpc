@@ -60,15 +60,27 @@ public enum CpcColor {
 	PASTELYELLOW(0xFFFFFF80),
 	BRIGHTWHITE(0xFFFFFFFF);
 	
-	private static CpcColor[] COLOR_ARRAY = {
-			BLACK, BLUE, BRIGHTBLUE, RED, MAGENTA, MAUVE,
-			BRIGHTRED, PURPLE, BRIGHTMAGENTA, GREEN, CYAN,
-			SKYBLUE, YELLOW, WHITE, PASTELBLUE, ORANGE,
-			PINK, PASTELMAGENTA, BRIGHTGREEN, SEAGREEN,
-			BRIGHTCYAN, LIME, PASTELGREEN, PASTELCYAN,
-			BRIGHTYELLOW, PASTELYELLOW, BRIGHTWHITE
+	private static CpcColor[] FIRM_INDEXED = {
+			BLACK,          BLUE,           BRIGHTBLUE,     RED,
+            MAGENTA,        MAUVE,	        BRIGHTRED,      PURPLE,
+            BRIGHTMAGENTA,  GREEN,          CYAN,			SKYBLUE,
+            YELLOW,         WHITE,          PASTELBLUE,     ORANGE,
+			PINK,           PASTELMAGENTA,  BRIGHTGREEN,    SEAGREEN,
+			BRIGHTCYAN,     LIME,           PASTELGREEN,    PASTELCYAN,
+			BRIGHTYELLOW,   PASTELYELLOW,   BRIGHTWHITE
 	};
-	
+
+	private static CpcColor[] HARD_INDEXED = {
+            FIRM_INDEXED[13],    FIRM_INDEXED[13],    FIRM_INDEXED[19],    FIRM_INDEXED[25],
+            FIRM_INDEXED[1],     FIRM_INDEXED[7],     FIRM_INDEXED[10],    FIRM_INDEXED[16],
+            FIRM_INDEXED[7],     FIRM_INDEXED[25],    FIRM_INDEXED[24],    FIRM_INDEXED[26],
+            FIRM_INDEXED[6],     FIRM_INDEXED[8],     FIRM_INDEXED[15],    FIRM_INDEXED[17],
+            FIRM_INDEXED[1],     FIRM_INDEXED[19],    FIRM_INDEXED[18],    FIRM_INDEXED[20],
+            FIRM_INDEXED[0],     FIRM_INDEXED[2],     FIRM_INDEXED[9],     FIRM_INDEXED[11],
+            FIRM_INDEXED[4],     FIRM_INDEXED[22],    FIRM_INDEXED[21],    FIRM_INDEXED[23],
+            FIRM_INDEXED[3],     FIRM_INDEXED[5],     FIRM_INDEXED[12],    FIRM_INDEXED[14],
+    };
+
 	private final int argb;
 	
 	CpcColor(int argb) {
@@ -79,8 +91,11 @@ public enum CpcColor {
 		return argb;
 	}
 	
-	public static int fromPalette(int paletteIndex) {
-		return COLOR_ARRAY[paletteIndex].argb();
+	public static int firmIndexed(int paletteIndex) {
+		return FIRM_INDEXED[paletteIndex].argb();
 	}
 
+	public static int hardIndexed(int paletteIndex) {
+	    return HARD_INDEXED[paletteIndex & 0x1f].argb();
+    }
 }

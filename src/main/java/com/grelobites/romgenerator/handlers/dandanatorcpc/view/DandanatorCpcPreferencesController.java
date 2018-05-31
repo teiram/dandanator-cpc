@@ -8,6 +8,7 @@ import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
@@ -64,6 +65,8 @@ public class DandanatorCpcPreferencesController {
     @FXML
     private Button resetDandanatorCpcRomButton;
 
+    @FXML
+    private CheckBox autoboot;
 
     private static String getRomFileName(String name) {
         int extensionLocation = name.lastIndexOf(".");
@@ -229,5 +232,9 @@ public class DandanatorCpcPreferencesController {
                 resetDandanatorCpcRomButton,
                 this::updateDandanatorRom,
                 null);
+
+        autoboot.selectedProperty().bindBidirectional(
+                DandanatorCpcConfiguration.getInstance().autobootProperty());
+
     }
 }

@@ -12,24 +12,21 @@ public class Constants {
 
     public static final String ROMSET_PROVIDED = "__ROMSET_PROVIDED__";
 
-    public static final int SECTOR_SIZE = 0x1000;
     public static final int SLOT_SIZE = 0x4000;
 
     private static final String DEFAULT_VERSION = "1.0";
 
     public static final int CHARSET_SIZE = 768;
 
-    public static final int SNA_HEADER_SIZE = 27;
-    public static final int SNA_EXTENDED_HEADER_SIZE = 31;
 	public static final int CPC_SCREEN_WIDTH = 640;
 	public static final int CPC_SCREEN_HEIGHT = 400;
-	public static final int CPC_SCREEN_SIZE = 80 * 200;
+	public static final int CPC_SCREEN_SIZE = 16384;
 	public static final int CPC_PALETTE_SIZE = 17;
     public static final int CPC_SCREEN_WITH_PALETTE_SIZE = CPC_SCREEN_SIZE +
             CPC_PALETTE_SIZE;
 
-    private static final String DEFAULT_MENU_SCREEN_RESOURCE = "menu.scr";
-    private static final String SINCLAIR_SCREEN_RESOURCE = "sinclair-1982.scr";
+    private static final String DEFAULT_MENU_SCREEN_RESOURCE = "cpc6128.scr";
+    private static final String SINCLAIR_SCREEN_RESOURCE = "cpc6128.scr";
     private static final String DEFAULT_CHARSET_RESOURCE = "charset.rom";
     private static final String THEME_RESOURCE = "view/theme.css";
 
@@ -70,7 +67,7 @@ public class Constants {
             DEFAULT_DANDANATOR_SCREEN = Util.fromInputStream(
                     DandanatorCpcConstants.class.getClassLoader()
                             .getResourceAsStream(DEFAULT_MENU_SCREEN_RESOURCE),
-                    Constants.CPC_SCREEN_SIZE);
+                    Constants.CPC_SCREEN_WITH_PALETTE_SIZE);
         }
         return DEFAULT_DANDANATOR_SCREEN;
     }
@@ -80,7 +77,7 @@ public class Constants {
             SINCLAIR_SCREEN = Util.fromInputStream(
                     DandanatorCpcConstants.class.getClassLoader()
                             .getResourceAsStream(SINCLAIR_SCREEN_RESOURCE),
-                    Constants.CPC_SCREEN_SIZE);
+                    Constants.CPC_SCREEN_WITH_PALETTE_SIZE);
         }
         return SINCLAIR_SCREEN;
     }

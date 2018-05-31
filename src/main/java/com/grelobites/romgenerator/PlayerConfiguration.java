@@ -37,12 +37,12 @@ public class PlayerConfiguration {
     private static final String AUDIOMIXERNAME_PROPERTY = "audioMixerName";
 
     private static final int DEFAULT_AUDIO_SAMPLE_RATE = 48000;
-    private static final int DEFAULT_BLOCKSIZE = 0x8000;
+    private static final int DEFAULT_BLOCKSIZE = 0x4000;
     private static final String DEFAULT_AUDIOMODE = "STEREOINV";
     private static final int DEFAULT_ENCODINGSPEED = 5;
     private static final int DEFAULT_PILOTLENGTH = 500;
     private static final int DEFAULT_TRAILLENGTH = 250;
-    private static final int DEFAULT_RECORDINGPAUSE = 2300;
+    private static final int DEFAULT_RECORDINGPAUSE = 1300;
     private static final String CASSETE_IMAGE_RESOURCE = "/player/cassette.jpg";
     private static final String KEMPSTON_IMAGE_RESOURCE = "/player/kempston.png";
 

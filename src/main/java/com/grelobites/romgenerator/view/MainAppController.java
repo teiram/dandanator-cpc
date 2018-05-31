@@ -159,9 +159,9 @@ public class MainAppController {
     @FXML
     private void initialize() throws IOException {
         menuPreview = new ImageView();
+        menuPreview.setFitWidth(320.0);
+        menuPreview.setFitHeight(200.0);
         menuPagination.getStyleClass().add(Pagination.STYLE_CLASS_BULLET);
-        menuPagination.setVisible(false);   //Do not show this so far, but maybe we need it
-                                            //in the near future
         menuPagination.setPageFactory((index) -> {
             switch (index) {
                 case 0:

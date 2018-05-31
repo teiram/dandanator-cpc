@@ -167,7 +167,6 @@ public class PlayerController {
 
         return configuration.isUseSerialPort() ?
                 new SerialDataPlayer(block, buffer) :
-                //new AudioDataPlayer(mediaView, block,  buffer);
                 new SampledAudioDataPlayer(block, buffer);
     }
 

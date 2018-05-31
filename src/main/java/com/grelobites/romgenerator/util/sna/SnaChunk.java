@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class SnaChunk {
     private static final Logger LOGGER = LoggerFactory.getLogger(SnaChunk.class);
@@ -43,17 +44,25 @@ public class SnaChunk {
         byte[] id = new byte[4];
         buffer.get(id);
         String name = new String(id);
-        long size = buffer.getLong();
+        int size = buffer.getInt();
         LOGGER.debug("Detected chunk with name {} and size {}", name, size);
-        byte[] data = new byte[(int) size];
 
         byte[] bufferAsArray = buffer.array();
         SnaCompressedInputStream cs = new SnaCompressedInputStream(
                 new ByteArrayInputStream(bufferAsArray, buffer.position(),
                         bufferAsArray.length - buffer.position()),
                     (int) size);
+        SnaChunk chunk = new SnaChunk(name, Util.fromInputStream(cs));
         LOGGER.debug("Shifting buffer position {}", cs.getSourceMark());
         buffer.position(buffer.position() + cs.getSourceMark());
-        return new SnaChunk(new String(id), Util.fromInputStream(cs));
+        return chunk;
+    }
+
+    @Override
+    public String toString() {
+        return "SnaChunk{" +
+                "name='" + name + '\'' +
+                ", data.length=" + data.length +
+                '}';
     }
 }

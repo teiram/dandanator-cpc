@@ -29,9 +29,11 @@ import java.util.TreeMap;
 public class SNAGameImageLoader implements GameImageLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(SNAGameImageLoader.class);
 
-    private static void setGameSlot(Map<Integer,byte[]> slots, byte[] data, int slot) {
-        slots.put(slot, Arrays.copyOfRange(data, slot * Constants.SLOT_SIZE,
-                (slot + 1 ) * Constants.SLOT_SIZE));
+    private static void setGameSlot(Map<Integer,byte[]> slots, byte[] data, int source, int slot) {
+        LOGGER.debug("Copying chunk data from {} to {}. Size {}",
+                slot * Constants.SLOT_SIZE, (slot + 1) * Constants.SLOT_SIZE, data.length);
+        slots.put(slot, Arrays.copyOfRange(data, source * Constants.SLOT_SIZE,
+                (source + 1 ) * Constants.SLOT_SIZE));
     }
 
     @Override
@@ -39,10 +41,10 @@ public class SNAGameImageLoader implements GameImageLoader {
         try {
             SnaImage snaImage = SnaFactory.fromInputStream(is);
             GameHeader header = GameHeader.fromSnaImage(snaImage);
-            int slots = snaImage.getMemoryDumpSize() / Constants.SLOT_SIZE;
+            int slots = 1024 * snaImage.getMemoryDumpSize() / Constants.SLOT_SIZE;
             SortedMap<Integer, byte[]> gameSlots = new TreeMap<>();
             for (int i = 0; i < slots; i++) {
-                setGameSlot(gameSlots, snaImage.getMemoryDump(), i);
+                setGameSlot(gameSlots, snaImage.getMemoryDump(), i, i);
             }
 
             if (snaImage.getSnapshotVersion() == 3) {
@@ -53,13 +55,13 @@ public class SNAGameImageLoader implements GameImageLoader {
                         LOGGER.debug("Read compressed chunk {} with size {}", chunk.getName(),
                                 chunk.getData().length);
                         for (int i = 0; i < chunk.getData().length / Constants.SLOT_SIZE; i++) {
-                            setGameSlot(gameSlots, chunk.getData(), i);
+                            setGameSlot(gameSlots, chunk.getData(), i, i);
                         }
                     } else if (chunk.getName().equals(SnaChunk.CHUNK_MEM1)) {
                         LOGGER.debug("Read compressed chunk {} with size {}", chunk.getName(),
                                 chunk.getData().length);
                         for (int i = 0; i < chunk.getData().length / Constants.SLOT_SIZE; i++) {
-                            setGameSlot(gameSlots, chunk.getData(), i + 4);
+                            setGameSlot(gameSlots, chunk.getData(), i, i + 4);
                         }
                     }
                 }

@@ -378,6 +378,7 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
         this.ppiControlPort = Byte.toUnsignedInt(buffer.get());
 
         this.psgSelectedRegisterIndex = Byte.toUnsignedInt(buffer.get());
+        this.psgRegisterData = new byte[16];
         buffer.get(this.psgRegisterData);
 
         this.memoryDumpSize = Short.toUnsignedInt(buffer.getShort());

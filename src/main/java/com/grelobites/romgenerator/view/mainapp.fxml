@@ -10,36 +10,36 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="applicationPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="470.0" prefWidth="550.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane fx:id="applicationPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="478.0" prefWidth="660.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <Pane layoutX="5.0" layoutY="5.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="201.0" prefWidth="265.0" styleClass="pane-with-border" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0">
+      <Pane layoutX="5.0" layoutY="5.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="210.0" prefWidth="330.0" styleClass="pane-with-border" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0">
          <children>
-            <Pagination fx:id="menuPagination" layoutX="5.0" layoutY="5.0" pageCount="2" prefHeight="192.0" prefWidth="256.0" styleClass="pagination-simple" />
+            <Pagination fx:id="menuPagination" layoutX="5.0" layoutY="5.0" pageCount="2" prefHeight="200.0" prefWidth="320.0" styleClass="pagination-simple" />
          </children>
       </Pane>
-      <Pane layoutX="289.0" layoutY="5.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="201.0" prefWidth="265.0" styleClass="pane-with-border" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+      <Pane layoutX="289.0" layoutY="5.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="210.0" prefWidth="330.0" styleClass="pane-with-border" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
          <children>
-            <ImageView fx:id="gamePreview" fitHeight="192.0" fitWidth="256.0" layoutX="5.0" layoutY="5.0" pickOnBounds="true" preserveRatio="true" />
+            <ImageView fx:id="gamePreview" fitHeight="200.0" fitWidth="320.0" layoutX="5.0" layoutY="5.0" pickOnBounds="true" preserveRatio="true" />
          </children>
       </Pane>
-      <Button fx:id="addRomButton" layoutX="43.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="28.0" text="+">
+      <Button fx:id="addRomButton" layoutX="43.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="28.0" text="+" AnchorPane.bottomAnchor="5.0">
          <font>
             <Font size="12.0" />
          </font>
       </Button>
-      <Button fx:id="removeSelectedRomButton" disable="true" layoutX="8.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="28.0" text="-">
+      <Button fx:id="removeSelectedRomButton" disable="true" layoutX="8.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="28.0" text="-" AnchorPane.bottomAnchor="5.0">
          <font>
             <Font size="12.0" />
          </font>
       </Button>
-      <Button fx:id="clearRomsetButton" disable="true" layoutX="76.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="28.0" text="x">
+      <Button fx:id="clearRomsetButton" disable="true" layoutX="76.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="28.0" text="x" AnchorPane.bottomAnchor="5.0">
          <font>
             <Font size="12.0" />
          </font>
       </Button>
-    <Button fx:id="createRomButton" disable="true" layoutX="109.0" layoutY="437.0" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="122.0" text="%createRomSetButton" />
-      <ProgressIndicator fx:id="operationInProgressIndicator" layoutX="243.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="25.0" prefWidth="25.0" visible="false" />
-      <TableView fx:id="gameTable" editable="true" layoutX="5.0" layoutY="214.0" prefHeight="220.0" prefWidth="265.0" AnchorPane.leftAnchor="5.0">
+    <Button fx:id="createRomButton" disable="true" layoutX="109.0" layoutY="437.0" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="122.0" text="%createRomSetButton" AnchorPane.bottomAnchor="5.0" />
+      <ProgressIndicator fx:id="operationInProgressIndicator" layoutX="243.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="25.0" prefWidth="25.0" visible="false" AnchorPane.bottomAnchor="5.0" />
+      <TableView fx:id="gameTable" editable="true" layoutX="5.0" layoutY="222.0" prefHeight="220.0" prefWidth="320.0" AnchorPane.leftAnchor="5.0">
         <columns>
           <TableColumn fx:id="nameColumn" prefWidth="-1.0" text="%gameNameColumn" />
         </columns>
@@ -47,6 +47,6 @@
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy>
       </TableView>
-      <Pane fx:id="romSetHandlerInfoPane" layoutX="280.0" layoutY="214.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="265.0" styleClass="gameInfoPane" AnchorPane.rightAnchor="5.0" />
+      <Pane fx:id="romSetHandlerInfoPane" layoutX="280.0" layoutY="214.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" styleClass="gameInfoPane" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0" />
    </children>
 </AnchorPane>

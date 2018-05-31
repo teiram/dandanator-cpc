@@ -1,34 +1,39 @@
 package com.grelobites.romgenerator.util.sna;
 
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.compress.sna.SnaCompressedOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SnaImageV3 extends SnaImageV2 implements SnaImage {
 
-    protected int fddMotorDriveState;
-    protected int fddCurrentPhysicalTrack;
-    protected int printerDataStrobeRegister;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SnaImageV3.class);
+    private int fddMotorDriveState;
+    private int fddCurrentPhysicalTrack;
+    private int printerDataStrobeRegister;
 
-    protected int crtcType;
-    protected int crtcHorizontalCharacterCounterRegister;
-    protected int crtcCharacterLineCounterRegister;
-    protected int crtcRasterLineCounterRegister;
-    protected int crtcVerticalTotalAdjustCounterRegister;
-    protected int crtcHorizontalSyncWidthCounter;
-    protected int crtcVerticalSyncWidthCounter;
-    protected int crtcStateFlags;
+    private int crtcType;
+    private int crtcHorizontalCharacterCounterRegister;
+    private int crtcCharacterLineCounterRegister;
+    private int crtcRasterLineCounterRegister;
+    private int crtcVerticalTotalAdjustCounterRegister;
+    private int crtcHorizontalSyncWidthCounter;
+    private int crtcVerticalSyncWidthCounter;
+    private int crtcStateFlags;
 
-    protected int gaVSyncDelayCounter;
-    protected int gaInterruptScanLineCounter;
-    protected int interruptRequestedFlag;
-    protected Map<String, SnaChunk> snaChunks = new HashMap<>();
+    private int gaVSyncDelayCounter;
+    private int gaInterruptScanLineCounter;
+    private int interruptRequestedFlag;
+    private Map<String, SnaChunk> snaChunks = new HashMap<>();
 
     @Override
     public int getSnapshotVersion() {
@@ -170,6 +175,13 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
         this.snaChunks = snaChunks;
     }
 
+    public static SnaImageV3 fromBuffer(ByteBuffer buffer) throws IOException {
+        SnaImageV3 image = new SnaImageV3();
+        image.populate(buffer);
+        LOGGER.debug("Returning image {}", image);
+        return image;
+    }
+
 
     public void populate(ByteBuffer buffer) throws IOException {
         super.populate(buffer);
@@ -199,7 +211,12 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
 
         while (buffer.hasRemaining()) {
             SnaChunk chunk = SnaChunk.fromBuffer(buffer);
-            snaChunks.put(chunk.getName(), chunk);
+            LOGGER.debug("Created SNA Chunk {}", chunk);
+            if (chunk.getData().length > 0) {
+                snaChunks.put(chunk.getName(), chunk);
+            } else {
+                throw new RuntimeException("No way");
+            }
         }
     }
 
@@ -246,4 +263,60 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
         }
     }
 
+    @Override
+    public String toString() {
+        return "SnaImageV3{" +
+                "fddMotorDriveState=" + fddMotorDriveState +
+                ", fddCurrentPhysicalTrack=" + fddCurrentPhysicalTrack +
+                ", printerDataStrobeRegister=" + printerDataStrobeRegister +
+                ", crtcType=" + crtcType +
+                ", crtcHorizontalCharacterCounterRegister=" + crtcHorizontalCharacterCounterRegister +
+                ", crtcCharacterLineCounterRegister=" + crtcCharacterLineCounterRegister +
+                ", crtcRasterLineCounterRegister=" + crtcRasterLineCounterRegister +
+                ", crtcVerticalTotalAdjustCounterRegister=" + crtcVerticalTotalAdjustCounterRegister +
+                ", crtcHorizontalSyncWidthCounter=" + crtcHorizontalSyncWidthCounter +
+                ", crtcVerticalSyncWidthCounter=" + crtcVerticalSyncWidthCounter +
+                ", crtcStateFlags=" + crtcStateFlags +
+                ", gaVSyncDelayCounter=" + gaVSyncDelayCounter +
+                ", gaInterruptScanLineCounter=" + gaInterruptScanLineCounter +
+                ", interruptRequestedFlag=" + interruptRequestedFlag +
+                ", snaChunks=" + snaChunks +
+                ", cpcType=" + cpcType +
+                ", interruptNumber=" + interruptNumber +
+                ", multimodeBytes=" + Util.dumpAsHexString(multimodeBytes) +
+                ", afRegister=" + afRegister +
+                ", bcRegister=" + bcRegister +
+                ", deRegister=" + deRegister +
+                ", hlRegister=" + hlRegister +
+                ", ixRegister=" + ixRegister +
+                ", iyRegister=" + iyRegister +
+                ", iRegister=" + iRegister +
+                ", rRegister=" + rRegister +
+                ", pc=" + pc +
+                ", sp=" + sp +
+                ", iff0=" + iff0 +
+                ", iff1=" + iff1 +
+                ", interruptMode=" + interruptMode +
+                ", altAfRegister=" + altAfRegister +
+                ", altBcRegister=" + altBcRegister +
+                ", altDeRegister=" + altDeRegister +
+                ", altHlRegister=" + altHlRegister +
+                ", gateArraySelectedPen=" + gateArraySelectedPen +
+                ", gateArrayCurrentPalette=" + Util.dumpAsHexString(gateArrayCurrentPalette) +
+                ", gateArrayMultiConfiguration=" + gateArrayMultiConfiguration +
+                ", currentRamConfiguration=" + currentRamConfiguration +
+                ", crtcSelectedRegisterIndex=" + crtcSelectedRegisterIndex +
+                ", crtcRegisterData=" + Util.dumpAsHexString(crtcRegisterData) +
+                ", currentRomSelection=" + currentRomSelection +
+                ", ppiPortA=" + ppiPortA +
+                ", ppiPortB=" + ppiPortB +
+                ", ppiPortC=" + ppiPortC +
+                ", ppiControlPort=" + ppiControlPort +
+                ", psgSelectedRegisterIndex=" + psgSelectedRegisterIndex +
+                ", psgRegisterData=" + Util.dumpAsHexString(psgRegisterData) +
+                ", memoryDumpSize=" + memoryDumpSize +
+                ", memory.length=" + memory.length +
+                ", snaChunks.size=" + snaChunks.size() +
+                '}';
+    }
 }

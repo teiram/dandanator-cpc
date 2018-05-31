@@ -96,7 +96,23 @@ public class SnapshotGame extends BaseGame implements RamGame {
 
 	public int getScreenSlot() {
         int index = getScreenPage() / Constants.SLOT_SIZE;
-        return MEMORY_CONFIGURATIONS[gameHeader.getCurrentRamConfiguration()][index];
+        LOGGER.debug("Index in memory configuration is {}, current RAM configuration is {}",
+                index, gameHeader.getCurrentRamConfiguration());
+        //Upper bits in RAM configuration sets the type of RAM extension, ignore them
+        /*
+                        RAM Expansion	Bits
+                                        7	6	5	4	3	2	1	0
+                       CPC6128 (note 1)	1	1	-	-	-	s2	s1	s0
+        Dk'tronics 256K Silicon Disk	1	1	1	b1	b0	s2	s1	s0
+        Key:
+
+        "-" - this bit is ignored. The value of this bit is not important.
+        "0" - this bit must be set to "0"
+        "1" - this bit must be set to "1"
+        "b0,b1,b2" - this bit is used to define the logical 64k block that the ram configuration uses
+        "s0,s1,s2" - this bit is used to define the ram configuration
+         */
+        return MEMORY_CONFIGURATIONS[gameHeader.getCurrentRamConfiguration() & 0x07][index];
     }
 
     public void setCompressedData(List<byte[]> compressedData) {
@@ -104,18 +120,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
     }
 
     private int getScreenMode() {
-        int width =  gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_WIDTH];
-        switch (width) {
-            case 20:
-                return 0;
-            case 40:
-                return 1;
-            case 80:
-                return 2;
-            default:
-                LOGGER.warn("Unsupported screen width {}", width);
-                return 0;
-        }
+        return gameHeader.getGateArrayMultiConfiguration() & 0x03;
     }
 
     private int getScreenOffset() {
@@ -126,18 +131,24 @@ public class SnapshotGame extends BaseGame implements RamGame {
     }
 
     private int getScreenPage() {
+        LOGGER.debug("Screen page is {}", String.format("%04x", (gameHeader.getCrtcRegisterData()
+                [CrtcRegisters.DISPLAY_START_ADDR_HI] & 0x30) << 10));
         return (gameHeader.getCrtcRegisterData()
-                [CrtcRegisters.DISPLAY_START_ADDR_HI] & 0xc0) << 8;
+                [CrtcRegisters.DISPLAY_START_ADDR_HI] & 0x30) << 10;
     }
 
     public Image getScreenshot() {
 		if (screenshot == null) {
+		    LOGGER.debug("Getting screenshot from slot {} with offset {}",
+                    getScreenSlot(), getScreenOffset());
 			try {
 				screenshot = ImageUtil
 						.scrLoader(ImageUtil.newScreenshot(),
 								getScreenMode(),
 								getSlot(getScreenSlot()),
 								getScreenOffset(),
+                                gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_WIDTH],
+                                gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_HEIGHT],
                                 gameHeader.getGateArrayCurrentPalette());
 			} catch (Exception e) {
 				LOGGER.error("Loading screenshot", e);

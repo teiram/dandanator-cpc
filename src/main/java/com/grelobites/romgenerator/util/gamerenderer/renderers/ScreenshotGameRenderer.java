@@ -25,7 +25,7 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
         cartridgeImage = ImageUtil.scrLoader(
                 ImageUtil.newScreenshot(), 1,
                 ScreenshotGameRenderer.class.getClassLoader()
-                        .getResourceAsStream("3carts.scr"));
+                        .getResourceAsStream("cpc6128.scr"));
     }
 
     private void loadDefaultImage(String imageResource) {
