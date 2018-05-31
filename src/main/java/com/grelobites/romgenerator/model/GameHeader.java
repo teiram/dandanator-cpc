@@ -337,7 +337,7 @@ public class GameHeader {
         header.setAltAfRegister(snaImage.getAltAFRegister());
         header.setAltBcRegister(snaImage.getAltBCRegister());
         header.setAltDeRegister(snaImage.getAltDERegister());
-
+        header.setAltHlRegister(snaImage.getAltHLRegister());
         header.setGateArraySelectedPen(snaImage.getGateArraySelectedPen());
         header.setGateArrayCurrentPalette(snaImage.getGateArrayCurrentPalette());
         header.setGateArrayMultiConfiguration(snaImage.getGateArrayMultiConfiguration());
