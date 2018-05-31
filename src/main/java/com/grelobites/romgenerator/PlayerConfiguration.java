@@ -44,7 +44,7 @@ public class PlayerConfiguration {
     private static final int DEFAULT_TRAILLENGTH = 250;
     private static final int DEFAULT_RECORDINGPAUSE = 1300;
     private static final String CASSETE_IMAGE_RESOURCE = "/player/cassette.jpg";
-    private static final String KEMPSTON_IMAGE_RESOURCE = "/player/kempston.png";
+    private static final String KEMPSTON_IMAGE_RESOURCE = "/player/usb.png";
 
     public static final String[] AUDIO_MODES = new String[] {"MONO", "STEREO", "STEREOINV"};
 
@@ -76,7 +76,7 @@ public class PlayerConfiguration {
         trailLength = new SimpleIntegerProperty(DEFAULT_TRAILLENGTH);
         recordingPause = new SimpleIntegerProperty(DEFAULT_RECORDINGPAUSE);
         useTargetFeedback = new SimpleBooleanProperty(true);
-        useSerialPort = new SimpleBooleanProperty(false);
+        useSerialPort = new SimpleBooleanProperty(true);
         serialPort = new SimpleStringProperty(null);
         customRomSetPath = new SimpleStringProperty(null);
         sendLoader = new SimpleBooleanProperty(true);

@@ -17,6 +17,7 @@ public class GameHeaderV1Serializer {
         GameHeader header = game.getGameHeader();
         ByteBuffer buffer = ByteBuffer.allocate(V1Constants.GAME_HEADER_SIZE)
                 .order(ByteOrder.LITTLE_ENDIAN);
+        buffer.put(Integer.valueOf(header.getSnapshotVersion()).byteValue());
         buffer.putShort(Integer.valueOf(header.getAfRegister()).shortValue());
         buffer.putShort(Integer.valueOf(header.getBcRegister()).shortValue());
         buffer.putShort(Integer.valueOf(header.getDeRegister()).shortValue());

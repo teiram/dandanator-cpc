@@ -146,9 +146,10 @@ public class SnapshotGame extends BaseGame implements RamGame {
 						.scrLoader(ImageUtil.newScreenshot(),
 								getScreenMode(),
 								getSlot(getScreenSlot()),
-								getScreenOffset(),
-                                gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_WIDTH],
-                                gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_HEIGHT],
+								CrtcDisplayData.newBuilder()
+                                .withDisplayOffset(getScreenOffset())
+                                .withVisibleHeight(gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_HEIGHT])
+                                .withVisibleWidth(gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_WIDTH]).build(),
                                 gameHeader.getGateArrayCurrentPalette());
 			} catch (Exception e) {
 				LOGGER.error("Loading screenshot", e);

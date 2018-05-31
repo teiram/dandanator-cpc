@@ -377,7 +377,7 @@ public class MainAppController {
                 selectedGame == null ? LocaleUtil.i18n("exportGameMenuEntry") :
                 selectedGame.getType() == GameType.ROM ?
                     LocaleUtil.i18n("exportGameAsRomMenuEntry") :
-                    LocaleUtil.i18n("exportGameAsZ80MenuEntry"));
+                    LocaleUtil.i18n("exportGameAsSNAMenuEntry"));
     }
 
     private void onGameSelection(Game oldGame, Game newGame) {
