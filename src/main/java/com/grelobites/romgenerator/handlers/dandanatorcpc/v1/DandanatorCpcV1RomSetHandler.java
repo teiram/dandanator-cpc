@@ -165,7 +165,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                     .getIff0() == 0;
 
             os.write(interruptDisable ? Z80Opcode.DI : Z80Opcode.EI);
-
+            os.write(Z80Opcode.RET);
         } else {
             os.write(new byte[V1Constants.GAME_LAUNCHCODE_SIZE]);
         }
@@ -254,7 +254,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         os.write(game.getType().typeId());
         os.write(getGameChunk(game));
         os.write(isGameCompressed(game) ? Constants.B_01 : Constants.B_00);
-        os.write(game.getType().typeId());
         os.write(isGameScreenHold(game) ? Constants.B_01 : Constants.B_00);
         os.write(0);
         os.write(0); //Upper and lower active roms (TODO)
