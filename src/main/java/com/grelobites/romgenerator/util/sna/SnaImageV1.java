@@ -1,6 +1,8 @@
 package com.grelobites.romgenerator.util.sna;
 
 import com.grelobites.romgenerator.util.compress.sna.SnaCompressedOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,6 +11,7 @@ import java.nio.ByteOrder;
 
 public class SnaImageV1 extends SnaImageBase implements SnaImage {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SnaImageV1.class);
     protected int afRegister;
     protected int bcRegister;
     protected int deRegister;
@@ -382,10 +385,20 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
         buffer.get(this.psgRegisterData);
 
         this.memoryDumpSize = Short.toUnsignedInt(buffer.getShort());
+        LOGGER.debug("Memory dump size is {}. Available is : {}",
+                this.memoryDumpSize,
+                buffer.capacity());
 
-        this.memory = new byte[memoryDumpSize * 1024];
         buffer.position(256);
-        buffer.get(this.memory);
+        int uncompressedMemorysize = this.memoryDumpSize * 1024;
+        if (buffer.capacity() - buffer.position() >= memoryDumpSize * 1024) {
+            this.memory = new byte[memoryDumpSize * 1024];
+            buffer.get(this.memory);
+        } else {
+            LOGGER.warn("Overriding memory size on buffer underrun");
+            this.memoryDumpSize = 0;
+        }
+
     }
     /*
      *

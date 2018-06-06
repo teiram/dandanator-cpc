@@ -4,10 +4,10 @@ import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.compress.sna.SnaCompressedOutputStream;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -42,13 +42,13 @@ public class SnaFactory {
 
     private static SnaChunk createSnaChunk(SnapshotGame game, int[] slots,
                                            String chunkName) throws IOException {
-        ByteOutputStream os = new ByteOutputStream();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
         SnaCompressedOutputStream cs = new SnaCompressedOutputStream(os);
         for (int i : slots) {
             cs.write(game.getSlot(i));
         }
         cs.flush();
-        return new SnaChunk(SnaChunk.CHUNK_MEM0, os.getBytes());
+        return new SnaChunk(SnaChunk.CHUNK_MEM0, os.toByteArray());
     }
 
     public static SnaImage fromSnapshotGame(SnapshotGame game) throws IOException {

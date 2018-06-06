@@ -607,7 +607,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     private static void printVersionAndPageInfo(CpcScreen screen, int line, int page, int numPages) {
         String versionInfo = getVersionInfo();
         screen.setInk(CpcColor.BLACK);
-        screen.setPen(CpcColor.BRIGHTMAGENTA);
+        screen.setPen(CpcColor.BRIGHTGREEN);
         screen.printLine(versionInfo, line, 0);
         if (numPages > 1) {
             screen.setPen(CpcColor.WHITE);
@@ -615,7 +615,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                     String.format("%d/%d", page, numPages) : "";
             String keyInfo = "SPC - ";
             screen.printLine(keyInfo, line, screen.getColumns() - pageInfo.length() - keyInfo.length());
-            screen.setPen(CpcColor.YELLOW);
             screen.printLine(pageInfo, line, screen.getColumns() - pageInfo.length());
         }
     }
@@ -626,17 +625,17 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     private static void printGameNameLine(CpcScreen screen, Game game, int index, int line) {
         screen.setPen(
-                isGameScreenHold(game) ? CpcColor.BRIGHTCYAN : CpcColor.BRIGHTGREEN);
+                isGameScreenHold(game) ? CpcColor.BRIGHTYELLOW : CpcColor.BRIGHTGREEN);
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT), line, 0);
-        screen.setPen(CpcColor.BRIGHTWHITE);
+        screen.setPen(CpcColor.WHITE);
         int gameSymbolCode = getGameSymbolCode(game);
         screen.printLine(String.format("%c", gameSymbolCode), line, 1);
         if (isGameCompressed(game)) {
             screen.setPen(CpcColor.BRIGHTYELLOW);
         }
         screen.printLine(String.format("%c", gameSymbolCode + 1), line, 2);
-        screen.setPen(isGameScreenHold(game) ? CpcColor.BRIGHTCYAN : CpcColor.BRIGHTGREEN);
+        screen.setPen(isGameScreenHold(game) ? CpcColor.BRIGHTYELLOW : CpcColor.BRIGHTGREEN);
         screen.printLine(
                 String.format("%s", game.getName()), line, 3);
     }
@@ -648,7 +647,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         page.setCharSet(new ExtendedCharSet(Configuration.getInstance().getCharSet()).getCharSet());
 
         page.setInk(CpcColor.BLACK);
-        page.setPen(CpcColor.BRIGHTMAGENTA);
+        page.setPen(CpcColor.BRIGHTYELLOW);
         for (int line = page.getLines() - 1; line >= 8; line--) {
             page.deleteLine(line);
         }
@@ -663,9 +662,9 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             gameIndex++;
         }
 
-        page.setPen(CpcColor.BRIGHTWHITE);
+        page.setPen(CpcColor.BRIGHTGREEN);
         page.printLine(String.format("P. %s", configuration.getTogglePokesMessage()), 21, 0);
-        page.setPen(CpcColor.BRIGHTRED);
+        page.setPen(CpcColor.BRIGHTYELLOW);
         page.printLine(String.format("R. %s", configuration.getExtraRomMessage()), 23, 0);
     }
 

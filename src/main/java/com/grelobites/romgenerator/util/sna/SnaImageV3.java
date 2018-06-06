@@ -207,7 +207,7 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
         this.gaInterruptScanLineCounter = Byte.toUnsignedInt(buffer.get());
         this.interruptRequestedFlag = Byte.toUnsignedInt(buffer.get());
 
-        buffer.position(SnaConstants.SNA_HEADER_SIZE + this.memory.length);
+        buffer.position(SnaConstants.SNA_HEADER_SIZE + this.memoryDumpSize * 1024);
 
         while (buffer.hasRemaining()) {
             SnaChunk chunk = SnaChunk.fromBuffer(buffer);
@@ -315,7 +315,7 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
                 ", psgSelectedRegisterIndex=" + psgSelectedRegisterIndex +
                 ", psgRegisterData=" + Util.dumpAsHexString(psgRegisterData) +
                 ", memoryDumpSize=" + memoryDumpSize +
-                ", memory.length=" + memory.length +
+                ", memory.length=" + (memory != null ? memory.length : 0) +
                 ", snaChunks.size=" + snaChunks.size() +
                 '}';
     }
