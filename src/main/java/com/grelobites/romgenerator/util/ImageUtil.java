@@ -17,12 +17,12 @@ public class ImageUtil {
 
 	private static int getXBorderSize(CrtcDisplayData crtcDisplayData) {
 	    int width = crtcDisplayData.getVisibleWidth() * 16;
-	    return (Constants.CPC_SCREEN_WIDTH - width) / 2;
+	    return Math.max(0, (Constants.CPC_SCREEN_WIDTH - width) / 2);
     }
 
     private static int getYBorderSize(CrtcDisplayData crtcDisplayData) {
         int height = crtcDisplayData.getVisibleHeight() * 16;
-        return (Constants.CPC_SCREEN_HEIGHT - height) / 2;
+        return Math.max(0, (Constants.CPC_SCREEN_HEIGHT - height) / 2);
     }
 
     private static void writeToImageMode0(PixelWriter writer, byte[] data,
@@ -62,7 +62,7 @@ public class ImageUtil {
 
     private static void writeToImageMode1(PixelWriter writer, byte[] data,
                                           CrtcDisplayData crtcDisplayData, byte[] palette) {
-	    int height = crtcDisplayData.getVisibleHeight() * 8;
+	    int height = Math.min(200, crtcDisplayData.getVisibleHeight() * 8);
 	    int width = crtcDisplayData.getVisibleWidth() * 2;
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
