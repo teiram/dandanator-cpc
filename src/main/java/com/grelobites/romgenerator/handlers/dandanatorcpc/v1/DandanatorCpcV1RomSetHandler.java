@@ -553,7 +553,16 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private static int getGameSymbolCode(Game game) {
-        return ExtendedCharSet.SYMBOL_SPACE;
+        switch (game.getType()) {
+            case ROM:
+                return ExtendedCharSet.SYMBOL_ROM_0_CODE;
+            case RAM64:
+                return ExtendedCharSet.SYMBOL_64K_0_CODE;
+            case RAM128:
+                return ExtendedCharSet.SYMBOL_128K_0_CODE;
+            default:
+                return ExtendedCharSet.SYMBOL_64K_0_CODE;
+        }
     }
 
     private static void printGameNameLine(CpcScreen screen, Game game, int index, int line) {
@@ -562,13 +571,13 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
-        screen.setPen(CpcColor.WHITE);
-        //int gameSymbolCode = getGameSymbolCode(game);
-        screen.printLine(String.format("%c", ExtendedCharSet.SYMBOL_SPACE), line, 1);
+        screen.setPen(CpcColor.BRIGHTGREEN);
+        int gameSymbolCode = getGameSymbolCode(game);
+        screen.printLine(String.format("%c", gameSymbolCode), line, 1);
         if (isGameCompressed(game)) {
             screen.setPen(CpcColor.BRIGHTYELLOW);
         }
-        screen.printLine(String.format("%c", ExtendedCharSet.SYMBOL_SPACE), line, 2);
+        screen.printLine(String.format("%c", gameSymbolCode + 1), line, 2);
         screen.setPen(isGameScreenHold(game) ? CpcColor.BRIGHTYELLOW : CpcColor.BRIGHTGREEN);
         screen.printLine(
                 String.format("%s", game.getName()), line, 3);
