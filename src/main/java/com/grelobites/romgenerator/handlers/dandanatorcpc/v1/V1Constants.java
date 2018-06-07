@@ -3,7 +3,7 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc.v1;
 public class V1Constants {
     protected static final int VERSION_SIZE = 8;
     protected static final int CBLOCKS_OFFSET = 16360;
-    protected static final int GAME_STRUCT_SIZE = 185;
+    protected static final int GAME_STRUCT_SIZE = 201;
     protected static final int GREY_ZONE_OFFSET = 8210;
     protected static final int VERSION_OFFSET = 16354;
 
