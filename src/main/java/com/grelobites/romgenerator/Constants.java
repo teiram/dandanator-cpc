@@ -25,7 +25,7 @@ public class Constants {
     public static final int CPC_SCREEN_WITH_PALETTE_SIZE = CPC_SCREEN_SIZE +
             CPC_PALETTE_SIZE;
 
-    private static final String DEFAULT_MENU_SCREEN_RESOURCE = "cpc6128.scr";
+    private static final String DEFAULT_MENU_SCREEN_RESOURCE = "menu.scr";
     private static final String SINCLAIR_SCREEN_RESOURCE = "cpc6128.scr";
     private static final String DEFAULT_CHARSET_RESOURCE = "charset.rom";
     private static final String THEME_RESOURCE = "view/theme.css";
