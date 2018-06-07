@@ -139,15 +139,17 @@ public class SnapshotGame extends BaseGame implements RamGame {
 
     public Image getScreenshot() {
 		if (screenshot == null) {
+		    int screenSlot = getScreenSlot();
+		    int screenOffset = getScreenOffset();
 		    LOGGER.debug("Getting screenshot from slot {} with offset {}",
-                    getScreenSlot(), getScreenOffset());
+                    screenSlot, screenOffset);
 			try {
 				screenshot = ImageUtil
 						.scrLoader(ImageUtil.newScreenshot(),
 								getScreenMode(),
-								getSlot(getScreenSlot()),
+								getSlot(screenSlot),
 								CrtcDisplayData.newBuilder()
-                                .withDisplayOffset(getScreenOffset())
+                                .withDisplayOffset(screenOffset)
                                 .withVisibleHeight(gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_HEIGHT])
                                 .withVisibleWidth(gameHeader.getCrtcRegisterData()[CrtcRegisters.VISIBLE_WIDTH]).build(),
                                 gameHeader.getGateArrayCurrentPalette());
