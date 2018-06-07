@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.model;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
 
 import javafx.beans.Observable;
 import org.slf4j.Logger;
@@ -37,5 +38,7 @@ public interface Game {
     boolean isSlotZeroed(int slot);
 
     int getSize();
+
+    List<byte[]> getData();
 
 }

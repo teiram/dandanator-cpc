@@ -79,6 +79,10 @@ public class BaseGame {
         return isSlotZeroed(slot) ? Constants.ZEROED_SLOT : data.get(slot);
     }
 
+    public List<byte[]> getData() {
+        return data;
+    }
+
     public int getSize() {
         if (size == null) {
             int gameSize = 0;

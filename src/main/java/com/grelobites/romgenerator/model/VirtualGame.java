@@ -6,6 +6,10 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class VirtualGame implements Game {
     protected GameType gameType;
     protected StringProperty name;
@@ -61,6 +65,11 @@ public class VirtualGame implements Game {
     @Override
     public byte[] getSlot(int slot) {
         return new byte[0];
+    }
+
+    @Override
+    public List<byte[]> getData() {
+       return Collections.emptyList();
     }
 
     @Override
