@@ -50,11 +50,10 @@ public class SnaChunk {
         byte[] bufferAsArray = buffer.array();
         SnaCompressedInputStream cs = new SnaCompressedInputStream(
                 new ByteArrayInputStream(bufferAsArray, buffer.position(),
-                        bufferAsArray.length - buffer.position()),
-                    (int) size);
+                        bufferAsArray.length - buffer.position()), size);
         SnaChunk chunk = new SnaChunk(name, Util.fromInputStream(cs));
-        LOGGER.debug("Shifting buffer position {}", cs.getSourceMark());
-        buffer.position(buffer.position() + cs.getSourceMark());
+        LOGGER.debug("Shifting buffer position {}", size);
+        buffer.position(buffer.position() + size);
         return chunk;
     }
 

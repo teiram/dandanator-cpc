@@ -30,7 +30,7 @@ public class SNAGameImageLoader implements GameImageLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(SNAGameImageLoader.class);
 
     private static void setGameSlot(Map<Integer,byte[]> slots, byte[] data, int source, int slot) {
-        LOGGER.debug("Copying chunk data from {} to {}. Size {}",
+        LOGGER.debug("Copying chunk data from {} to {}. Source size {}",
                 slot * Constants.SLOT_SIZE, (slot + 1) * Constants.SLOT_SIZE, data.length);
         slots.put(slot, Arrays.copyOfRange(data, source * Constants.SLOT_SIZE,
                 (source + 1 ) * Constants.SLOT_SIZE));
@@ -73,7 +73,7 @@ public class SNAGameImageLoader implements GameImageLoader {
                     if (chunk.getName().equals(SnaChunk.CHUNK_MEM0)) {
                         LOGGER.debug("Read compressed chunk {} with size {}", chunk.getName(),
                                 chunk.getData().length);
-                        for (int i = 0; i < chunk.getData().length / Constants.SLOT_SIZE; i++) {
+                        for (int i = 0; i < 4; i++) {
                             setGameSlot(gameSlots, chunk.getData(), i, i);
                         }
                     } else if (chunk.getName().equals(SnaChunk.CHUNK_MEM1)) {

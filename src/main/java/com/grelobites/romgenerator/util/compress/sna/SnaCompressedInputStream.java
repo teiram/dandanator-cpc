@@ -13,17 +13,22 @@ public class SnaCompressedInputStream extends InputStream {
     private int cachedValue = 0;
     private int cachedCount = 0;
     private int sourceMark = 0;
-    private int size;
+    private int sourceSize;
 
     private static final int CONTROL_BYTE = 0xE5;
 
     private int readNextValue() throws SourceStreamEOFException, IOException {
-        int value = source.read();
-        if (value < 0) {
-            throw new SourceStreamEOFException();
+        if (sourceSize-- > 0) {
+            int value = source.read();
+            if (value < 0) {
+                throw new SourceStreamEOFException();
+            } else {
+                sourceMark++;
+                return value;
+            }
         } else {
-            sourceMark++;
-            return value;
+            LOGGER.debug("End of declared source stream");
+            throw new SourceStreamEOFException();
         }
     }
 
@@ -46,9 +51,14 @@ public class SnaCompressedInputStream extends InputStream {
         }
     }
 
-    public SnaCompressedInputStream(InputStream source, int size) {
+    public SnaCompressedInputStream(InputStream source, int sourceSize) {
         this.source = source;
-        this.size = size;
+        this.sourceSize = sourceSize;
+    }
+
+    public SnaCompressedInputStream(InputStream source) {
+        this.source = source;
+        this.sourceSize = Integer.MAX_VALUE;
     }
 
     public int getSourceMark() {
@@ -57,16 +67,11 @@ public class SnaCompressedInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        if (size -- > 0) {
-            if (cachedCount > 0) {
-                cachedCount--;
-                return cachedValue;
-            } else {
-                return getNextValue();
-            }
+        if (cachedCount > 0) {
+            cachedCount--;
+            return cachedValue;
         } else {
-            LOGGER.debug("Forcing EOF on reaching declared uncompressed size {}");
-            return -1;
+            return getNextValue();
         }
     }
 
