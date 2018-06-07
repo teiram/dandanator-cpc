@@ -36,6 +36,25 @@ public class SNAGameImageLoader implements GameImageLoader {
                 (source + 1 ) * Constants.SLOT_SIZE));
     }
 
+    private static boolean isEmptyChunk(SnaChunk chunk) {
+        for (byte d : chunk.getData()) {
+            if (d != Constants.B_FF) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasAllEmptyChunks(Map<String, SnaChunk> chunks) {
+        for (SnaChunk chunk: chunks.values()) {
+            if (!isEmptyChunk(chunk)) {
+                return false;
+            }
+        }
+        LOGGER.debug("SNA has all chunks empty");
+        return true;
+    }
+
     @Override
     public Game load(InputStream is) throws IOException {
         try {
@@ -47,7 +66,7 @@ public class SNAGameImageLoader implements GameImageLoader {
                 setGameSlot(gameSlots, snaImage.getMemoryDump(), i, i);
             }
 
-            if (snaImage.getSnapshotVersion() == 3) {
+            if (snaImage.getSnapshotVersion() == 3 && !hasAllEmptyChunks(snaImage.getSnaChunks())) {
                 for (Map.Entry<String, SnaChunk> chunkEntry : snaImage.getSnaChunks()
                         .entrySet()) {
                     SnaChunk chunk = chunkEntry.getValue();
