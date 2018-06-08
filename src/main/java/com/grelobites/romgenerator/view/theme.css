@@ -1,7 +1,8 @@
 .root {
-    -fx-background-color: #2a2a2a;
-    -fx-base: #111111;
+    -fx-background-color: #2a2a3a;
+    -fx-base: #202030;
     -fx-accent: #102c9c;
+    -fx-light-text-color: yellow;
 }
 
 .progress-indicator:indeterminate .segment {
@@ -21,20 +22,20 @@
 
 .table-view .column-header-background .label {
     -fx-background-color: transparent;
-    -fx-text-fill: white;
+    -fx-text-fill: yellow;
     -fx-font-size: 12px;
     -fx-font-weight: normal;
     -fx-alignment: center-left;
 }
 
 .table-view .table-cell {
-    -fx-text-fill: white;
+    -fx-text-fill: yellow;
 }
 
 .table-row-cell {
     -fx-border-width: 1 0 1 0;
     -fx-border-style: dotted;
-    -fx-border-color: white;
+    -fx-border-color: black;
     -fx-background-color: -fx-table-cell-border-color, #616161;
     -fx-background-insets: 0, 0 0 1 0;
     -fx-padding: 0.0em;
@@ -63,15 +64,15 @@
 }
 
 .dialog-pane {
-    -fx-background-color: #2a2a2a;
+    -fx-background-color: #2a2a3a;
 }
 
 .dialog-pane .label {
-    -fx-text-fill: white;
+    -fx-text-fill: yellow;
 }
 
 .dialog-pane:header .header-panel {
-    -fx-background-color: #2a2a2a;
+    -fx-background-color: #2a2a3a;
 }
 
 .dialog-pane:header .header-panel .label {
@@ -84,8 +85,8 @@
 }
 
 .gameInfoPane .tree-cell {
-    -fx-background-color: #2a2a2a;
-    -fx-text-fill: white;
+    -fx-background-color: #2a2a3a;
+    -fx-text-fill: yellow;
     -fx-cell-size: 18px;
     -fx-font-size: 12px;
 }
@@ -103,7 +104,7 @@
 }
 
 .gameInfoPane .tree-cell .tree-disclosure-node .arrow {
-  -fx-background-color: white;
+  -fx-background-color: yellow;
 }
 
 .gameInfoPane .tree-cell:selected .tree-disclosure-node .arrow {
@@ -131,7 +132,7 @@
 }
 
 .white-text {
-    -fx-text-fill: white;
+    -fx-text-fill: yellow;
 }
 
 .red-text {
@@ -145,7 +146,7 @@
 }
 
 .pagination-simple > .page {
-    -fx-background-color: #2a2a2a;
+    -fx-background-color: #2a2a3a;
 }
 
 .pagination-simple > .pagination-control {

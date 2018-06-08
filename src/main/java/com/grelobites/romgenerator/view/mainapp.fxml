@@ -37,8 +37,8 @@
             <Font size="12.0" />
          </font>
       </Button>
-    <Button fx:id="createRomButton" disable="true" layoutX="109.0" layoutY="437.0" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="122.0" text="%createRomSetButton" AnchorPane.bottomAnchor="5.0" />
-      <ProgressIndicator fx:id="operationInProgressIndicator" layoutX="243.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="25.0" prefWidth="25.0" visible="false" AnchorPane.bottomAnchor="5.0" />
+    <Button fx:id="createRomButton" disable="true" layoutX="157.0" layoutY="445.0" maxHeight="-Infinity" minHeight="-Infinity" mnemonicParsing="false" prefHeight="28.0" prefWidth="122.0" text="%createRomSetButton" AnchorPane.bottomAnchor="5.0" />
+      <ProgressIndicator fx:id="operationInProgressIndicator" layoutX="300.0" layoutY="437.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="28.0" prefWidth="25.0" visible="false" AnchorPane.bottomAnchor="5.0" />
       <TableView fx:id="gameTable" editable="true" layoutX="5.0" layoutY="222.0" prefHeight="220.0" prefWidth="320.0" AnchorPane.leftAnchor="5.0">
         <columns>
           <TableColumn fx:id="nameColumn" prefWidth="-1.0" text="%gameNameColumn" />
