@@ -419,11 +419,11 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             LOGGER.debug("Dumped version info. Offset: " + os.size());
 
             os.write(cBlocksTable.toByteArray());
-            LOGGER.debug("Dumped CBlocks table. Offset " + os.size());
+            LOGGER.debug("Dumped CBlocks table {}. Offset {}",
+                    Util.dumpAsHexString(cBlocksTable.toByteArray()), os.size());
 
             os.write(dmConfiguration.isAutoboot() ? 1 : 0);
             LOGGER.debug("Dumped autoboot configuration. Offset: " + os.size());
-
 
             Util.fillWithValue(os, (byte) 0, Constants.SLOT_SIZE - os.size());
 

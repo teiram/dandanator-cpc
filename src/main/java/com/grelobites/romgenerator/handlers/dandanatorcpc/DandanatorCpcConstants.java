@@ -12,7 +12,7 @@ import java.io.IOException;
 
 public class DandanatorCpcConstants {
     public static final int SLOT_COUNT = 10;
-    public static final int MAX_GAMES = 25;
+    public static final int MAX_GAMES = 20;
     public static final int EEPROM_SLOTS = 32;
     public static final int GAME_SLOTS = EEPROM_SLOTS - 2; //Total ROM Size is 32 slots (minus 1 slot (code) and last (test rom))
     public static final int POKE_HEADER_SIZE = 3 * SLOT_COUNT;
