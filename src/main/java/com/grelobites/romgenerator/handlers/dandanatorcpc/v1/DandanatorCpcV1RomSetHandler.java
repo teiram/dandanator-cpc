@@ -348,6 +348,14 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
+    private static byte[] getCompressedScreen() throws IOException {
+        Configuration configuration = Configuration.getInstance();
+        byte[] screenWithPalette = configuration.getBackgroundImage();
+        byte[] screen = Arrays.copyOf(screenWithPalette, 16384);
+        System.arraycopy(screenWithPalette, 16384, screen, 16384 - 17, 17);
+        return Util.compress(screen);
+    }
+
     @Override
     public void exportRomSet(OutputStream stream) {
         try {
@@ -364,7 +372,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
             int cblocksOffset = V1Constants.GREY_ZONE_OFFSET;
             ByteArrayOutputStream cBlocksTable = new ByteArrayOutputStream();
-            byte[] compressedScreen = Util.compress(configuration.getBackgroundImage());
+            byte[] compressedScreen = getCompressedScreen();
             cBlocksTable.write(asLittleEndianWord(cblocksOffset));
             cBlocksTable.write(asLittleEndianWord(compressedScreen.length));
             cblocksOffset += compressedScreen.length;
