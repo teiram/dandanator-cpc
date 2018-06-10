@@ -43,6 +43,9 @@ public class DandanatorCpcConstants {
     public static final int EXTENDED_CHARSET_SIZE = 896;
     public static final int BASEROM_SIZE = 3584;
 
+    public static final int PACKED_SCREEN_SIZE = 16384;
+    public static final int PALETTE_SIZE = 17;
+
     private static byte[] DANDANATOR_ROM;
     private static byte[] EXTRA_ROM;
 

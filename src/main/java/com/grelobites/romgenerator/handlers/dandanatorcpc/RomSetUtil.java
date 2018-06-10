@@ -93,11 +93,11 @@ public class RomSetUtil {
         }
     }
 
-    public static byte[] getCompressedScreen(byte[] screen) throws IOException {
-        Configuration configuration = Configuration.getInstance();
-        byte[] screenWithPalette = configuration.getBackgroundImage();
-        byte[] packedScreen = Arrays.copyOf(screenWithPalette, 16384);
-        System.arraycopy(screenWithPalette, 16384, packedScreen, 16384 - 17, 17);
+    public static byte[] getCompressedScreen(byte[] screenWithPalette) throws IOException {
+        byte[] packedScreen = Arrays.copyOf(screenWithPalette, DandanatorCpcConstants.PACKED_SCREEN_SIZE);
+        System.arraycopy(screenWithPalette, DandanatorCpcConstants.PACKED_SCREEN_SIZE,
+                packedScreen, DandanatorCpcConstants.PACKED_SCREEN_SIZE - DandanatorCpcConstants.PALETTE_SIZE,
+                DandanatorCpcConstants.PALETTE_SIZE);
         return Util.compress(packedScreen);
     }
 
