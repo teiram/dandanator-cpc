@@ -77,15 +77,17 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
         int compressedPokeStructBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 10);
         LOGGER.debug("Compressed poke data located at " + compressedPokeStructOffset + ", blocks "
                 + compressedPokeStructBlocks);
-        int compressedPicFwAndCharsetOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 12);
-        int compressedPicFwAndCharsetBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 14);
-        LOGGER.debug("Compressed PIC FW and Charset located at " + compressedPicFwAndCharsetOffset
-                + ", blocks " + compressedPicFwAndCharsetBlocks);
+        int compressedCharsetOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 12);
+        int compressedCharsetBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 14);
+        LOGGER.debug("Compressed Charset located at " + compressedCharsetOffset
+                + ", blocks " + compressedCharsetBlocks);
 
         screen = uncompress(zis, compressedScreenOffset, compressedScreenBlocks);
+        screenPalette = Arrays.copyOfRange(screen, 16384 - 17, 16384);
+
         byte[] textData = uncompress(zis, compressedTextDataOffset, compressedTextDataBlocks);
         byte[] pokeData = uncompress(zis, compressedPokeStructOffset, compressedPokeStructBlocks);
-        byte[] picFwAndCharset = uncompress(zis, compressedPicFwAndCharsetOffset, compressedPicFwAndCharsetBlocks);
+        byte[] picFwAndCharset = uncompress(zis, compressedCharsetOffset, compressedCharsetBlocks);
 
         ByteArrayInputStream textDataStream = new ByteArrayInputStream(textData);
         extraRomMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
@@ -128,16 +130,6 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
                 }
             }
         }
-
-        for (int i = 0; i < gameCount; i++) {
-            GameMapperV1 mapper = gameMappers.get(i);
-            GameChunk gameChunk = mapper.getGameChunk();
-            if (gameChunk.getLength() == DandanatorCpcConstants.GAME_CHUNK_SIZE) {
-                gameChunk.setData(copy(zis, gameChunk.getAddress(), gameChunk.getLength()));
-            } else if (gameChunk.getLength() > 0) {
-                gameChunk.setData(uncompress(zis, gameChunk.getAddress(), gameChunk.getLength()));
-            }
-        }
     }
 
     @Override
@@ -166,6 +158,7 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
                 if (block.getInitSlot() > 0) {
                     if (block.compressed) {
                         int offset = (block.getInitSlot() - 1) * Constants.SLOT_SIZE + block.getStart();
+                        LOGGER.debug("Offsetting to {}", offset - is.position());
                         is.safeSkip(offset - is.position());
                         block.rawdata = Util.fromInputStream(is, block.size);
                         block.data = uncompressByteArray(block.rawdata);

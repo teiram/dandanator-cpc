@@ -34,8 +34,6 @@ public class GameMapperV1 implements GameMapper {
     private boolean isGameCompressed;
     private GameType gameType;
     private boolean screenHold;
-    private byte[] launchCode;
-    private GameChunk gameChunk;
     private List<GameBlock> blocks = new ArrayList<>();
     private TrainerList trainerList = new TrainerList(null);
     private int trainerCount;
@@ -46,26 +44,21 @@ public class GameMapperV1 implements GameMapper {
     }
 
     private static boolean isSlotCompressed(int slotIndex, int size) {
-        return size > 0 && ((slotIndex != DandanatorCpcConstants.GAME_CHUNK_SLOT) ?
-                size < COMPRESSED_SLOT_MAXSIZE :
-                size < COMPRESSED_CHUNKSLOT_MAXSIZE);
+        return size > 0 && size < COMPRESSED_SLOT_MAXSIZE;
     }
 
     public static GameMapperV1 fromRomSet(PositionAwareInputStream is, SlotZeroV1 slotZero) throws IOException {
         LOGGER.debug("About to read game data. Offset is " + is.position());
         GameMapperV1 mapper = new GameMapperV1(slotZero);
         mapper.gameHeader = GameHeaderV1Serializer.deserialize(is);
-        mapper.name = Util.getNullTerminatedString(is, 3, DandanatorCpcConstants.GAMENAME_SIZE);
-
-        mapper.isGameCompressed = is.read() != 0;
+        LOGGER.debug("Game header deserialized to {}", mapper.gameHeader);
         mapper.gameType = GameType.byTypeId(is.read());
-
+        is.skip(DandanatorCpcConstants.GAME_CHUNK_SIZE);
+        mapper.isGameCompressed = is.read() != 0;
         mapper.screenHold = is.read() != 0;
 
-        mapper.launchCode = Util.fromInputStream(is, V1Constants.GAME_LAUNCHCODE_SIZE);
-        mapper.gameChunk = new GameChunk();
-        mapper.gameChunk.setAddress(is.getAsLittleEndian());
-        mapper.gameChunk.setLength(is.getAsLittleEndian());
+        is.skip(2); //Active ROMS
+        is.skip(V1Constants.GAME_LAUNCHCODE_SIZE);
         for (int i = 0; i < 8; i++) {
             GameBlock block = new GameBlock();
             block.setInitSlot(is.read());
@@ -78,6 +71,8 @@ public class GameMapperV1 implements GameMapper {
                 mapper.getBlocks().add(block);
             }
         }
+        mapper.name = Util.getNullTerminatedString(is, 3, DandanatorCpcConstants.GAMENAME_SIZE);
+
         LOGGER.debug("Read game data. Offset is " + is.position());
         return mapper;
     }
@@ -90,14 +85,6 @@ public class GameMapperV1 implements GameMapper {
         return blocks;
     }
 
-    public GameChunk getGameChunk() {
-        return gameChunk;
-    }
-
-    public byte[] getLaunchCode() {
-        return launchCode;
-    }
-
     public void setTrainerCount(int trainerCount) {
         this.trainerCount = trainerCount;
     }
@@ -107,11 +94,7 @@ public class GameMapperV1 implements GameMapper {
         for (int index = 0; index < blocks.size(); index++) {
             GameBlock block = blocks.get(index);
             LOGGER.debug("Adding game slot for game " + name + ": " + block);
-            if (index == DandanatorCpcConstants.GAME_CHUNK_SLOT) {
-                gameSlots.add(Util.concatArrays(block.getData(), gameChunk.getData()));
-            } else {
-                gameSlots.add(block.getData());
-            }
+            gameSlots.add(block.getData());
         }
         return gameSlots;
     }
@@ -155,6 +138,7 @@ public class GameMapperV1 implements GameMapper {
                     game = new RomGame(GameType.ROM, getGameSlots().get(0));
                     break;
                 case RAM128:
+                case RAM64:
                     SnapshotGame snapshotGame = new SnapshotGame(gameType, getGameSlots());
                     snapshotGame.setCompressed(isGameCompressed);
                     snapshotGame.setHoldScreen(screenHold);

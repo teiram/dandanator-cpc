@@ -17,6 +17,7 @@ public class GameHeaderV1Serializer {
         GameHeader header = game.getGameHeader();
         ByteBuffer buffer = ByteBuffer.allocate(V1Constants.GAME_HEADER_SIZE)
                 .order(ByteOrder.LITTLE_ENDIAN);
+
         buffer.put(Integer.valueOf(header.getSnapshotVersion()).byteValue());
         buffer.putShort(Integer.valueOf(header.getAfRegister()).shortValue());
         buffer.putShort(Integer.valueOf(header.getBcRegister()).shortValue());
@@ -65,6 +66,8 @@ public class GameHeaderV1Serializer {
         GameHeader header = new GameHeader();
         ByteBuffer buffer = ByteBuffer.wrap(Util.fromInputStream(is,
                 V1Constants.GAME_HEADER_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
+
+        header.setSnapshotVersion(Byte.toUnsignedInt(buffer.get()));
 
         header.setAfRegister(Short.toUnsignedInt(buffer.getShort()));
         header.setBcRegister(Short.toUnsignedInt(buffer.getShort()));
