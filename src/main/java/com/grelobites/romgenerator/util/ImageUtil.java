@@ -206,7 +206,5 @@ public class ImageUtil {
         System.arraycopy(palette, 0, image, Constants.CPC_SCREEN_SIZE,
                 palette.length);
         return image;
-
-
     }
 }

@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc;
 
+import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.PlayerConfiguration;
 import com.grelobites.romgenerator.util.Util;
@@ -16,6 +17,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -90,5 +92,14 @@ public class RomSetUtil {
             return Optional.empty();
         }
     }
+
+    public static byte[] getCompressedScreen(byte[] screen) throws IOException {
+        Configuration configuration = Configuration.getInstance();
+        byte[] screenWithPalette = configuration.getBackgroundImage();
+        byte[] packedScreen = Arrays.copyOf(screenWithPalette, 16384);
+        System.arraycopy(screenWithPalette, 16384, packedScreen, 16384 - 17, 17);
+        return Util.compress(packedScreen);
+    }
+
 
 }
