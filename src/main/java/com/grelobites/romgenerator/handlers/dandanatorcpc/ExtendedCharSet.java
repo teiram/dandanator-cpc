@@ -3,60 +3,16 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc;
 import com.grelobites.romgenerator.Constants;
 
 public class ExtendedCharSet {
-/*
+
     public static final byte[] SYMBOL_128K_0 = new byte[]{
-            (byte) 0x3F,
-            (byte) 0x37,
-            (byte) 0x26,
-            (byte) 0x37,
-            (byte) 0x37,
-            (byte) 0x22,
-            (byte) 0x1F,
+            (byte) 0x03,
+            (byte) 0x03,
+            (byte) 0x02,
+            (byte) 0x03,
+            (byte) 0x03,
+            (byte) 0x02,
+            (byte) 0x01,
             (byte) 0x00
-    };
-
-    public static final byte[] SYMBOL_128K_1 = new byte[]{
-            (byte) 0xFC,
-            (byte) 0x76,
-            (byte) 0xAA,
-            (byte) 0xB6,
-            (byte) 0x6A,
-            (byte) 0x36,
-            (byte) 0xFE,
-            (byte) 0x00
-    };
-        public static final byte[] SYMBOL_64K_0 = new byte[]{
-            (byte) 0x3F,
-            (byte) 0x2E,
-            (byte) 0x2E,
-            (byte) 0x22,
-            (byte) 0x2B,
-            (byte) 0x23,
-            (byte) 0x1F,
-            (byte) 0x00
-    };
-
-    public static final byte[] SYMBOL_64K_1 = new byte[]{
-            (byte) 0xFC,
-            (byte) 0xAA,
-            (byte) 0xA6,
-            (byte) 0x2E,
-            (byte) 0xA6,
-            (byte) 0xAA,
-            (byte) 0xFE,
-            (byte) 0x00
-    };
-
-*/
-    public static final byte[] SYMBOL_128K_0 = new byte[]{
-        (byte) 0x03,
-        (byte) 0x03,
-        (byte) 0x02,
-        (byte) 0x03,
-        (byte) 0x03,
-        (byte) 0x02,
-        (byte) 0x01,
-        (byte) 0x00
     };
 
     public static final byte[] SYMBOL_128K_1 = new byte[]{
