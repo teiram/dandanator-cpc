@@ -228,8 +228,8 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     protected static void dumpGameName(OutputStream os, Game game, int index) throws IOException {
         int gameSymbolCode = getGameSymbolCode(game);
-        String gameName = String.format("%1d%c%c%s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
-                gameSymbolCode, gameSymbolCode + 1,
+        String gameName = String.format("%1d.%c%c%s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
+                gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2,
                 game.getName());
         os.write(asNullTerminatedByteArray(gameName, DandanatorCpcConstants.GAMENAME_SIZE));
     }
@@ -540,10 +540,10 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     private static void printVersionAndPageInfo(CpcScreen screen, int line, int page, int numPages) {
         String versionInfo = getVersionInfo();
         screen.setInk(CpcColor.BLACK);
-        screen.setPen(CpcColor.BRIGHTGREEN);
+        screen.setPen(CpcColor.BRIGHTWHITE);
         screen.printLine(versionInfo, line, 0);
         if (numPages > 1) {
-            screen.setPen(CpcColor.WHITE);
+            screen.setPen(CpcColor.BRIGHTWHITE);
             String pageInfo = numPages > 1 ?
                     String.format("%d/%d", page, numPages) : "";
             String keyInfo = "SPC - ";
@@ -566,21 +566,16 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private static void printGameNameLine(CpcScreen screen, Game game, int index, int line) {
-        screen.setPen(
-                isGameScreenHold(game) ? CpcColor.BRIGHTYELLOW : CpcColor.BRIGHTGREEN);
+        screen.setPen(CpcColor.BRIGHTWHITE);
         screen.deleteLine(line);
-        screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
+        screen.printLine(String.format("%1d.", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
-        screen.setPen(CpcColor.BRIGHTGREEN);
+        screen.setPen(CpcColor.BRIGHTCYAN);
         int gameSymbolCode = getGameSymbolCode(game);
-        screen.printLine(String.format("%c", gameSymbolCode), line, 1);
-        if (isGameCompressed(game)) {
-            screen.setPen(CpcColor.BRIGHTYELLOW);
-        }
-        screen.printLine(String.format("%c", gameSymbolCode + 1), line, 2);
-        screen.setPen(isGameScreenHold(game) ? CpcColor.BRIGHTYELLOW : CpcColor.BRIGHTGREEN);
+        screen.printLine(String.format("%c%c%c", gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2), line, 2);
+        screen.setPen(CpcColor.BRIGHTWHITE);
         screen.printLine(
-                String.format("%s", game.getName()), line, 3);
+                String.format("%s", game.getName()), line, 5);
     }
 
     private void updateMenuPage(List<Game> gameList, int pageIndex, int numPages) throws IOException {
@@ -590,7 +585,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         page.setCharSet(new ExtendedCharSet(Configuration.getInstance().getCharSet()).getCharSet());
 
         page.setInk(CpcColor.BLACK);
-        page.setPen(CpcColor.BRIGHTYELLOW);
+        page.setPen(CpcColor.BRIGHTWHITE);
         for (int line = page.getLines() - 1; line >= 8; line--) {
             page.deleteLine(line);
         }
@@ -605,9 +600,9 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             gameIndex++;
         }
 
-        page.setPen(CpcColor.BRIGHTGREEN);
-        page.printLine(String.format("P. %s", configuration.getTogglePokesMessage()), 21, 0);
         page.setPen(CpcColor.BRIGHTYELLOW);
+        page.printLine(String.format("P. %s", configuration.getTogglePokesMessage()), 21, 0);
+        page.setPen(CpcColor.BRIGHTWHITE);
         page.printLine(String.format("R. %s", configuration.getExtraRomMessage()), 23, 0);
     }
 
