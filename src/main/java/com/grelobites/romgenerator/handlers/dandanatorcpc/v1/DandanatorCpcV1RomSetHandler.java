@@ -543,12 +543,12 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.setPen(CpcColor.BRIGHTWHITE);
         screen.printLine(versionInfo, line, 0);
         if (numPages > 1) {
-            screen.setPen(CpcColor.BRIGHTWHITE);
+            screen.setPen(CpcColor.BRIGHTYELLOW);
             String pageInfo = numPages > 1 ?
                     String.format("%d/%d", page, numPages) : "";
             String keyInfo = "SPC - ";
-            screen.printLine(keyInfo, line, screen.getColumns() - pageInfo.length() - keyInfo.length());
-            screen.printLine(pageInfo, line, screen.getColumns() - pageInfo.length());
+            screen.printLine(keyInfo, line, screen.getColumns() - pageInfo.length() - keyInfo.length() - 1);
+            screen.printLine(pageInfo, line, screen.getColumns() - pageInfo.length() - 1);
         }
     }
 
@@ -602,7 +602,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
         page.setPen(CpcColor.BRIGHTYELLOW);
         page.printLine(String.format("P. %s", configuration.getTogglePokesMessage()), 21, 0);
-        page.setPen(CpcColor.BRIGHTWHITE);
         page.printLine(String.format("R. %s", configuration.getExtraRomMessage()), 23, 0);
     }
 
