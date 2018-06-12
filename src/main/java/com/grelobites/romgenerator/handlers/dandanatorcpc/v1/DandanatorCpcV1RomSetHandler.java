@@ -228,7 +228,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     protected static void dumpGameName(OutputStream os, Game game, int index) throws IOException {
         int gameSymbolCode = getGameSymbolCode(game);
-        String gameName = String.format("%1d.%c%c%c%s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
+        String gameName = String.format("%1d%c%c%c%s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
                 gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2,
                 game.getName());
         os.write(asNullTerminatedByteArray(gameName, DandanatorCpcConstants.GAMENAME_SIZE));
@@ -568,14 +568,14 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     private static void printGameNameLine(CpcScreen screen, Game game, int index, int line) {
         screen.setPen(CpcColor.BRIGHTWHITE);
         screen.deleteLine(line);
-        screen.printLine(String.format("%1d.", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
+        screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
         screen.setPen(CpcColor.BRIGHTCYAN);
         int gameSymbolCode = getGameSymbolCode(game);
-        screen.printLine(String.format("%c%c%c", gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2), line, 2);
+        screen.printLine(String.format("%c%c%c", gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2), line, 1);
         screen.setPen(CpcColor.BRIGHTWHITE);
         screen.printLine(
-                String.format("%s", game.getName()), line, 5);
+                String.format("%s", game.getName()), line, 4);
     }
 
     private void updateMenuPage(List<Game> gameList, int pageIndex, int numPages) throws IOException {
