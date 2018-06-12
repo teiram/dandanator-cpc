@@ -71,7 +71,7 @@ public class GameMapperV1 implements GameMapper {
                 mapper.getBlocks().add(block);
             }
         }
-        mapper.name = Util.getNullTerminatedString(is, 3, DandanatorCpcConstants.GAMENAME_SIZE);
+        mapper.name = Util.getNullTerminatedString(is, 5, DandanatorCpcConstants.GAMENAME_SIZE);
 
         LOGGER.debug("Read game data. Offset is " + is.position());
         return mapper;
