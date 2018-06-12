@@ -48,6 +48,15 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
         }
     }
 
+    private static byte[] decodeCharset(byte[] encodedCharset) {
+        byte[] charset = new byte[encodedCharset.length / 2];
+        for (int i = 0; i < charset.length; i++) {
+            charset[i] = Integer.valueOf((encodedCharset[2 * i] & 0xF0) |
+                    (encodedCharset[(2 * i) + 1] & 0x0F)).byteValue();
+        }
+        return charset;
+    }
+
     @Override
     public void parse() throws IOException {
         PositionAwareInputStream zis = new PositionAwareInputStream(data());
@@ -87,7 +96,7 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
 
         byte[] textData = uncompress(zis, compressedTextDataOffset, compressedTextDataBlocks);
         byte[] pokeData = uncompress(zis, compressedPokeStructOffset, compressedPokeStructBlocks);
-        byte[] picFwAndCharset = uncompress(zis, compressedCharsetOffset, compressedCharsetBlocks);
+        byte[] encodedCharset = uncompress(zis, compressedCharsetOffset, compressedCharsetBlocks);
 
         ByteArrayInputStream textDataStream = new ByteArrayInputStream(textData);
         extraRomMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
@@ -95,7 +104,7 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
         launchGameMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
         selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
 
-        charSet = Arrays.copyOfRange(picFwAndCharset, 0, Constants.CHARSET_SIZE);
+        charSet = decodeCharset(encodedCharset);
 
         //Poke data
         ByteArrayInputStream pokeDataStream = new ByteArrayInputStream(pokeData);

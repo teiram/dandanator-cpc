@@ -43,7 +43,7 @@ public class DandanatorCpcRomSetHandlerSupport {
     }
 
     protected static void updateBackgroundImage(WritableImage image) throws IOException {
-        ImageUtil.scrLoader(image, 1,
+        ImageUtil.scrLoader(image, Constants.MENU_SCREEN_MODE,
                 new ByteArrayInputStream(Configuration.getInstance()
                         .getBackgroundImage()));
     }
@@ -216,5 +216,16 @@ public class DandanatorCpcRomSetHandlerSupport {
         } catch (Exception e) {
             LOGGER.error("Merging RomSet", e);
         }
+    }
+
+    protected byte[] encodedCpcColorCharset(byte [] charset) {
+        byte[] encoded = new byte[charset.length * 2];
+        for (int i = 0; i < charset.length; i++) {
+            encoded[2 * i] = Integer.valueOf((((charset[i] & 0xF0))) >> 4 |
+                    (charset[i] & 0xF0)).byteValue();
+            encoded[(2 * i) + 1] = Integer.valueOf((((charset[i] & 0x0F)) << 4) |
+                    (charset[i] & 0x0F)).byteValue();
+        }
+        return encoded;
     }
 }

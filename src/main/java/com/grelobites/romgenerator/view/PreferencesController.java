@@ -50,7 +50,7 @@ public class PreferencesController {
 
     private void initializeImages() throws IOException {
         backgroundImage = ImageUtil.scrLoader(
-                ImageUtil.newScreenshot(), 1,
+                ImageUtil.newScreenshot(), Constants.MENU_SCREEN_MODE,
                 new ByteArrayInputStream(Configuration.getInstance().getBackgroundImage()));
         charSetImage = new FontViewer(256, 64);
         recreateCharSetImage();
@@ -68,7 +68,7 @@ public class PreferencesController {
 
     private void recreateBackgroundImage() throws IOException {
         LOGGER.debug("RecreateBackgroundImage");
-        ImageUtil.scrLoader(backgroundImage, 1,
+        ImageUtil.scrLoader(backgroundImage, Constants.MENU_SCREEN_MODE,
                 new ByteArrayInputStream(Configuration.getInstance().getBackgroundImage()));
     }
 

@@ -98,7 +98,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     private static void initializeMenuImages(CpcScreen[] menuImages) throws IOException {
         for (int i = 0; i < menuImages.length; i++) {
-            menuImages[i] = new CpcScreen(1);
+            menuImages[i] = new CpcScreen(1); //Use mode 1 here
             updateBackgroundImage(menuImages[i]);
         }
     }
@@ -380,7 +380,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             cblocksOffset += compressedPokeData.length;
 
             ExtendedCharSet extendedCharset = new ExtendedCharSet(configuration.getCharSet());
-            byte[] compressedCharSet = Util.compress(extendedCharset.getCharSet());
+            byte[] compressedCharSet = Util.compress(encodedCpcColorCharset(extendedCharset.getCharSet()));
             cBlocksTable.write(asLittleEndianWord(cblocksOffset));
             cBlocksTable.write(asLittleEndianWord(compressedCharSet.length));
 
@@ -570,7 +570,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
-        screen.setPen(CpcColor.BRIGHTCYAN);
+        screen.setPen(CpcColor.BRIGHTGREEN);
         int gameSymbolCode = getGameSymbolCode(game);
         screen.printLine(String.format("%c%c%c", gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2), line, 1);
         screen.setPen(CpcColor.BRIGHTWHITE);
