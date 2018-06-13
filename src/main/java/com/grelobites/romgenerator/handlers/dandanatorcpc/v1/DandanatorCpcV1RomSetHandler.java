@@ -570,7 +570,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
-        screen.setPen(CpcColor.BRIGHTGREEN);
+        screen.setPen(CpcColor.SEAGREEN);
         int gameSymbolCode = getGameSymbolCode(game);
         screen.printLine(String.format("%c%c%c", gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2), line, 1);
         screen.setPen(CpcColor.BRIGHTWHITE);
