@@ -108,12 +108,6 @@ public class DandanatorCpcRomSetHandlerSupport {
         return game instanceof SnapshotGame && ((SnapshotGame) game).getCompressed();
     }
 
-    protected static void dumpGameName(OutputStream os, Game game, int index) throws IOException {
-        String gameName = String.format("%d. %s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
-                game.getName());
-        os.write(asNullTerminatedByteArray(gameName, DandanatorCpcConstants.GAMENAME_SIZE));
-    }
-
     protected static byte[] asLittleEndianWord(int value) {
         return new byte[]{
                 (byte) (value & 0xff),
