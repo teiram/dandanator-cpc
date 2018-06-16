@@ -320,16 +320,16 @@ public class PlayerController {
             resetPlayerAndRomSet();
         });
 
-        playerImage.setImage(configuration.isUseSerialPort() ? configuration.getKempstonImage() :
-            configuration.getCassetteImage());
+        playerImage.setImage(configuration.isUseSerialPort() ? configuration.getUsbCableImage() :
+            configuration.getLoudspeakerImage());
 
         beeImage.visibleProperty().bind(consecutiveFailures.greaterThan(0));
         failuresCount.visibleProperty().bind(consecutiveFailures.greaterThan(0));
 
         configuration.useSerialPortProperty().addListener(
                 (observable, oldValue, newValue) ->
-                        playerImage.setImage(newValue ? configuration.getKempstonImage() :
-                                configuration.getCassetteImage()));
+                        playerImage.setImage(newValue ? configuration.getUsbCableImage() :
+                                configuration.getLoudspeakerImage()));
 
         configuration.sendLoaderProperty().addListener(
                 (observable, oldValue, newValue) -> {

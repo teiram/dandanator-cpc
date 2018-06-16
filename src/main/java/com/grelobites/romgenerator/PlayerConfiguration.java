@@ -43,8 +43,8 @@ public class PlayerConfiguration {
     private static final int DEFAULT_PILOTLENGTH = 500;
     private static final int DEFAULT_TRAILLENGTH = 250;
     private static final int DEFAULT_RECORDINGPAUSE = 1300;
-    private static final String CASSETE_IMAGE_RESOURCE = "/player/cassette.jpg";
-    private static final String KEMPSTON_IMAGE_RESOURCE = "/player/usb.png";
+    private static final String LOUDSPEAKER_IMAGE_RESOURCE = "/player/loudspeaker.png";
+    private static final String USBCABLE_IMAGE_RESOURCE = "/player/usb-cable.png";
 
     public static final String[] AUDIO_MODES = new String[] {"MONO", "STEREO", "STEREOINV"};
 
@@ -63,8 +63,8 @@ public class PlayerConfiguration {
     private BooleanProperty boostLevel;
     private StringProperty audioMixerName;
 
-    private static Image cassetteImage;
-    private static Image kempstonImage;
+    private static Image loudspeakerImage;
+    private static Image usbCableImage;
 
     private static PlayerConfiguration INSTANCE;
 
@@ -326,18 +326,18 @@ public class PlayerConfiguration {
         this.audioMixerName.set(audioMixerName);
     }
 
-    public Image getCassetteImage() {
-        if (cassetteImage == null) {
-            cassetteImage = new Image(PlayerConfiguration.class.getResourceAsStream(CASSETE_IMAGE_RESOURCE));
+    public Image getLoudspeakerImage() {
+        if (loudspeakerImage == null) {
+            loudspeakerImage = new Image(PlayerConfiguration.class.getResourceAsStream(LOUDSPEAKER_IMAGE_RESOURCE));
         }
-        return cassetteImage;
+        return loudspeakerImage;
     }
 
-    public Image getKempstonImage() {
-        if (kempstonImage == null) {
-            kempstonImage = new Image(PlayerConfiguration.class.getResourceAsStream(KEMPSTON_IMAGE_RESOURCE));
+    public Image getUsbCableImage() {
+        if (usbCableImage == null) {
+            usbCableImage = new Image(PlayerConfiguration.class.getResourceAsStream(USBCABLE_IMAGE_RESOURCE));
         }
-        return kempstonImage;
+        return usbCableImage;
     }
 
     public static Preferences getApplicationPreferences() {

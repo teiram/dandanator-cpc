@@ -52,7 +52,7 @@
       <Circle fx:id="playingLed" fill="#5fff1f" layoutX="27.0" layoutY="61.0" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
       <ImageView fx:id="playerImage" fitHeight="58.0" fitWidth="100.0" layoutX="243.0" layoutY="39.0" preserveRatio="true">
          <image>
-            <Image url="@/player/cassette.jpg" />
+            <Image url="@/player/loudspeaker.png" />
          </image>
       </ImageView>
       <ImageView fx:id="beeImage" fitHeight="16.0" fitWidth="16.0" layoutX="210.0" layoutY="110.0" pickOnBounds="true" preserveRatio="true">
