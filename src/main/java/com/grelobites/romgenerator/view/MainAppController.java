@@ -165,8 +165,14 @@ public class MainAppController {
         menuPagination.setPageFactory((index) -> {
             switch (index) {
                 case 0:
+                    if (playerController != null) {
+                        playerController.onPageLeave();
+                    }
                     return menuPreview;
                 case 1:
+                    if (playerController != null) {
+                        playerController.onPageEnter();
+                    }
                     return getPlayerPane();
                 default:
                     return null;

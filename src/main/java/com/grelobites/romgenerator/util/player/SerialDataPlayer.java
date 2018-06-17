@@ -22,6 +22,7 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
 
     private Thread serviceThread;
     private SerialPort serialPort;
+    private boolean sharedSerialPort = false;
     private Runnable onFinalization;
     private DoubleProperty progressProperty;
     private byte[] data;
@@ -34,11 +35,21 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
 
     private void init() {
         progressProperty = new SimpleDoubleProperty(0.0);
-        serialPort =  new SerialPort(configuration.getSerialPort());
         serviceThread = new Thread(null, this::serialSendData, SERVICE_THREAD_NAME);
+        if (!sharedSerialPort) {
+            LOGGER.debug("Using exclusive serial port on {}", configuration.getSerialPort());
+            serialPort =  new SerialPort(configuration.getSerialPort());
+        }
     }
 
     public SerialDataPlayer(int block, byte[] data) {
+        init();
+        setupBlockData(block, data);
+    }
+
+    public SerialDataPlayer(SerialPort serialPort, int block, byte[] data) {
+        sharedSerialPort = true;
+        this.serialPort = serialPort;
         init();
         setupBlockData(block, data);
     }
@@ -55,12 +66,15 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
 
     private void serialSendData() {
         try {
-            serialPort.openPort();
-            serialPort.setParams(SerialPort.BAUDRATE_115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_2,
-                    SerialPort.PARITY_NONE);
+            if (!sharedSerialPort) {
+                serialPort.openPort();
+                serialPort.setParams(SerialPort.BAUDRATE_115200,
+                        SerialPort.DATABITS_8, SerialPort.STOPBITS_2,
+                        SerialPort.PARITY_NONE);
 
-            //Give time to some crappy serial ports to stabilize
-            Thread.sleep(50);
+                //Give time to some crappy serial ports to stabilize
+                Thread.sleep(50);
+            }
 
             int sent = 0;
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
@@ -92,7 +106,7 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
             state = State.STOPPED;
         } finally {
             try {
-                if (serialPort.isOpened()) {
+                if (!sharedSerialPort && serialPort.isOpened()) {
                     serialPort.closePort();
                 }
             } catch (SerialPortException e) {

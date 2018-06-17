@@ -10,7 +10,9 @@ import com.grelobites.romgenerator.util.player.DataPlayer;
 import com.grelobites.romgenerator.util.player.FrequencyDetector;
 import com.grelobites.romgenerator.util.player.SampledAudioDataPlayer;
 import com.grelobites.romgenerator.util.player.SerialDataPlayer;
+import com.grelobites.romgenerator.util.player.SerialListener;
 import javafx.animation.FadeTransition;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -102,6 +104,37 @@ public class PlayerController {
 
     private ObjectProperty<DataPlayer> currentPlayer;
 
+    private SerialListener serialListener;
+
+    private boolean externallyTriggered = false;
+
+    public void onPageLeave() {
+        LOGGER.debug("Executing PlayerController onPageLeave");
+        stop();
+        resetSerialListener();
+    }
+
+    public void onPageEnter() {
+        if (configuration.isUseSerialPort()) {
+            initializeSerialListener();
+        }
+    }
+
+    private void initializeSerialListener() {
+        LOGGER.debug("Initializing Serial Listener");
+        if (serialListener == null) {
+            serialListener = new SerialListener(this);
+        }
+        serialListener.start();
+    }
+
+    private void resetSerialListener() {
+        LOGGER.debug("Resetting Serial Listener");
+        if (serialListener != null) {
+            serialListener.stop();
+            serialListener.close();
+        }
+    }
     private static void doAfterDelay(int delay, Runnable r) {
         Task<Void> sleeper = new Task<Void>() {
             @Override
@@ -156,7 +189,6 @@ public class PlayerController {
     }
 
     private DataPlayer getBootstrapMediaPlayer() throws IOException {
-        //return new AudioDataPlayer(mediaView);
         return new SampledAudioDataPlayer();
     }
 
@@ -166,7 +198,7 @@ public class PlayerController {
         System.arraycopy(getRomsetByteArray(), block * blockSize, buffer, 0, blockSize);
 
         return configuration.isUseSerialPort() ?
-                new SerialDataPlayer(block, buffer) :
+                new SerialDataPlayer(serialListener.serialPort(), block, buffer) :
                 new SampledAudioDataPlayer(block, buffer);
     }
 
@@ -215,17 +247,22 @@ public class PlayerController {
             LOGGER.debug("Started detection");
             detector.start();
         } else {
-            LOGGER.debug("Playing next block on skipped detection");
-            if (currentBlock.get() != LOADER_BLOCK) {
-                playBlinkingTransition(configuration.getRecordingPause());
-            }
-            doAfterDelay(currentBlock.get() == LOADER_BLOCK ?
-                    PAUSE_AFTER_LOADER : configuration.getRecordingPause(), () -> {
-                if (playing.get()) {
-                    currentBlock.set(currentBlock.get() + 1);
-                    playCurrentBlock();
+            if (configuration.isUseSerialPort() && externallyTriggered) {
+                LOGGER.debug("Stopping after block externally triggered");
+                stop();
+            } else {
+                LOGGER.debug("Playing next block on skipped detection");
+                if (currentBlock.get() != LOADER_BLOCK) {
+                    playBlinkingTransition(configuration.getRecordingPause());
                 }
-            });
+                doAfterDelay(currentBlock.get() == LOADER_BLOCK ?
+                        PAUSE_AFTER_LOADER : configuration.getRecordingPause(), () -> {
+                    if (playing.get()) {
+                        currentBlock.set(currentBlock.get() + 1);
+                        playCurrentBlock();
+                    }
+                });
+            }
         }
     }
 
@@ -268,8 +305,10 @@ public class PlayerController {
             playingLed.setVisible(false);
             playButton.getStyleClass().removeAll(STOP_BUTTON_STYLE);
             playButton.getStyleClass().add(PLAY_BUTTON_STYLE);
-            LOGGER.debug("Stopping player");
-            currentPlayer.get().stop();
+            if (currentPlayer.get() != null) {
+                LOGGER.debug("Stopping player");
+                currentPlayer.get().stop();
+            }
             consecutiveFailures.set(0);
             playing.set(false);
             currentPlayer.set(null);
@@ -295,6 +334,53 @@ public class PlayerController {
         stop();
         romsetByteArray = null;
         currentBlock.set(startingBlockProperty.get());
+    }
+
+    public int getCurrentBlock() {
+        return currentBlock.get();
+    }
+
+    public IntegerProperty currentBlockProperty() {
+        return currentBlock;
+    }
+
+    public void setCurrentBlock(int currentBlock) {
+        this.currentBlock.set(currentBlock);
+    }
+
+    public void setNextBlockRequested(boolean nextBlockRequested) {
+        this.nextBlockRequested.set(nextBlockRequested);
+    }
+
+    public boolean isNextBlockRequested() {
+        return nextBlockRequested.get();
+    }
+
+    public BooleanProperty nextBlockRequestedProperty() {
+        return nextBlockRequested;
+    }
+
+    public void doPlayExternal() {
+        try {
+            stop();
+            if (!playing.get()) {
+                playing.set(true);
+                externallyTriggered = true;
+                playCurrentBlock();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Getting ROMSet block", e);
+        }
+    }
+
+    public void doStopExternal() {
+        try {
+            if (playing.get()) {
+                stop();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Stopping player", e);
+        }
     }
 
     @FXML
@@ -326,11 +412,20 @@ public class PlayerController {
         beeImage.visibleProperty().bind(consecutiveFailures.greaterThan(0));
         failuresCount.visibleProperty().bind(consecutiveFailures.greaterThan(0));
 
-        configuration.useSerialPortProperty().addListener(
-                (observable, oldValue, newValue) ->
-                        playerImage.setImage(newValue ? configuration.getUsbCableImage() :
-                                configuration.getLoudspeakerImage()));
+        if (configuration.isUseSerialPort()) {
+            initializeSerialListener();
+        }
 
+        configuration.useSerialPortProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    playerImage.setImage(newValue ? configuration.getUsbCableImage() :
+                        configuration.getLoudspeakerImage());
+                    if (newValue) {
+                        initializeSerialListener();
+                    } else {
+                        resetSerialListener();
+                    }
+                });
         configuration.sendLoaderProperty().addListener(
                 (observable, oldValue, newValue) -> {
                     stop();
@@ -383,6 +478,7 @@ public class PlayerController {
             try {
                 if (!playing.get()) {
                     playing.set(true);
+                    externallyTriggered = false;
                     playCurrentBlock();
                 } else {
                     stop();

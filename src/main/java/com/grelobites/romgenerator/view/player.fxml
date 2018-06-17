@@ -11,7 +11,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="320.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="320.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <Circle fill="#650c0c" layoutX="27.0" layoutY="82.0" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
       <Circle fill="#1b4009" layoutX="27.0" layoutY="61.0" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
@@ -50,7 +50,7 @@
       <Text fill="#5ad742" layoutX="51.0" layoutY="65.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Send" />
       <Text fill="#e44444" layoutX="51.0" layoutY="87.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Acknowledge" />
       <Circle fx:id="playingLed" fill="#5fff1f" layoutX="27.0" layoutY="61.0" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-      <ImageView fx:id="playerImage" fitHeight="58.0" fitWidth="100.0" layoutX="243.0" layoutY="39.0" preserveRatio="true">
+      <ImageView fx:id="playerImage" fitHeight="58.0" fitWidth="100.0" layoutX="227.0" layoutY="39.0" preserveRatio="true">
          <image>
             <Image url="@/player/loudspeaker.png" />
          </image>
@@ -61,7 +61,7 @@
          </image>
       </ImageView>
       <Label fx:id="failuresCount" layoutX="231.0" layoutY="110.0" text="0" />
-      <Label layoutX="64.0" layoutY="6.0" text="FLASH UPDATER" textFill="#6de173">
+      <Label layoutX="49.0" layoutY="6.0" text="FLASH UPDATER" textFill="#ddfa05">
          <font>
             <Font name="System Bold" size="24.0" />
          </font>
