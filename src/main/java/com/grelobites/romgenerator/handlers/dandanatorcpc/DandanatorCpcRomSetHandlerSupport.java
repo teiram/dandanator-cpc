@@ -119,7 +119,7 @@ public class DandanatorCpcRomSetHandlerSupport {
                 DandanatorCpcConstants.GAMENAME_SIZE));
         os.write(asNullTerminatedByteArray(String.format("P. %s", configuration.getTogglePokesMessage()),
                 DandanatorCpcConstants.GAMENAME_SIZE));
-        os.write(asNullTerminatedByteArray(String.format("0. %s", configuration.getLaunchGameMessage()),
+        os.write(asNullTerminatedByteArray(String.format("Space. %s", configuration.getLaunchGameMessage()),
                 DandanatorCpcConstants.GAMENAME_SIZE));
         os.write(asNullTerminatedByteArray(configuration.getSelectPokesMessage(), DandanatorCpcConstants.GAMENAME_SIZE));
     }
