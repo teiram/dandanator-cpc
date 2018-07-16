@@ -101,7 +101,7 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
         ByteArrayInputStream textDataStream = new ByteArrayInputStream(textData);
         extraRomMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
         togglePokesMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
-        launchGameMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
+        launchGameMessage = Util.getNullTerminatedString(textDataStream, 7, DandanatorCpcConstants.GAMENAME_SIZE);
         selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
 
         charSet = decodeCharset(encodedCharset);
