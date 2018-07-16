@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class Poke implements PokeViewable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Poke.class);
 
-    static final int LOWEST_ADDRESS = 0x4000;
+    static final int LOWEST_ADDRESS = 0x0000;
     static final int HIGHEST_ADDRESS = 0xFFFF;
 
     static final int LOWEST_VALUE = 0;
