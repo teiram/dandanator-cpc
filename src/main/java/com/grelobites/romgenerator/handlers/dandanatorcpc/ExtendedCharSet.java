@@ -105,6 +105,51 @@ public class ExtendedCharSet {
             (byte) 0x00
     };
 
+    /*
+    public static final byte[] SYMBOL_LEFT_ARROW = new byte[] {
+            (byte) 0x00,
+            (byte) 0x00,
+            (byte) 0x30,
+            (byte) 0x60,
+            (byte) 0xFF,
+            (byte) 0x60,
+            (byte) 0x30,
+            (byte) 0x00
+    };
+
+    public static final byte[] SYMBOL_RIGHT_ARROW = new byte[] {
+            (byte) 0x00,
+            (byte) 0x00,
+            (byte) 0x0C,
+            (byte) 0x06,
+            (byte) 0xFF,
+            (byte) 0x06,
+            (byte) 0x0C,
+            (byte) 0x00
+    };
+*/
+
+    public static final byte[] SYMBOL_LEFT_ARROW = new byte[] {
+            (byte) 0x10,
+            (byte) 0x30,
+            (byte) 0x5F,
+            (byte) 0x81,
+            (byte) 0x81,
+            (byte) 0x5F,
+            (byte) 0x30,
+            (byte) 0x10
+    };
+
+    public static final byte[] SYMBOL_RIGHT_ARROW = new byte[] {
+            (byte) 0x08,
+            (byte) 0x0C,
+            (byte) 0xFA,
+            (byte) 0x81,
+            (byte) 0x81,
+            (byte) 0xFA,
+            (byte) 0x0C,
+            (byte) 0x08
+    };
     public static final int SYMBOL_SPACE = 32;
     public static final int CHARSET_OFFSET = SYMBOL_SPACE;
 
@@ -121,22 +166,30 @@ public class ExtendedCharSet {
     public static final int SYMBOL_ROM_0_CODE = 134;
     public static final int SYMBOL_ROM_1_CODE = 135;
     public static final int SYMBOL_ROM_2_CODE = 136;
+    public static final int SYMBOL_LEFT_ARROW_CODE = 137;
+    public static final int SYMBOL_RIGHT_ARROW_CODE = 138;
 
     private byte[] charset;
 
+    private static void copySymbolToCharset(byte[] charset, byte[] symbol, int code) {
+        System.arraycopy(symbol, 0, charset,  (code - CHARSET_OFFSET) * 8, symbol.length);
+
+    }
     private static void appendSymbolChars(byte[] charset) {
-        System.arraycopy(SYMBOL_128K_0, 0, charset, (SYMBOL_128K_0_CODE - CHARSET_OFFSET) * 8, SYMBOL_128K_0.length);
-        System.arraycopy(SYMBOL_128K_1, 0, charset, (SYMBOL_128K_1_CODE - CHARSET_OFFSET) * 8, SYMBOL_128K_1.length);
-        System.arraycopy(SYMBOL_128K_2, 0, charset, (SYMBOL_128K_2_CODE - CHARSET_OFFSET) * 8, SYMBOL_128K_2.length);
+        copySymbolToCharset(charset, SYMBOL_128K_0, SYMBOL_128K_0_CODE);
+        copySymbolToCharset(charset, SYMBOL_128K_1, SYMBOL_128K_1_CODE);
+        copySymbolToCharset(charset, SYMBOL_128K_2, SYMBOL_128K_2_CODE);
 
-        System.arraycopy(SYMBOL_64K_0, 0, charset, (SYMBOL_64K_0_CODE - CHARSET_OFFSET) * 8, SYMBOL_64K_0.length);
-        System.arraycopy(SYMBOL_64K_1, 0, charset, (SYMBOL_64K_1_CODE - CHARSET_OFFSET) * 8, SYMBOL_64K_1.length);
-        System.arraycopy(SYMBOL_64K_2, 0, charset, (SYMBOL_64K_2_CODE - CHARSET_OFFSET) * 8, SYMBOL_64K_2.length);
+        copySymbolToCharset(charset, SYMBOL_64K_0, SYMBOL_64K_0_CODE);
+        copySymbolToCharset(charset, SYMBOL_64K_1, SYMBOL_64K_1_CODE);
+        copySymbolToCharset(charset, SYMBOL_64K_2, SYMBOL_64K_2_CODE);
 
-        System.arraycopy(SYMBOL_ROM_0, 0, charset, (SYMBOL_ROM_0_CODE - CHARSET_OFFSET) * 8, SYMBOL_ROM_0.length);
-        System.arraycopy(SYMBOL_ROM_1, 0, charset, (SYMBOL_ROM_1_CODE - CHARSET_OFFSET) * 8, SYMBOL_ROM_1.length);
-        System.arraycopy(SYMBOL_ROM_2, 0, charset, (SYMBOL_ROM_2_CODE - CHARSET_OFFSET) * 8, SYMBOL_ROM_2.length);
+        copySymbolToCharset(charset, SYMBOL_ROM_0, SYMBOL_ROM_0_CODE);
+        copySymbolToCharset(charset, SYMBOL_ROM_1, SYMBOL_ROM_1_CODE);
+        copySymbolToCharset(charset, SYMBOL_ROM_2, SYMBOL_ROM_2_CODE);
 
+        copySymbolToCharset(charset, SYMBOL_LEFT_ARROW, SYMBOL_LEFT_ARROW_CODE);
+        copySymbolToCharset(charset, SYMBOL_RIGHT_ARROW, SYMBOL_RIGHT_ARROW_CODE);
     }
 
     public ExtendedCharSet(byte[] charset) {

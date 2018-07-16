@@ -542,14 +542,20 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.setInk(CpcColor.BLACK);
         screen.setPen(CpcColor.BRIGHTBLUE);
         screen.printLine(versionInfo, line, 0);
+        screen.printLine("L. Loader", line, 15);
         if (numPages > 1) {
             String pageInfo = numPages > 1 ?
                     String.format("%d/%d", page, numPages) : "";
-            String keyInfo = "SPACE - ";
+
             screen.setPen(CpcColor.BRIGHTWHITE);
-            screen.printLine(keyInfo, line, screen.getColumns() - pageInfo.length() - keyInfo.length() - 1);
-            screen.setPen(CpcColor.BRIGHTYELLOW);
-            screen.printLine(pageInfo, line, screen.getColumns() - pageInfo.length() - 1);
+            int pos = 30;
+            screen.printLine(String.format("%c", ExtendedCharSet.SYMBOL_LEFT_ARROW_CODE), line, pos);
+            pos += 2;
+            screen.setPen(CpcColor.SEAGREEN);
+            screen.printLine(pageInfo, line, pos);
+            pos += 4;
+            screen.setPen(CpcColor.BRIGHTWHITE);
+            screen.printLine(String.format("%c", ExtendedCharSet.SYMBOL_RIGHT_ARROW_CODE), line, pos);
         }
     }
 
