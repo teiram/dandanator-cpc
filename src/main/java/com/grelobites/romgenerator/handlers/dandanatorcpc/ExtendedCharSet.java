@@ -10,26 +10,12 @@ public class ExtendedCharSet {
 
     public static final int BASE_SYMBOLS_CODE = 128;
     public static final int SYMBOL_128K_0_CODE = BASE_SYMBOLS_CODE;
-    public static final int SYMBOL_128K_1_CODE = BASE_SYMBOLS_CODE + 2;
-    public static final int SYMBOL_128K_2_CODE = BASE_SYMBOLS_CODE + 4;
-
-
     public static final int SYMBOL_64K_0_CODE = BASE_SYMBOLS_CODE + 6;
-    public static final int SYMBOL_64K_1_CODE = BASE_SYMBOLS_CODE + 8;
-    public static final int SYMBOL_64K_2_CODE = BASE_SYMBOLS_CODE + 10;
-
-
     public static final int SYMBOL_ROM_0_CODE = BASE_SYMBOLS_CODE + 12;
-    public static final int SYMBOL_ROM_1_CODE = BASE_SYMBOLS_CODE + 14;
-    public static final int SYMBOL_ROM_2_CODE = BASE_SYMBOLS_CODE + 16;
     public static final int SYMBOL_LEFT_ARROW_CODE = BASE_SYMBOLS_CODE + 18;
     public static final int SYMBOL_RIGHT_ARROW_CODE = BASE_SYMBOLS_CODE + 20;
 
     private byte[] charset;
-
-    private static void copySymbolToCharset(byte[] charset, byte[] symbol, int code) {
-        System.arraycopy(symbol, 0, charset,  (code - CHARSET_OFFSET) * 8, symbol.length);
-    }
 
     public ExtendedCharSet(byte[] sourceCharset) throws IOException {
         charset = new byte[Constants.CHARSET_SIZE + Constants.ICONS_SIZE];
