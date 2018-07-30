@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.grelobites.romgenerator.Constants;
 
+import com.grelobites.romgenerator.handlers.dandanatorcpc.ExtendedCharSet;
 import com.sun.prism.paint.Gradient;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
@@ -112,7 +113,7 @@ public class CpcScreen extends WritableImage {
 	}
 
 	private int iconRasterLine(int code, int rasterLine) {
-	    int index = (code - 32) * 8 + (rasterLine * 2);
+	    int index = (code - 32 + (code - ExtendedCharSet.BASE_SYMBOLS_CODE)) * 8 + (rasterLine * 2);
 	    return ((getCharSet()[index] & 0xff) << 8) | (getCharSet()[index + 1] & 0xff);
     }
 	
@@ -190,8 +191,8 @@ public class CpcScreen extends WritableImage {
 
     public void printSymbol(int code, int line, int column) {
 	    printIcon(code, line, column);
-	    printIcon(code + 2, line, column + 1);
-	    printIcon(code + 4, line, column + 2);
+	    printIcon(code + 1, line, column + 1);
+	    printIcon(code + 2, line, column + 2);
     }
 	private void printPixelWithFactor(PixelWriter writer, int xpos, int ypos, int color) {
 		xpos *= xfactor;

@@ -231,7 +231,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     protected static void dumpGameName(OutputStream os, Game game, int index) throws IOException {
         int gameSymbolCode = getGameSymbolCode(game);
         String gameName = String.format("%1d%c%c%c%s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
-                gameSymbolCode, gameSymbolCode + 2, gameSymbolCode + 4,
+                gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2,
                 game.getName());
         os.write(asNullTerminatedByteArray(gameName, DandanatorCpcConstants.GAMENAME_SIZE));
     }

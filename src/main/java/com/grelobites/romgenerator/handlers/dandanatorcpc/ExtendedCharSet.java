@@ -10,10 +10,10 @@ public class ExtendedCharSet {
 
     public static final int BASE_SYMBOLS_CODE = 128;
     public static final int SYMBOL_128K_0_CODE = BASE_SYMBOLS_CODE;
-    public static final int SYMBOL_64K_0_CODE = BASE_SYMBOLS_CODE + 6;
-    public static final int SYMBOL_ROM_0_CODE = BASE_SYMBOLS_CODE + 12;
-    public static final int SYMBOL_LEFT_ARROW_CODE = BASE_SYMBOLS_CODE + 18;
-    public static final int SYMBOL_RIGHT_ARROW_CODE = BASE_SYMBOLS_CODE + 20;
+    public static final int SYMBOL_64K_0_CODE = BASE_SYMBOLS_CODE + 3;
+    public static final int SYMBOL_ROM_0_CODE = BASE_SYMBOLS_CODE + 6;
+    public static final int SYMBOL_LEFT_ARROW_CODE = BASE_SYMBOLS_CODE + 9;
+    public static final int SYMBOL_RIGHT_ARROW_CODE = BASE_SYMBOLS_CODE + 10;
 
     private byte[] charset;
 
