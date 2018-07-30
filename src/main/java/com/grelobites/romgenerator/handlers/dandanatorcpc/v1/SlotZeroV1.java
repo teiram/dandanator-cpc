@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc.v1;
 
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.DandanatorCpcImporter;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameBlock;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameChunk;
@@ -46,15 +47,6 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
             LOGGER.debug("Validation failed", e);
             return false;
         }
-    }
-
-    private static byte[] decodeCharset(byte[] encodedCharset) {
-        byte[] charset = new byte[encodedCharset.length / 2];
-        for (int i = 0; i < charset.length; i++) {
-            charset[i] = Integer.valueOf((encodedCharset[2 * i] & 0xF0) |
-                    (encodedCharset[(2 * i) + 1] & 0x0F)).byteValue();
-        }
-        return charset;
     }
 
     @Override
@@ -104,7 +96,7 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
         launchGameMessage = Util.getNullTerminatedString(textDataStream, 7, DandanatorCpcConstants.GAMENAME_SIZE);
         selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
 
-        charSet = decodeCharset(encodedCharset);
+        charSet = RomSetUtil.decodeCharset(encodedCharset);
 
         //Poke data
         ByteArrayInputStream pokeDataStream = new ByteArrayInputStream(pokeData);

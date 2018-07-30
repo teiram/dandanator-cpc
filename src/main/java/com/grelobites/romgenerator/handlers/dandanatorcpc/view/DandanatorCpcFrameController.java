@@ -1,6 +1,7 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc.view;
 
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.GameUtil;
@@ -242,6 +243,16 @@ public class DandanatorCpcFrameController {
                     DandanatorCpcConstants.POKE_ZONE_SIZE);
             pokeUsageDetail.setText(pokeUsageDetailString);
         });
+
+        gameName.textProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    if (newValue != null) {
+                        if (!RomSetUtil.isValidGameName(newValue)) {
+                            LOGGER.debug("Resetting name from {} -> {}", oldValue, newValue);
+                            gameName.textProperty().setValue(oldValue);
+                        }
+                    }
+                });
 
         applicationContext.selectedGameProperty().addListener(
                 (observable, oldValue, newValue) -> onGameSelection(oldValue, newValue));

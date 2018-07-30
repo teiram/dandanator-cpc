@@ -22,12 +22,14 @@ public class Constants {
 	public static final int CPC_SCREEN_HEIGHT = 400;
 	public static final int CPC_SCREEN_SIZE = 16384;
 	public static final int CPC_PALETTE_SIZE = 17;
+	public static final int ICONS_SIZE = 256;
     public static final int CPC_SCREEN_WITH_PALETTE_SIZE = CPC_SCREEN_SIZE +
             CPC_PALETTE_SIZE;
 
     private static final String DEFAULT_MENU_SCREEN_RESOURCE = "menu.scr";
     private static final String SINCLAIR_SCREEN_RESOURCE = "cpc6128.scr";
     private static final String DEFAULT_CHARSET_RESOURCE = "charset.rom";
+    private static final String ICONS_RESOURCE = "icons.bin";
     private static final String THEME_RESOURCE = "view/theme.css";
 
     public static final byte[] ZEROED_SLOT = new byte[SLOT_SIZE];
@@ -41,6 +43,7 @@ public class Constants {
     private static byte[] DEFAULT_DANDANATOR_SCREEN;
     private static byte[] SINCLAIR_SCREEN;
     private static byte[] DEFAULT_CHARSET;
+    private static byte[] ICONS;
 
     private static String THEME_RESOURCE_URL;
 
@@ -97,6 +100,17 @@ public class Constants {
         }
         return DEFAULT_CHARSET;
     }
+
+    public static byte[] getIcons() throws IOException {
+        if (ICONS == null) {
+            ICONS = Util.fromInputStream(
+                    DandanatorCpcConstants.class.getClassLoader()
+                            .getResourceAsStream(ICONS_RESOURCE),
+                    ICONS_SIZE);
+        }
+        return ICONS;
+    }
+
 
     public static String getThemeResourceUrl() {
         if (THEME_RESOURCE_URL == null) {

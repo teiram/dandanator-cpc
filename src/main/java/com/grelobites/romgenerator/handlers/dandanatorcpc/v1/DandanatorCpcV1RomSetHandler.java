@@ -16,6 +16,7 @@ import com.grelobites.romgenerator.model.GameHeaderOffsets;
 import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.CpcColor;
+import com.grelobites.romgenerator.util.CpcGradient;
 import com.grelobites.romgenerator.util.CpcScreen;
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.OperationResult;
@@ -25,6 +26,7 @@ import com.grelobites.romgenerator.util.Z80Opcode;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandler;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
+import com.sun.prism.paint.Gradient;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -380,7 +382,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             cblocksOffset += compressedPokeData.length;
 
             ExtendedCharSet extendedCharset = new ExtendedCharSet(configuration.getCharSet());
-            byte[] compressedCharSet = Util.compress(encodedCpcColorCharset(extendedCharset.getCharSet()));
+            byte[] compressedCharSet = Util.compress(RomSetUtil.encodeCharset(extendedCharset.getCharSet()));
             cBlocksTable.write(asLittleEndianWord(cblocksOffset));
             cBlocksTable.write(asLittleEndianWord(compressedCharSet.length));
 
@@ -539,23 +541,24 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     private static void printVersionAndPageInfo(CpcScreen screen, int line, int page, int numPages) {
         String versionInfo = getVersionInfo();
-        screen.setInk(CpcColor.BLACK);
+        screen.setPaper(CpcColor.BLACK);
         screen.setPen(CpcColor.BRIGHTBLUE);
         screen.printLine(versionInfo, line, 0);
         screen.printLine("L. Loader", line, 15);
         if (numPages > 1) {
             String pageInfo = numPages > 1 ?
                     String.format("%d/%d", page, numPages) : "";
-
-            screen.setPen(CpcColor.BRIGHTWHITE);
             int pos = 30;
-            screen.printLine(String.format("%c", ExtendedCharSet.SYMBOL_LEFT_ARROW_CODE), line, pos);
+            if (page > 1) {
+                screen.printIcon(ExtendedCharSet.SYMBOL_LEFT_ARROW_CODE, line, pos);
+            }
             pos += 2;
             screen.setPen(CpcColor.SEAGREEN);
             screen.printLine(pageInfo, line, pos);
-            pos += 4;
-            screen.setPen(CpcColor.BRIGHTWHITE);
-            screen.printLine(String.format("%c", ExtendedCharSet.SYMBOL_RIGHT_ARROW_CODE), line, pos);
+            if (page < numPages) {
+                pos += 4;
+                screen.printIcon(ExtendedCharSet.SYMBOL_RIGHT_ARROW_CODE, line, pos);
+            }
         }
     }
 
@@ -573,14 +576,12 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private static void printGameNameLine(CpcScreen screen, Game game, int index, int line) {
-        screen.setPen(CpcColor.BRIGHTWHITE);
+        screen.setPen(new CpcGradient(CpcColor.BRIGHTWHITE, 5,
+                CpcColor.SEAGREEN));
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
-        screen.setPen(CpcColor.SEAGREEN);
-        int gameSymbolCode = getGameSymbolCode(game);
-        screen.printLine(String.format("%c%c%c", gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2), line, 1);
-        screen.setPen(CpcColor.BRIGHTWHITE);
+        screen.printSymbol(getGameSymbolCode(game), line, 1);
         screen.printLine(
                 String.format("%s", game.getName()), line, 4);
     }
@@ -591,7 +592,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         updateBackgroundImage(page);
         page.setCharSet(new ExtendedCharSet(Configuration.getInstance().getCharSet()).getCharSet());
 
-        page.setInk(CpcColor.BLACK);
+        page.setPaper(CpcColor.BLACK);
         page.setPen(CpcColor.BRIGHTWHITE);
         for (int line = page.getLines() - 1; line >= 8; line--) {
             page.deleteLine(line);

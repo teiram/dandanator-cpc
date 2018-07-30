@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.view.util;
 
+import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.PokeViewable;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
@@ -45,6 +46,15 @@ public class PokeEntityTreeCell extends TreeCell<PokeViewable> {
                 cancelEdit();
             }
         });
+        textField.textProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    if (newValue != null) {
+                        if (!RomSetUtil.isValidPokeName(newValue)) {
+                            LOGGER.debug("Resetting name from {} -> {}", newValue, oldValue);
+                            textField.textProperty().setValue(oldValue);
+                        }
+                    }
+                });
     }
 
     @Override

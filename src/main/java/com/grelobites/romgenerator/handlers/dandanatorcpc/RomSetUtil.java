@@ -1,6 +1,5 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc;
 
-import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.PlayerConfiguration;
 import com.grelobites.romgenerator.util.Util;
@@ -101,5 +100,50 @@ public class RomSetUtil {
         return Util.compress(packedScreen);
     }
 
+    public static byte[] decodeCharset(byte[] encodedCharset) throws IOException {
+        byte[] charset = new byte[Constants.CHARSET_SIZE + Constants.ICONS_SIZE];
+        for (int i = 0; i < Constants.CHARSET_SIZE; i++) {
+            charset[i] = Integer.valueOf((encodedCharset[2 * i] & 0xF0) |
+                    (encodedCharset[(2 * i) + 1] & 0x0F)).byteValue();
+        }
+        System.arraycopy(Constants.getIcons(), 0, charset, Constants.CHARSET_SIZE,
+                Constants.ICONS_SIZE);
+        return charset;
+    }
+
+    public static byte[] encodeCharset(byte [] charset) {
+        byte[] encoded = new byte[Constants.CHARSET_SIZE * 2 + Constants.ICONS_SIZE];
+        for (int i = 0; i < Constants.CHARSET_SIZE; i++) {
+            encoded[2 * i] = Integer.valueOf((((charset[i] & 0xF0))) >> 4 |
+                    (charset[i] & 0xF0)).byteValue();
+            encoded[(2 * i) + 1] = Integer.valueOf((((charset[i] & 0x0F)) << 4) |
+                    (charset[i] & 0x0F)).byteValue();
+        }
+        System.arraycopy(charset, Constants.CHARSET_SIZE, encoded, Constants.CHARSET_SIZE * 2,
+                Constants.ICONS_SIZE);
+        return encoded;
+    }
+
+    private static boolean isPrintableAscii(String name) {
+        for (int i = 0; i < name.length(); i++) {
+            int code = name.charAt(i);
+            if (code < 32 || code > 127) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isValidGameName(String name) {
+        return name != null &&
+                name.length() < DandanatorCpcConstants.GAMENAME_EFFECTIVE_SIZE &&
+                isPrintableAscii(name);
+    }
+
+    public static boolean isValidPokeName(String name) {
+        return name != null &&
+                name.length() < DandanatorCpcConstants.POKE_EFFECTIVE_NAME_SIZE &&
+                isPrintableAscii(name);
+    }
 
 }
