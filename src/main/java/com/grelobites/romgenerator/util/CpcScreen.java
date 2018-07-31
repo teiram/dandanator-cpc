@@ -5,7 +5,6 @@ import java.io.IOException;
 import com.grelobites.romgenerator.Constants;
 
 import com.grelobites.romgenerator.handlers.dandanatorcpc.ExtendedCharSet;
-import com.sun.prism.paint.Gradient;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import org.slf4j.Logger;

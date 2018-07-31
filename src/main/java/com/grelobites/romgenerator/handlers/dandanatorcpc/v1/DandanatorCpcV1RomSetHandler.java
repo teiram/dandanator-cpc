@@ -26,7 +26,6 @@ import com.grelobites.romgenerator.util.Z80Opcode;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandler;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
-import com.sun.prism.paint.Gradient;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
@@ -577,7 +576,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     private static void printGameNameLine(CpcScreen screen, Game game, int index, int line) {
         screen.setPen(new CpcGradient(CpcColor.BRIGHTWHITE, 5,
-                CpcColor.SEAGREEN));
+                CpcColor.WHITE));
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
