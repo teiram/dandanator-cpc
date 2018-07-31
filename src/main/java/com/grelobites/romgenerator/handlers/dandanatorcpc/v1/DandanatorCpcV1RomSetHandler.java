@@ -541,8 +541,10 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     private static void printVersionAndPageInfo(CpcScreen screen, int line, int page, int numPages) {
         String versionInfo = getVersionInfo();
         screen.setPaper(CpcColor.BLACK);
-        screen.setPen(CpcColor.BRIGHTBLUE);
+        screen.setPen(CpcColor.SEAGREEN);
         screen.printLine(versionInfo, line, 0);
+
+        screen.setPen(CpcColor.WHITE);
         screen.printLine("L. Loader", line, 15);
         if (numPages > 1) {
             String pageInfo = numPages > 1 ?

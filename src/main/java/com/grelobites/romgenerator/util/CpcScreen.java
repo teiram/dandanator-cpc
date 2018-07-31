@@ -23,9 +23,9 @@ public class CpcScreen extends WritableImage {
 
 	private static final CpcColor[] DEFAULT_INKS = new CpcColor[] {
 	        CpcColor.BLACK,
-            CpcColor.BRIGHTWHITE,
-            CpcColor.SEAGREEN,
-            CpcColor.BRIGHTBLUE
+			CpcColor.SEAGREEN,
+			CpcColor.BRIGHTWHITE,
+            CpcColor.WHITE
     };
 
 	private String charSetPath;
