@@ -83,7 +83,7 @@ public class SerialListener {
     public void run() {
         try {
             serialPort.openPort();
-            serialPort.setParams(SerialPort.BAUDRATE_115200,
+            serialPort.setParams(SerialPort.BAUDRATE_57600,
                     SerialPort.DATABITS_8,
                     SerialPort.STOPBITS_2,
                     SerialPort.PARITY_NONE);

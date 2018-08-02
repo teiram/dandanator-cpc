@@ -59,7 +59,7 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
         data = new byte[blockSize + 3];
         System.arraycopy(buffer, 0, data, 0, blockSize);
 
-        data[blockSize] = Integer.valueOf(block + 1).byteValue();
+        data[blockSize] = Integer.valueOf(block).byteValue();
 
         Util.writeAsLittleEndian(data, blockSize + 1, Util.getBlockCrc16(data, blockSize + 1));
     }
@@ -68,7 +68,7 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
         try {
             if (!sharedSerialPort) {
                 serialPort.openPort();
-                serialPort.setParams(SerialPort.BAUDRATE_115200,
+                serialPort.setParams(SerialPort.BAUDRATE_57600,
                         SerialPort.DATABITS_8, SerialPort.STOPBITS_2,
                         SerialPort.PARITY_NONE);
 
