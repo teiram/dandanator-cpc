@@ -1,29 +1,28 @@
-package com.grelobites.romgenerator.util.player;
+package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.PlayerConfiguration;
+import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.util.Util;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import jssc.SerialPort;
-import jssc.SerialPortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
-import java.util.Optional;
 
-public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SerialDataPlayer.class);
-    private static final String SERVICE_THREAD_NAME = "SerialPortServiceThread";
-    private static PlayerConfiguration configuration = PlayerConfiguration.getInstance();
+public class SerialDataProducer implements DataProducer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SerialDataProducer.class);
+    private static final String SERVICE_THREAD_NAME = "SerialDataProducerService";
+    private static EepromWriterConfiguration configuration = EepromWriterConfiguration
+            .getInstance();
     private static final int SEND_BUFFER_SIZE = 1024;
 
     private Thread serviceThread;
     private SerialPort serialPort;
-    private boolean sharedSerialPort = false;
     private Runnable onFinalization;
+    private Runnable onDataSent;
     private DoubleProperty progressProperty;
     private byte[] data;
     private enum State {
@@ -36,19 +35,10 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
     private void init() {
         progressProperty = new SimpleDoubleProperty(0.0);
         serviceThread = new Thread(null, this::serialSendData, SERVICE_THREAD_NAME);
-        if (!sharedSerialPort) {
-            LOGGER.debug("Using exclusive serial port on {}", configuration.getSerialPort());
-            serialPort =  new SerialPort(configuration.getSerialPort());
-        }
     }
 
-    public SerialDataPlayer(int block, byte[] data) {
-        init();
-        setupBlockData(block, data);
-    }
 
-    public SerialDataPlayer(SerialPort serialPort, int block, byte[] data) {
-        sharedSerialPort = true;
+    public SerialDataProducer(SerialPort serialPort, int block, byte[] data) {
         this.serialPort = serialPort;
         init();
         setupBlockData(block, data);
@@ -66,20 +56,10 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
 
     private void serialSendData() {
         try {
-            if (!sharedSerialPort) {
-                serialPort.openPort();
-                serialPort.setParams(SerialPort.BAUDRATE_57600,
-                        SerialPort.DATABITS_8, SerialPort.STOPBITS_2,
-                        SerialPort.PARITY_NONE);
-
-                //Give time to some crappy serial ports to stabilize
-                Thread.sleep(50);
-            }
-
-            int sent = 0;
+            int sentBytesCount = 0;
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             byte[] sendBuffer = new byte[SEND_BUFFER_SIZE];
-            while (sent < data.length) {
+            while (sentBytesCount < data.length) {
                 int count = bis.read(sendBuffer);
                 LOGGER.debug("Sending block of " + count + " bytes");
                 if (count < SEND_BUFFER_SIZE) {
@@ -87,8 +67,11 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
                 } else {
                     serialPort.writeBytes(sendBuffer);
                 }
-                sent += count;
-                final double progress = 1.0 * sent / data.length;
+                sentBytesCount += count;
+                if (onDataSent != null) {
+                    Platform.runLater(onDataSent);
+                }
+                final double progress = 1.0 * sentBytesCount / data.length;
                 Platform.runLater(() -> progressProperty.set(progress));
                 if (state != State.RUNNING) {
                     LOGGER.debug("No more in running state");
@@ -104,14 +87,6 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
         } catch (Exception e) {
             LOGGER.error("Exception during send process", e);
             state = State.STOPPED;
-        } finally {
-            try {
-                if (!sharedSerialPort && serialPort.isOpened()) {
-                    serialPort.closePort();
-                }
-            } catch (SerialPortException e) {
-                LOGGER.error("Closing port", e);
-            }
         }
     }
 
@@ -143,12 +118,13 @@ public class SerialDataPlayer extends DataPlayerSupport implements DataPlayer {
     }
 
     @Override
+    public void onDataSent(Runnable onDataSent) {
+        this.onDataSent = onDataSent;
+    }
+
+    @Override
     public DoubleProperty progressProperty() {
         return progressProperty;
     }
 
-    @Override
-    public Optional<DoubleProperty> volumeProperty() {
-        return Optional.empty();
-    }
 }

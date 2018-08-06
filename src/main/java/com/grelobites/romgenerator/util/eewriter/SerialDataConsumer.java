@@ -1,20 +1,19 @@
-package com.grelobites.romgenerator.util.player;
+package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.PlayerConfiguration;
-import com.grelobites.romgenerator.view.PlayerController;
+import com.grelobites.romgenerator.view.EepromWriterController;
 import javafx.application.Platform;
 import jssc.SerialPort;
 import jssc.SerialPortTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SerialListener {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SerialListener.class);
-    private static PlayerConfiguration configuration = PlayerConfiguration.getInstance();
-    private static final String SERVICE_THREAD_NAME = "SerialPortListener";
+public class SerialDataConsumer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SerialDataConsumer.class);
+    private static final String SERVICE_THREAD_NAME = "SerialDataConsumer";
     private SerialPort serialPort;
     private Thread serviceThread;
-    private final PlayerController controller;
+    private Runnable onDataReceived;
+    private final EepromWriterController controller;
 
     private enum State {
         STOPPED,
@@ -23,12 +22,17 @@ public class SerialListener {
     }
     private State state = State.STOPPED;
 
-    public SerialListener(PlayerController controller) {
+    public SerialDataConsumer(EepromWriterController controller) {
         this.controller = controller;
     }
 
-    public void start() {
-        this.serialPort =  new SerialPort(configuration.getSerialPort());
+    public void setOnDataReceived(Runnable onDataReceived) {
+        this.onDataReceived = onDataReceived;
+    }
+
+    public void start(String serialPort) {
+        LOGGER.debug("Creating serial port on {}", serialPort);
+        this.serialPort =  new SerialPort(serialPort);
         this.serviceThread = new Thread(null, this::run, SERVICE_THREAD_NAME);
         this.serviceThread.start();
     }
@@ -59,24 +63,29 @@ public class SerialListener {
     }
 
     private void handleIncomingData(byte[] data) {
-        if (data.length == 1) {
-            int value = data[0] & 0xFF;
-            if (value < 0xAA) {
-                LOGGER.debug("Block {} Requested by serial port", value);
-                Platform.runLater(() -> {
-                    controller.setCurrentBlock(value);
-                    controller.doPlayExternal();
-                });
-            } else if (value == 0xAA) {
-                LOGGER.debug("Received end of communications message");
-                Platform.runLater(() -> {
-                    controller.doStopExternal();
-                });
-            } else {
-                LOGGER.warn("Unexpected value {} received on serial port", value);
+        if (data.length > 0) {
+            if (onDataReceived != null) {
+                Platform.runLater(onDataReceived);
             }
-        } else {
-            LOGGER.warn("Unexpected byte array of length {} in serial port", data.length);
+            if (data.length == 1) {
+                int value = data[0] & 0xFF;
+                if (value < 0xAA) {
+                    LOGGER.debug("Block {} Requested by serial port", value);
+                    Platform.runLater(() -> {
+                        controller.setCurrentBlock(value);
+                        controller.doPlayExternal();
+                    });
+                } else if (value == 0xAA) {
+                    LOGGER.debug("Received end of communications message");
+                    Platform.runLater(() -> {
+                        controller.doStopExternal();
+                    });
+                } else {
+                    LOGGER.warn("Unexpected value {} received on serial port", value);
+                }
+            } else {
+                LOGGER.warn("Unexpected byte array of length {} in serial port", data.length);
+            }
         }
     }
 

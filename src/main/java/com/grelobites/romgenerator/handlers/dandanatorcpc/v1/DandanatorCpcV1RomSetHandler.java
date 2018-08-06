@@ -3,7 +3,7 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc.v1;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.PlayerConfiguration;
+import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcRamGameCompressor;
@@ -42,7 +42,6 @@ import javafx.scene.layout.Pane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -82,7 +81,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     protected Pane dandanatorCpcFrame;
     protected MenuItem exportPokesMenuItem;
     protected MenuItem importPokesMenuItem;
-    protected MenuItem exportToWavsMenuItem;
     protected MenuItem exportExtraRomMenuItem;
     private BooleanProperty generationAllowedProperty = new SimpleBooleanProperty(false);
 
@@ -142,13 +140,13 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private static byte[] getEepromLoaderCode() throws IOException {
-        PlayerConfiguration configuration = PlayerConfiguration.getInstance();
+        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
         byte[] eewriter = Util.fromInputStream(configuration.getRomsetLoaderStream());
         return Util.compress(eewriter);
     }
 
     private static byte[] getEepromLoaderScreen() throws IOException {
-        PlayerConfiguration configuration = PlayerConfiguration.getInstance();
+        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
         byte[] screen = Util.fromInputStream(configuration.getScreenStream());
         return RomSetUtil.getCompressedScreen(screen);
     }
@@ -398,7 +396,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             byte[] eepromLoaderCode = getEepromLoaderCode();
             byte[] eepromLoaderScreen = getEepromLoaderScreen();
             int requiredEepromLoaderSpace = eepromLoaderCode.length + eepromLoaderScreen.length;
-            int eepromLocation = 0;
+            int eepromLocation;
             if (requiredEepromLoaderSpace <= freeSpace) {
                 eepromLocation = os.size();
                 LOGGER.debug("Dumping EEPROM Loader with size " + requiredEepromLoaderSpace
@@ -547,8 +545,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.setPen(CpcColor.WHITE);
         screen.printLine("L. Loader", line, 15);
         if (numPages > 1) {
-            String pageInfo = numPages > 1 ?
-                    String.format("%d/%d", page, numPages) : "";
+            String pageInfo = String.format("%d/%d", page, numPages);
             int pos = 30;
             if (page > 1) {
                 screen.printIcon(ExtendedCharSet.SYMBOL_LEFT_ARROW_CODE, line, pos);
@@ -688,36 +685,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
-    protected MenuItem getExportToWavsMenuItem() {
-        if (exportToWavsMenuItem == null) {
-            exportToWavsMenuItem = new MenuItem(LocaleUtil.i18n("exportToWavsMenuEntry"));
-
-            exportToWavsMenuItem.setAccelerator(
-                    KeyCombination.keyCombination("SHORTCUT+W")
-            );
-            exportToWavsMenuItem.disableProperty().bind(generationAllowedProperty.not());
-
-            exportToWavsMenuItem.setOnAction(f -> exportToWavs());
-        }
-        return exportToWavsMenuItem;
-    }
-
-    public void exportToWavs() {
-        DirectoryAwareFileChooser chooser = applicationContext.getFileChooser();
-        chooser.setTitle(LocaleUtil.i18n("exportToWavsMenuEntry"));
-        chooser.setInitialFileName("dandanator_wav_romset.zip");
-        final File saveFile = chooser.showSaveDialog(applicationContext.getApplicationStage());
-        if (saveFile != null) {
-            try (FileOutputStream fos = new FileOutputStream(saveFile)) {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                exportRomSet(bos);
-                RomSetUtil.exportToZippedWavFiles(new ByteArrayInputStream(bos.toByteArray()), fos);
-            } catch (IOException e) {
-                LOGGER.error("Exporting to Wavs", e);
-            }
-        }
-    }
-
     @Override
     public void updateMenuPreview() {
         LOGGER.debug("updateMenuPreview");
@@ -787,8 +754,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
         applicationContext.getExtraMenu().getItems().addAll(
                 getExportPokesMenuItem(), getImportPokesMenuItem(),
-                getExportExtraRomMenuItem(),
-                getExportToWavsMenuItem());
+                getExportExtraRomMenuItem());
 
         updateRomUsage();
         previewUpdateTimer.start();
@@ -810,8 +776,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         applicationContext.getExtraMenu().getItems().removeAll(
                 getExportPokesMenuItem(),
                 getImportPokesMenuItem(),
-                getExportExtraRomMenuItem(),
-                getExportToWavsMenuItem());
+                getExportExtraRomMenuItem());
         applicationContext.getGameList().removeListener(updateImageListener);
         applicationContext.getGameList().removeListener(updateRomUsageListener);
         applicationContext = null;

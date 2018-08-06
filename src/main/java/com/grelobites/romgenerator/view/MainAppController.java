@@ -80,11 +80,8 @@ public class MainAppController {
     @FXML
     private Pane romSetHandlerInfoPane;
 
-    private Pane playerPane;
-    private PlayerController playerController;
-    private boolean playerVisible = false;
-
-    private boolean iannaMode = false;
+    private Pane eepromWriterPane;
+    private EepromWriterController eepromWriterController;
 
     public MainAppController(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -165,15 +162,15 @@ public class MainAppController {
         menuPagination.setPageFactory((index) -> {
             switch (index) {
                 case 0:
-                    if (playerController != null) {
-                        playerController.onPageLeave();
+                    if (eepromWriterController != null) {
+                        eepromWriterController.onPageLeave();
                     }
                     return menuPreview;
                 case 1:
-                    if (playerController != null) {
-                        playerController.onPageEnter();
+                    if (eepromWriterController != null) {
+                        eepromWriterController.onPageEnter();
                     }
-                    return getPlayerPane();
+                    return getEepromWriterPane();
                 default:
                     return null;
             }
@@ -397,25 +394,25 @@ public class MainAppController {
         }
     }
 
-    private PlayerController getPlayerController(ApplicationContext applicationContext) {
-        if (playerController == null) {
-            playerController = new PlayerController(applicationContext);
+    private EepromWriterController getEepromWriterController(ApplicationContext applicationContext) {
+        if (eepromWriterController == null) {
+            eepromWriterController = new EepromWriterController(applicationContext);
         }
-        return playerController;
+        return eepromWriterController;
     }
 
-    private Pane getPlayerPane() {
+    private Pane getEepromWriterPane() {
         try {
-            if (playerPane == null) {
+            if (eepromWriterPane == null) {
                 FXMLLoader loader = new FXMLLoader();
-                loader.setLocation(MainAppController.class.getResource("player.fxml"));
-                loader.setController(getPlayerController(applicationContext));
+                loader.setLocation(MainAppController.class.getResource("eepromwriter.fxml"));
+                loader.setController(getEepromWriterController(applicationContext));
                 loader.setResources(LocaleUtil.getBundle());
-                playerPane = loader.load();
+                eepromWriterPane = loader.load();
             }
-            return playerPane;
+            return eepromWriterPane;
         } catch (Exception e) {
-            LOGGER.error("Creating Player", e);
+            LOGGER.error("Creating EepromWriter", e);
             throw new RuntimeException(e);
         }
     }

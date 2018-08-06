@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.player;
+package com.grelobites.romgenerator.util.eewriter;
 
 /* jSSC (Java Simple Serial Connector) - serial port communication library.
  * © Alexey Sokolov (scream3r), 2010-2014.

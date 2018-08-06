@@ -1,11 +1,10 @@
-package com.grelobites.romgenerator.util.player;
+package com.grelobites.romgenerator.util.eewriter;
 
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
 
 import java.util.Optional;
 
-public interface DataPlayer {
+public interface DataProducer {
 
     void send();
 
@@ -13,8 +12,8 @@ public interface DataPlayer {
 
     void onFinalization(Runnable onFinalization);
 
+    void onDataSent(Runnable onDataSent);
+    
     DoubleProperty progressProperty();
-
-    Optional<DoubleProperty> volumeProperty();
 
 }

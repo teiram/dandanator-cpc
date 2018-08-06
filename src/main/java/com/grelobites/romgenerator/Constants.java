@@ -52,10 +52,10 @@ public class Constants {
             LocaleUtil.i18n("preferencesGeneralTab"),
             "/com/grelobites/romgenerator/view/preferences.fxml", PreferencesProvider.PRECEDENCE_GLOBAL);
 
-    private static PreferencesProvider playerPreferences = new PreferencesProvider(
+    private static PreferencesProvider eepromwriterPreferences = new PreferencesProvider(
             LocaleUtil.i18n("loader"),
-            "/com/grelobites/romgenerator/view/playerconfiguration.fxml", PreferencesProvider.PRECEDENCE_OTHER);
-
+            "/com/grelobites/romgenerator/view/eepromwriterconfiguration.fxml",
+            PreferencesProvider.PRECEDENCE_OTHER);
 
     public static String currentVersion() {
         String version = Constants.class.getPackage()
