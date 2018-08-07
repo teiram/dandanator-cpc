@@ -15,6 +15,15 @@ import static org.junit.Assert.assertNotNull;
 
 public class PokImportTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(PokImportTest.class);
+    private static String[] valueNames = new String[]{
+            "Decimal",
+            "Hex",
+            "BCD",
+            "Numeric (Zero Based)",
+            "Numeric (ASCII)",
+            "Long",
+            "String"
+    };
 
     private static class GameData {
         public String name;
@@ -46,7 +55,7 @@ public class PokImportTest {
             return "Trainer{" +
                     "description='" + description + '\'' +
                     ", comment='" + comment + '\'' +
-                    ", valueType=" + valueType +
+                    ", valueType=" + valueNames[valueType] +
                     ", reversed=" + reversed +
                     ", ramBank=" + String.format("0x%02x", ramBank) +
                     ", numPokes=" + numPokes +
