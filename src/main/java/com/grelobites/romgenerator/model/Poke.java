@@ -11,14 +11,17 @@ import org.slf4j.LoggerFactory;
 public class Poke implements PokeViewable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Poke.class);
 
+    static final int DEFAULT_BANK_VALUE = 0xc0;
+
     static final int LOWEST_ADDRESS = 0x0000;
     static final int HIGHEST_ADDRESS = 0xFFFF;
 
     static final int LOWEST_VALUE = 0;
     static final int HIGHEST_VALUE = 0xFF;
 
-    private final IntegerProperty addressProperty;
-    private final IntegerProperty valueProperty;
+    private final IntegerProperty address;
+    private final IntegerProperty value;
+
     private final Integer originalValue;
 
     private static final ObservableList<PokeViewable> children = FXCollections.emptyObservableList();
@@ -39,8 +42,8 @@ public class Poke implements PokeViewable {
                 checkAddressRange(newAddress);
                 Integer newValue = Integer.parseUnsignedInt(pair[1].trim(), 10);
                 checkValueRange(newValue);
-                this.addressProperty.set(newAddress);
-                this.valueProperty.set(newValue);
+                this.address.set(newAddress);
+                this.value.set(newValue);
             } catch (Exception e) {
                 LOGGER.warn("Error updating AddressValueNode with user entry " + value);
             }
@@ -94,7 +97,7 @@ public class Poke implements PokeViewable {
         if (getOwner() != null) {
             LOGGER.debug("Original value for " + address);
             try {
-                originalValue = (int) GameUtil.getGameAddressValue(getOwner(), address);
+                originalValue = GameUtil.getGameAddressValue(getOwner(), address);
             } catch (Exception e) {
                 LOGGER.warn("Unable to get original value from game address", e);
             }
@@ -106,33 +109,33 @@ public class Poke implements PokeViewable {
         this.parent = parent;
         checkAddressRange(address);
         checkValueRange(value);
-        this.addressProperty = new SimpleIntegerProperty(address);
-        this.valueProperty = new SimpleIntegerProperty(value);
+        this.address = new SimpleIntegerProperty(address);
+        this.value = new SimpleIntegerProperty(value);
         this.originalValue = getOriginalValue(address);
     }
 
     public IntegerProperty addressProperty() {
-        return this.addressProperty;
+        return this.address;
     }
 
     public IntegerProperty valueProperty() {
-        return this.valueProperty;
+        return this.value;
     }
 
     public Integer getAddress() {
-        return addressProperty.get();
+        return address.get();
     }
 
     public void setAddress(Integer address) {
-        addressProperty.set(address);
+        this.address.set(address);
     }
 
     public Integer getValue() {
-        return valueProperty.get();
+        return value.get();
     }
 
     public void setValue(Integer value) {
-        this.valueProperty.set(value);
+        this.value.set(value);
     }
 
     public Integer getOriginalValue() {
@@ -153,8 +156,8 @@ public class Poke implements PokeViewable {
     @Override
     public String toString() {
         return "Poke{" +
-                "addressProperty=" + addressProperty +
-                ", valueProperty=" + valueProperty +
+                "address=" + address +
+                ", value=" + value +
                 ", originalValue=" + originalValue +
                 '}';
     }

@@ -35,7 +35,7 @@ public class DandanatorCpcConstants {
     private static final String DANDANATOR_ROM_RESOURCE = "dandanator-cpc/dandanator-mini.rom";
     private static final String EXTRA_ROM_RESOURCE = "dandanator-cpc/test.rom";
 
-    public static final int POKE_TARGET_ADDRESS = 0xB220;
+    public static final int POKE_TARGET_ADDRESS = 7925;
     public static final int GAME_CHUNK_SIZE = 32;
     public static final int GAME_CHUNK_SLOT = 2;
     public static final int VERSION_SIZE = 8;

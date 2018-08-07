@@ -4,7 +4,6 @@ public class V1Constants {
     protected static final int VERSION_SIZE = 8;
     protected static final int CBLOCKS_OFFSET = 16362;
     protected static final int GAME_STRUCT_SIZE = 217;
-    protected static final int GREY_ZONE_OFFSET = 7925;
     protected static final int VERSION_OFFSET = 16354;
 
     protected static final int BASEROM_SIZE = 3584;

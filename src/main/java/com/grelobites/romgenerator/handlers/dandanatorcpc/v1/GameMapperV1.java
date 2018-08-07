@@ -67,13 +67,13 @@ public class GameMapperV1 implements GameMapper {
             block.setGameCompressed(mapper.isGameCompressed);
             block.setCompressed(mapper.isGameCompressed && isSlotCompressed(i, block.getSize()));
             if (block.getInitSlot() < INVALID_SLOT_ID) {
-                LOGGER.debug("Read block for game " + mapper.name + ": " + block);
+                LOGGER.debug("Read block for game {}", block);
                 mapper.getBlocks().add(block);
             }
         }
         mapper.name = Util.getNullTerminatedString(is, 4, DandanatorCpcConstants.GAMENAME_SIZE);
 
-        LOGGER.debug("Read game data. Offset is " + is.position());
+        LOGGER.debug("Read game {} data. Offset is {}", mapper.name, is.position());
         return mapper;
     }
 

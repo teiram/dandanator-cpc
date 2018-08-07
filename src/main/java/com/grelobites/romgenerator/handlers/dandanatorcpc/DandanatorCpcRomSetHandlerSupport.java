@@ -69,8 +69,8 @@ public class DandanatorCpcRomSetHandlerSupport {
     protected static int pokeRequiredSize(Game game) {
         if (game instanceof SnapshotGame) {
             SnapshotGame snapshotGame = (SnapshotGame) game;
-            int headerSize = 25; //Fixed size required per poke
-            //Sum of all the addressValues * 3 (address + value)
+            int headerSize = 25; //Fixed size required per trainer (Poke count(1) + name(24))
+            //Sum of all the addressValues * 3 (address(2) + value(1))
             int size = snapshotGame.getTrainerList().getChildren().stream()
                     .map(p -> p.getChildren().size() * 3).reduce(0, (a, b) -> a + b);
             return size + headerSize * snapshotGame.getTrainerList().getChildren().size();

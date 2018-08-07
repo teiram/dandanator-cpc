@@ -164,7 +164,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         return paddedHeader;
     }
 
-    protected static int dumpGameLaunchCode(OutputStream os, Game game, int index) throws IOException {
+    protected static void dumpGameLaunchCode(OutputStream os, Game game, int index) throws IOException {
         if (game instanceof SnapshotGame) {
             SnapshotGame snapshotGame = (SnapshotGame) game;
 
@@ -179,7 +179,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         } else {
             os.write(new byte[V1Constants.GAME_LAUNCHCODE_SIZE]);
         }
-        return V1Constants.GAME_LAUNCHCODE_SIZE;
     }
 
     private void dumpGameCBlocks(OutputStream os, Game game, Offsets offsets)
@@ -361,34 +360,35 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write((byte) games.size());
             LOGGER.debug("Dumped game count. Offset: " + os.size());
 
-            int cblocksOffset = V1Constants.GREY_ZONE_OFFSET;
+            dumpGameHeaders(os);
+            LOGGER.debug("Dumped game struct. Offset: {}", os.size());
+
+            os.write(getPokeStructureData(games));
+            LOGGER.debug("Dumped poke struct. Offset: {}", os.size());
+
+            int greyAreaOffset = os.size();
             ByteArrayOutputStream cBlocksTable = new ByteArrayOutputStream();
             byte[] compressedScreen = RomSetUtil.getCompressedScreen(configuration.getBackgroundImage());
-            cBlocksTable.write(asLittleEndianWord(cblocksOffset));
+            cBlocksTable.write(asLittleEndianWord(greyAreaOffset));
             cBlocksTable.write(asLittleEndianWord(compressedScreen.length));
-            cblocksOffset += compressedScreen.length;
+            greyAreaOffset += compressedScreen.length;
 
             byte[] compressedScreenTexts = Util.compress(getScreenTexts(dmConfiguration));
-            cBlocksTable.write(asLittleEndianWord(cblocksOffset));
+            cBlocksTable.write(asLittleEndianWord(greyAreaOffset));
             cBlocksTable.write(asLittleEndianWord(compressedScreenTexts.length));
-            cblocksOffset += compressedScreenTexts.length;
-
-            byte[] compressedPokeData = Util.compress(getPokeStructureData(games));
-            cBlocksTable.write(asLittleEndianWord(cblocksOffset));
-            cBlocksTable.write(asLittleEndianWord(compressedPokeData.length));
-            cblocksOffset += compressedPokeData.length;
+            greyAreaOffset += compressedScreenTexts.length;
 
             ExtendedCharSet extendedCharset = new ExtendedCharSet(configuration.getCharSet());
             byte[] compressedCharSet = Util.compress(RomSetUtil.encodeCharset(extendedCharset.getCharSet()));
-            cBlocksTable.write(asLittleEndianWord(cblocksOffset));
+            cBlocksTable.write(asLittleEndianWord(greyAreaOffset));
             cBlocksTable.write(asLittleEndianWord(compressedCharSet.length));
+            //Empty entry in CBlocks table
+            cBlocksTable.write(asLittleEndianWord(0));
+            cBlocksTable.write(asLittleEndianWord(0));
 
-            dumpGameHeaders(os);
-            LOGGER.debug("Dumped game struct. Offset: " + os.size());
 
             os.write(compressedScreen);
             os.write(compressedScreenTexts);
-            os.write(compressedPokeData);
             os.write(compressedCharSet);
 
             //loader if enough room
@@ -399,34 +399,36 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             int eepromLocation;
             if (requiredEepromLoaderSpace <= freeSpace) {
                 eepromLocation = os.size();
-                LOGGER.debug("Dumping EEPROM Loader with size " + requiredEepromLoaderSpace
-                        + " at offset " + eepromLocation + ". Free space was " + freeSpace);
+                LOGGER.debug("Dumping EEPROM Loader with size {} at offset {}. Free space was {}",
+                        requiredEepromLoaderSpace,
+                        eepromLocation,
+                        freeSpace);
                 cBlocksTable.write(asLittleEndianWord(os.size()));
                 os.write(eepromLoaderScreen);
                 cBlocksTable.write(asLittleEndianWord(os.size()));
                 os.write(eepromLoaderCode);
             } else {
-                LOGGER.debug("Skipping EEPROM Loader. Not enough free space: " +
-                        freeSpace + ". Needed: " + requiredEepromLoaderSpace);
+                LOGGER.debug("Skipping EEPROM Loader. Not enough free space: {}. Needed {}",
+                        freeSpace, requiredEepromLoaderSpace);
                 cBlocksTable.write(asLittleEndianWord(0));
                 cBlocksTable.write(asLittleEndianWord(0));
             }
             Util.fillWithValue(os, (byte) 0, V1Constants.VERSION_OFFSET - os.size());
-            LOGGER.debug("Dumped grey zone. Offset: " + os.size());
+            LOGGER.debug("Dumped grey zone. Offset: {}", os.size());
 
             os.write(asNullTerminatedByteArray(getVersionInfo(), V1Constants.VERSION_SIZE));
-            LOGGER.debug("Dumped version info. Offset: " + os.size());
+            LOGGER.debug("Dumped version info. Offset: {}", os.size());
 
             os.write(cBlocksTable.toByteArray());
             LOGGER.debug("Dumped CBlocks table {}. Offset {}",
                     Util.dumpAsHexString(cBlocksTable.toByteArray()), os.size());
 
             os.write(dmConfiguration.isAutoboot() ? 1 : 0);
-            LOGGER.debug("Dumped autoboot configuration. Offset: " + os.size());
+            LOGGER.debug("Dumped autoboot configuration. Offset: {}", os.size());
 
             Util.fillWithValue(os, (byte) 0, Constants.SLOT_SIZE - os.size());
 
-            LOGGER.debug("Slot zero completed. Offset: " + os.size());
+            LOGGER.debug("Slot zero completed. Offset: {}", os.size());
 
             for (Game game : games) {
                 if (isGameCompressed(game)) {

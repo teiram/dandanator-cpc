@@ -5,7 +5,6 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.DandanatorCpcImporter;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameBlock;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameChunk;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameMapper;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.SlotZero;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.SlotZeroBase;
@@ -65,63 +64,30 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
 
         zis.safeSkip(V1Constants.GAME_STRUCT_SIZE * (DandanatorCpcConstants.MAX_GAMES - gameCount));
 
-
-        int compressedScreenOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET);
-        int compressedScreenBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 2);
-        LOGGER.debug("Compressed screen located at " + compressedScreenOffset + ", blocks "
-                + compressedScreenBlocks);
-        int compressedTextDataOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 4);
-        int compressedTextDataBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 6);
-        LOGGER.debug("Compressed text data located at " + compressedTextDataOffset + ", blocks "
-                + compressedTextDataBlocks);
-        int compressedPokeStructOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 8);
-        int compressedPokeStructBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 10);
-        LOGGER.debug("Compressed poke data located at " + compressedPokeStructOffset + ", blocks "
-                + compressedPokeStructBlocks);
-        int compressedCharsetOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 12);
-        int compressedCharsetBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 14);
-        LOGGER.debug("Compressed Charset located at " + compressedCharsetOffset
-                + ", blocks " + compressedCharsetBlocks);
-
-        screen = uncompress(zis, compressedScreenOffset, compressedScreenBlocks);
-        screenPalette = Arrays.copyOfRange(screen, 16384 - 17, 16384);
-
-        byte[] textData = uncompress(zis, compressedTextDataOffset, compressedTextDataBlocks);
-        byte[] pokeData = uncompress(zis, compressedPokeStructOffset, compressedPokeStructBlocks);
-        byte[] encodedCharset = uncompress(zis, compressedCharsetOffset, compressedCharsetBlocks);
-
-        ByteArrayInputStream textDataStream = new ByteArrayInputStream(textData);
-        extraRomMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
-        togglePokesMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
-        launchGameMessage = Util.getNullTerminatedString(textDataStream, 7, DandanatorCpcConstants.GAMENAME_SIZE);
-        selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
-
-        charSet = RomSetUtil.decodeCharset(encodedCharset);
-
-        //Poke data
-        ByteArrayInputStream pokeDataStream = new ByteArrayInputStream(pokeData);
+        LOGGER.debug("About to read poke data with offset {}", zis.position());
         for (int i = 0; i < gameCount; i++) {
-            LOGGER.debug("Reading poke data for game " + i);
             GameMapperV1 mapper = gameMappers.get(i);
-            mapper.setTrainerCount(pokeDataStream.read());
+            mapper.setTrainerCount(zis.read());
+            LOGGER.debug("Number of trainers for game {}: {}", i, mapper.getTrainerCount());
         }
-        pokeDataStream.skip(DandanatorCpcConstants.MAX_GAMES - gameCount);
-        pokeDataStream.skip(DandanatorCpcConstants.MAX_GAMES * 2);
+        zis.safeSkip(DandanatorCpcConstants.MAX_GAMES - gameCount); //Empty slots
+        zis.safeSkip(DandanatorCpcConstants.MAX_GAMES * 2);         //Base game poke addresses
+        LOGGER.debug("Reading poke data. Offset {}", zis.position());
 
         for (int i = 0; i < gameCount; i++) {
             GameMapperV1 mapper = gameMappers.get(i);
             int trainerCount = mapper.getTrainerCount();
             if (trainerCount > 0) {
-                LOGGER.debug("Importing " + trainerCount + " trainers");
+                LOGGER.debug("Importing {} trainers", trainerCount);
                 for (int j = 0; j < trainerCount; j++) {
-                    int pokeCount = pokeDataStream.read();
-                    String trainerName = Util.getNullTerminatedString(pokeDataStream, 3, 24);
+                    int pokeCount = zis.read();
+                    String trainerName = Util.getNullTerminatedString(zis, 3, 24);
                     Optional<Trainer> trainer = mapper.getTrainerList().addTrainerNode(trainerName);
                     if (trainer.isPresent() && pokeCount > 0) {
-                        LOGGER.debug("Importing " + pokeCount + " pokes on trainer " + trainerName);
+                        LOGGER.debug("Importing {} pokes on trainer {}", pokeCount, trainerName);
                         for (int k = 0; k < pokeCount; k++) {
-                            int address = Util.readAsLittleEndian(pokeDataStream);
-                            int value = pokeDataStream.read();
+                            int address = Util.readAsLittleEndian(zis);
+                            int value = zis.read();
                             trainer.map(t -> {
                                 t.addPoke(address, value);
                                 return true;
@@ -131,6 +97,33 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
                 }
             }
         }
+        LOGGER.debug("Pokes read. Offset {}", zis.position());
+        int compressedScreenOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET);
+        int compressedScreenBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 2);
+        LOGGER.debug("Compressed screen located at " + compressedScreenOffset + ", blocks "
+                + compressedScreenBlocks);
+        int compressedTextDataOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 4);
+        int compressedTextDataBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 6);
+        LOGGER.debug("Compressed text data located at " + compressedTextDataOffset + ", blocks "
+                + compressedTextDataBlocks);
+        int compressedCharsetOffset = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 8);
+        int compressedCharsetBlocks = Util.readAsLittleEndian(data, V1Constants.CBLOCKS_OFFSET + 10);
+        LOGGER.debug("Compressed Charset located at " + compressedCharsetOffset
+                + ", blocks " + compressedCharsetBlocks);
+
+        screen = uncompress(zis, compressedScreenOffset, compressedScreenBlocks);
+        screenPalette = Arrays.copyOfRange(screen, 16384 - 17, 16384);
+
+        byte[] textData = uncompress(zis, compressedTextDataOffset, compressedTextDataBlocks);
+        byte[] encodedCharset = uncompress(zis, compressedCharsetOffset, compressedCharsetBlocks);
+
+        ByteArrayInputStream textDataStream = new ByteArrayInputStream(textData);
+        extraRomMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
+        togglePokesMessage = Util.getNullTerminatedString(textDataStream, 3, DandanatorCpcConstants.GAMENAME_SIZE);
+        launchGameMessage = Util.getNullTerminatedString(textDataStream, 7, DandanatorCpcConstants.GAMENAME_SIZE);
+        selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
+
+        charSet = RomSetUtil.decodeCharset(encodedCharset);
     }
 
     @Override
