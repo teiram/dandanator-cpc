@@ -4,6 +4,7 @@ import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.DandanatorCpcImporter;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.SlotZero;
 import com.grelobites.romgenerator.model.Game;
@@ -48,8 +49,8 @@ public class DandanatorCpcV1Importer implements DandanatorCpcImporter {
                 return OperationResult.successResult();
             });
 
-            //Since games have a fixed size and we always have all the slots, we can
-            //trust to find the extraRom in the current position
+            is.safeSkip(Constants.SLOT_SIZE * DandanatorCpcConstants.GAME_SLOTS - is.position());
+            LOGGER.debug("Getting extraRom with offset {}", is.position());
             byte[] extraRom = is.getAsByteArray(Constants.SLOT_SIZE);
 
             //Update preferences only if everything was OK
