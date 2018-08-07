@@ -382,10 +382,6 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             byte[] compressedCharSet = Util.compress(RomSetUtil.encodeCharset(extendedCharset.getCharSet()));
             cBlocksTable.write(asLittleEndianWord(greyAreaOffset));
             cBlocksTable.write(asLittleEndianWord(compressedCharSet.length));
-            //Empty entry in CBlocks table
-            cBlocksTable.write(asLittleEndianWord(0));
-            cBlocksTable.write(asLittleEndianWord(0));
-
 
             os.write(compressedScreen);
             os.write(compressedScreenTexts);
@@ -413,6 +409,10 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 cBlocksTable.write(asLittleEndianWord(0));
                 cBlocksTable.write(asLittleEndianWord(0));
             }
+            //Empty entry in CBlocks table
+            cBlocksTable.write(asLittleEndianWord(0));
+            cBlocksTable.write(asLittleEndianWord(0));
+
             Util.fillWithValue(os, (byte) 0, V1Constants.VERSION_OFFSET - os.size());
             LOGGER.debug("Dumped grey zone. Offset: {}", os.size());
 
