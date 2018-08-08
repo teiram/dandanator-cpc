@@ -2,11 +2,14 @@ package com.grelobites.romgenerator.pok.model;
 
 import com.grelobites.romgenerator.pok.PokInputStream;
 import com.grelobites.romgenerator.util.Util;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
 
 public class WinApePoke {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WinApePoke.class);
     private static final int USER_VALUE = 65535;
     private int address;
     private Integer[] values;
@@ -14,6 +17,17 @@ public class WinApePoke {
     private static Integer parseValue(int value) {
         return value == USER_VALUE ? null : value;
     }
+
+    public WinApePoke(WinApePoke c) {
+        LOGGER.debug("Copy constructor on {}", c);
+        this.address = c.address;
+        this.values = new Integer[c.values.length];
+        for (int i = 0; i < c.values.length; i++) {
+            this.values[i] = c.values[i];
+        }
+    }
+
+    public WinApePoke() {}
 
     public static WinApePoke fromPokInputStream(PokInputStream is) throws IOException {
         WinApePoke poke = new WinApePoke();
@@ -23,6 +37,7 @@ public class WinApePoke {
         for (int i = 0; i < size; i++) {
             values[i] = parseValue(Util.readAsLittleEndian(is));
         }
+        poke.setValues(values);
         return poke;
     }
 
@@ -45,7 +60,7 @@ public class WinApePoke {
     @Override
     public String toString() {
         return "Poke{" +
-                ", address=" + address +
+                "address=" + address +
                 ", values=" + Arrays.toString(values) +
                 '}';
     }

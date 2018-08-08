@@ -1,9 +1,6 @@
 package com.grelobites.romgenerator.pok.view;
 
-import com.grelobites.romgenerator.pok.model.WinApeGame;
-import com.grelobites.romgenerator.pok.model.WinApePoke;
-import com.grelobites.romgenerator.pok.model.WinApePokeDatabase;
-import com.grelobites.romgenerator.pok.model.WinApeTrainer;
+import com.grelobites.romgenerator.pok.model.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -27,7 +24,7 @@ public class PokAppController {
     private TableView<WinApeTrainer> trainerTable;
 
     @FXML
-    private TableView<WinApePoke> pokeTable;
+    private TableView<TrainerExporter.PokeContainer> pokeTable;
 
     @FXML
     private TextArea searchBox;
@@ -45,17 +42,26 @@ public class PokAppController {
     private TableColumn<WinApePoke, String> pokeAddress;
 
     @FXML
-    private TableColumn<WinApePoke, String> pokeValues;
+    private TableColumn<TrainerExporter.PokeContainer, String> pokeValues;
 
     private ObservableList<WinApeGame> games = FXCollections.observableArrayList();
     private ObservableList<WinApeTrainer> trainers = FXCollections.observableArrayList();
-    private ObservableList<WinApePoke> pokes = FXCollections.observableArrayList();
+    private TrainerExporter exporter = new TrainerExporter();
 
     private WinApePokeDatabase database;
 
-    private static String parsePokeValue(WinApePoke poke) {
-        return null;
+    private String parsePokeValue(TrainerExporter.PokeContainer poke) {
+        int valueCount = poke.getValues().length;
+        StringBuilder value = new StringBuilder();
+        for (int i = 0; i < valueCount; i++) {
+            value.append(poke.getValues()[i] == null ? "?" : poke.getValues()[i]);
+            if (i < (valueCount - 1)) {
+                value.append(", ");
+            }
+        }
+        return value.toString();
     }
+
     @FXML
     private void initialize() throws IOException {
         database = WinApePokeDatabase.fromInputStream(PokAppController.class
@@ -68,33 +74,33 @@ public class PokAppController {
         pokeAddress.setCellValueFactory(
                 cellData -> new SimpleStringProperty(
                         String.format("0x%04x", cellData.getValue().getAddress())));
-/*
+
         pokeValues.setCellValueFactory(
                 cellData -> new SimpleStringProperty(parsePokeValue(cellData.getValue())));
-*/
+
         games.setAll(database.games());
         gameTable.setItems(games);
         trainerTable.setItems(trainers);
         trainerTable.setPlaceholder(new Label("Select a Game"));
-        pokeTable.setItems(pokes);
+        pokeTable.setItems(exporter.getPokes());
         pokeTable.setPlaceholder(new Label("Select a Trainer"));
 
         gameTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     LOGGER.debug("New game selected: {}", newValue);
                     trainers.setAll(newValue.getTrainers());
-                    pokes.clear();
+                    exporter.bind(null);
                 });
         trainerTable.selectionModelProperty().addListener(e -> {
-            pokes.clear();
+            exporter.bind(null);
         });
         trainerTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     LOGGER.debug("New trainer selected: {}", newValue);
                     if (newValue != null) {
-                        pokes.setAll(newValue.getPokes());
+                        exporter.bind(newValue);
                     } else {
-                        pokes.clear();
+                        exporter.bind(null);
                     }
         });
     }
