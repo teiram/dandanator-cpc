@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.pok;
 
+import com.grelobites.romgenerator.pok.model.WinApePokeDatabase;
 import com.grelobites.romgenerator.util.Util;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class PokImportTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(PokImportTest.class);
-    private static String[] valueNames = new String[]{
+    private static String[] valueNames = new String[] {
             "Decimal",
             "Hex",
             "BCD",
@@ -184,5 +185,15 @@ public class PokImportTest {
         LOGGER.debug("Value types distribution {}", Arrays.toString(valueTypes));
         LOGGER.debug("Pokes per trainer distribution {}", Arrays.toString(pokeCounts));
         LOGGER.debug("Poke size distribution {}", Arrays.toString(pokeSizes));
+    }
+
+    @Test
+    public void testSearchDatabase() throws IOException {
+        WinApePokeDatabase database = WinApePokeDatabase
+                .fromInputStream(PokImportTest.class
+                        .getResourceAsStream("/winape.pok"));
+
+        LOGGER.debug("Values starting with A: {}", database.search("A", 10));
+        LOGGER.debug("Values starting with Abu: {}", database.search("Abu", 10));
     }
 }
