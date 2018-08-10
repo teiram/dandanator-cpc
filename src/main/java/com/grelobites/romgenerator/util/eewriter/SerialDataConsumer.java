@@ -14,6 +14,7 @@ public class SerialDataConsumer {
     private Thread serviceThread;
     private Runnable onDataReceived;
     private final EepromWriterController controller;
+    private boolean dandanatorReady = false;
 
     private enum State {
         STOPPED,
@@ -34,6 +35,7 @@ public class SerialDataConsumer {
         LOGGER.debug("Creating serial port on {}", serialPort);
         this.serialPort =  new SerialPort(serialPort);
         this.serviceThread = new Thread(null, this::run, SERVICE_THREAD_NAME);
+        this.serviceThread.setDaemon(true);
         this.serviceThread.start();
     }
 
@@ -69,17 +71,35 @@ public class SerialDataConsumer {
             }
             if (data.length == 1) {
                 int value = data[0] & 0xFF;
-                if (value < 0xAA) {
-                    LOGGER.debug("Block {} Requested by serial port", value);
-                    Platform.runLater(() -> {
-                        controller.setCurrentBlock(value);
-                        controller.doPlayExternal();
-                    });
+                if (value < 64) {
+                    if (dandanatorReady) {
+                        LOGGER.debug("Block {} Requested by serial port", value);
+
+                        Platform.runLater(() -> {
+                            controller.setCurrentBlock(value);
+                            controller.doPlayExternal();
+                        });
+                    } else {
+                        LOGGER.warn("Received block request before 0x55 (dandanator ready)");
+                    }
                 } else if (value == 0xAA) {
                     LOGGER.debug("Received end of communications message");
                     Platform.runLater(() -> {
                         controller.doStopExternal();
                     });
+                } else if (value == 0x55) {
+                    if (!dandanatorReady) {
+                        LOGGER.debug("Dandanator ready to request data");
+                        dandanatorReady = true;
+                        try {
+                            serialPort.writeByte((byte) 0xFF);
+                        } catch (Exception e) {
+                            LOGGER.error("Trying to ACK dandanator", e);
+
+                        }
+                    } else {
+                        LOGGER.debug("Discarded 0x55 request");
+                    }
                 } else {
                     LOGGER.warn("Unexpected value {} received on serial port", value);
                 }
