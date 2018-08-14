@@ -1,6 +1,7 @@
 package com.grelobites.romgenerator.pok.view;
 
 import com.grelobites.romgenerator.pok.model.*;
+import com.grelobites.romgenerator.util.GameUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -10,10 +11,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PokAppController {
     private static final Logger LOGGER = LoggerFactory.getLogger(PokAppController.class);
@@ -62,6 +68,22 @@ public class PokAppController {
         return value.toString();
     }
 
+    private Optional<Integer[]> getPokeValuesFromString(TrainerExporter.PokeContainer container, String value) {
+        String[] stringValues = value.split(",");
+        if (stringValues.length == container.getRequiredSize()) {
+            return Optional.of(Stream.of(stringValues).map(stringValue -> {
+                Integer candidate = null;
+                try {
+                    candidate = Integer.parseInt(stringValue);
+                } catch (Exception e) {
+
+                }
+                return candidate;
+            }).collect(Collectors.toList()).toArray(new Integer[0]));
+        } else {
+            return Optional.empty();
+        }
+    }
     @FXML
     private void initialize() throws IOException {
         database = WinApePokeDatabase.fromInputStream(PokAppController.class
@@ -75,8 +97,35 @@ public class PokAppController {
                 cellData -> new SimpleStringProperty(
                         String.format("0x%04x", cellData.getValue().getAddress())));
 
+        pokeValues.setEditable(true);
+        pokeTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
+
         pokeValues.setCellValueFactory(
                 cellData -> new SimpleStringProperty(parsePokeValue(cellData.getValue())));
+        pokeValues.setOnEditStart(e -> {
+           pokeTable.getSelectionModel().
+        });
+        pokeValues.setOnEditCommit(e -> {
+            TrainerExporter.PokeContainer container = e.getRowValue();
+            Optional<Integer[]> pokeValues = getPokeValuesFromString(container, e.getNewValue());
+            if (pokeValues.isPresent()) {
+                container.setValues(pokeValues.get());
+            }
+        });
+        pokeValues.setCellFactory(TextFieldTableCell.forTableColumn(
+                new StringConverter<String>() {
+                    @Override
+                    public String toString(String value) {
+                        LOGGER.debug("Invoking toString({})", value);
+                        return value;
+                    }
+
+                    @Override
+                    public String fromString(String value) {
+                        LOGGER.debug("Invoking fromString({})", value);
+                        return value;
+                    }
+                }));
 
         games.setAll(database.games());
         gameTable.setItems(games);
@@ -103,6 +152,8 @@ public class PokAppController {
                         exporter.bind(null);
                     }
         });
+
+        importButton.disableProperty().bind(trainerTable.getSelectionModel().selectedItemProperty().isNull());
     }
 
 }

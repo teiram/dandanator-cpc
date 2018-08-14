@@ -23,7 +23,7 @@
                 <TableColumn fx:id="trainerDescription" prefWidth="199.0" resizable="false" text="Trainer" />
               </columns>
             </TableView>
-            <TableView fx:id="pokeTable" prefHeight="200.0" prefWidth="200.0">
+            <TableView fx:id="pokeTable" editable="true" prefHeight="200.0" prefWidth="200.0">
               <columns>
                 <TableColumn fx:id="pokeAddress" prefWidth="100.0" resizable="false" text="Address" />
                   <TableColumn fx:id="pokeValues" prefWidth="100.0" resizable="false" text="Value" />

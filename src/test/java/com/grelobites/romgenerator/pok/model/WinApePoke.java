@@ -13,6 +13,7 @@ public class WinApePoke {
     private static final int USER_VALUE = 65535;
     private int address;
     private Integer[] values;
+    private int requiredSize;
 
     private static Integer parseValue(int value) {
         return value == USER_VALUE ? null : value;
@@ -21,6 +22,7 @@ public class WinApePoke {
     public WinApePoke(WinApePoke c) {
         LOGGER.debug("Copy constructor on {}", c);
         this.address = c.address;
+        this.requiredSize = c.requiredSize;
         this.values = new Integer[c.values.length];
         for (int i = 0; i < c.values.length; i++) {
             this.values[i] = c.values[i];
@@ -32,6 +34,7 @@ public class WinApePoke {
     public static WinApePoke fromPokInputStream(PokInputStream is) throws IOException {
         WinApePoke poke = new WinApePoke();
         int size = Util.readAsLittleEndian(is);
+        poke.setRequiredSize(size);
         poke.setAddress(Util.readAsLittleEndian(is));
         Integer[] values = new Integer[size];
         for (int i = 0; i < size; i++) {
@@ -57,11 +60,20 @@ public class WinApePoke {
         this.values = values;
     }
 
+    public int getRequiredSize() {
+        return requiredSize;
+    }
+
+    public void setRequiredSize(int requiredSize) {
+        this.requiredSize = requiredSize;
+    }
+
     @Override
     public String toString() {
-        return "Poke{" +
+        return "WinApePoke{" +
                 "address=" + address +
                 ", values=" + Arrays.toString(values) +
+                ", requiredSize=" + requiredSize +
                 '}';
     }
 }

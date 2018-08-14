@@ -15,6 +15,7 @@ public class TrainerExporter {
             return TrainerExporter.this.trainer.get();
         }
     }
+
     private ObjectProperty<WinApeTrainer> trainer;
     private ObservableList<PokeContainer> pokes;
 
