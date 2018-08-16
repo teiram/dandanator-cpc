@@ -1,7 +1,6 @@
 package com.grelobites.romgenerator.pok.view;
 
 import com.grelobites.romgenerator.pok.model.*;
-import com.grelobites.romgenerator.util.GameUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -103,7 +102,7 @@ public class PokAppController {
         pokeValues.setCellValueFactory(
                 cellData -> new SimpleStringProperty(parsePokeValue(cellData.getValue())));
         pokeValues.setOnEditStart(e -> {
-           pokeTable.getSelectionModel().
+           LOGGER.debug("On Edit Start {}", e);
         });
         pokeValues.setOnEditCommit(e -> {
             TrainerExporter.PokeContainer container = e.getRowValue();
