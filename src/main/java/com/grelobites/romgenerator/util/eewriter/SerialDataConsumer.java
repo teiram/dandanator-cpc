@@ -15,6 +15,7 @@ public class SerialDataConsumer {
     private Runnable onDataReceived;
     private final EepromWriterController controller;
     private boolean dandanatorReady = false;
+    private boolean ignoreSyncRequest = false;
 
     private enum State {
         STOPPED,
@@ -79,18 +80,22 @@ public class SerialDataConsumer {
                             controller.setCurrentBlock(value);
                             controller.doPlayExternal();
                         });
+                        //Allow new sync requests to be ACK'd
+                        ignoreSyncRequest = false;
                     } else {
                         LOGGER.warn("Received block request before 0x55 (dandanator ready)");
                     }
                 } else if (value == 0xAA) {
                     LOGGER.debug("Received end of communications message");
+                    dandanatorReady = false;
                     Platform.runLater(() -> {
                         controller.doStopExternal();
                     });
                 } else if (value == 0x55) {
-                    if (!dandanatorReady) {
+                    if (!ignoreSyncRequest) {
                         LOGGER.debug("Dandanator ready to request data");
                         dandanatorReady = true;
+                        ignoreSyncRequest = true;
                         try {
                             serialPort.writeByte((byte) 0xFF);
                         } catch (Exception e) {
@@ -121,6 +126,8 @@ public class SerialDataConsumer {
             throw new RuntimeException(e);
         }
         state = State.RUNNING;
+        dandanatorReady = false;
+        ignoreSyncRequest = false;
         while (state == State.RUNNING) {
             try {
                 handleIncomingData(serialPort.readBytes(1, 1000));
