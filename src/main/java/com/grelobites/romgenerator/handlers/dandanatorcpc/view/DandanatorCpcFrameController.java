@@ -1,5 +1,7 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc.view;
 
+import com.grelobites.romgenerator.Constants;
+import com.grelobites.romgenerator.MainApp;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.*;
@@ -8,6 +10,7 @@ import com.grelobites.romgenerator.util.GameUtil;
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.pokeimporter.ImportContext;
 import com.grelobites.romgenerator.ApplicationContext;
+import com.grelobites.romgenerator.util.winape.view.WinApePokesController;
 import com.grelobites.romgenerator.view.util.DialogUtil;
 import com.grelobites.romgenerator.view.util.PokeEntityTreeCell;
 import com.grelobites.romgenerator.view.util.RecursiveTreeItem;
@@ -16,6 +19,8 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
@@ -31,6 +36,9 @@ import javafx.scene.control.TreeView;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Pane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +68,10 @@ public class DandanatorCpcFrameController {
     private Button removeAllGamePokesButton;
 
     @FXML
-    private ProgressBar pokesCurrentSizeBar;
+    private Button importPokesButton;
 
+    @FXML
+    private ProgressBar pokesCurrentSizeBar;
 
     private Tooltip pokeUsageDetail;
 
@@ -95,6 +105,10 @@ public class DandanatorCpcFrameController {
     @FXML
     private ProgressBar romUsage;
 
+    private Stage winApePokesStage;
+
+    private Pane winApePokesPane;
+
     private ApplicationContext applicationContext;
 
     private InvalidationListener currentGameCompressedChangeListener;
@@ -109,6 +123,32 @@ public class DandanatorCpcFrameController {
 
     public void setApplicationContext(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+    }
+
+    private Pane getWinApePokesPane() throws IOException {
+        if (winApePokesPane == null) {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(DandanatorCpcFrameController.class
+                    .getResource("winapepokes.fxml"));
+            loader.setResources(LocaleUtil.getBundle());
+            loader.setController(new WinApePokesController(applicationContext));
+            winApePokesPane = loader.load();
+        }
+        return winApePokesPane;
+    }
+
+    private Stage getWinApePokesStage() throws IOException {
+        if (winApePokesStage == null) {
+            winApePokesStage = new Stage();
+            Scene winApePokesScene = new Scene(getWinApePokesPane());
+            winApePokesScene.getStylesheets().add(Constants.getThemeResourceUrl());
+            winApePokesStage.setScene(winApePokesScene);
+            winApePokesStage.setTitle("Poke Import Tool");
+            //winApePokesStage.initModality(Modality.APPLICATION_MODAL);
+            winApePokesStage.initOwner(importPokesButton.getScene().getWindow());
+            winApePokesStage.setResizable(true);
+        }
+        return winApePokesStage;
     }
 
     @FXML
@@ -189,6 +229,14 @@ public class DandanatorCpcFrameController {
                 if (result.orElse(ButtonType.CANCEL) == ButtonType.OK) {
                     ((SnapshotGame) game).getTrainerList().getChildren().clear();
                 }
+            }
+        });
+
+        importPokesButton.setOnAction(c -> {
+            try {
+                getWinApePokesStage().show();
+            } catch (Exception e) {
+                LOGGER.error("Trying to show WinApePokes importer", e);
             }
         });
 

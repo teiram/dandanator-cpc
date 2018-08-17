@@ -1,7 +1,7 @@
-package com.grelobites.romgenerator.pok.model;
+package com.grelobites.romgenerator.util.winape.model;
 
-import com.grelobites.romgenerator.pok.PokInputStream;
 import com.grelobites.romgenerator.util.Util;
+import com.grelobites.romgenerator.util.winape.PokInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

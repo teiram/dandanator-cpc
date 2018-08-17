@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 public class Trainer implements PokeViewable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Trainer.class);
-    private static final int MAX_POKES_PER_TRAINER = 6;
+    public static final int MAX_POKES_PER_TRAINER = 6;
 
     private final SimpleStringProperty nameProperty;
     private final TrainerList parent;

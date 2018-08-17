@@ -11,7 +11,7 @@ import java.util.Optional;
 public class TrainerList implements PokeViewable {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrainerList.class);
 
-    private static final int MAX_TRAINERS_PER_GAME = 8;
+    public static final int MAX_TRAINERS_PER_GAME = 8;
     private static final String NEW_TRAINER_NAME = LocaleUtil.i18n("newPokeMessage");
     private static final String EMPTY_STRING = "";
 

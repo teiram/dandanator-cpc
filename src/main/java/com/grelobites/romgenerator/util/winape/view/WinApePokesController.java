@@ -1,14 +1,21 @@
-package com.grelobites.romgenerator.pok.view;
+package com.grelobites.romgenerator.util.winape.view;
 
-import com.grelobites.romgenerator.pok.model.TrainerExporter;
-import com.grelobites.romgenerator.pok.model.WinApeGame;
-import com.grelobites.romgenerator.pok.model.WinApePoke;
-import com.grelobites.romgenerator.pok.model.WinApePokeDatabase;
-import com.grelobites.romgenerator.pok.model.WinApePokeValue;
-import com.grelobites.romgenerator.pok.model.WinApeTrainer;
+
+import com.grelobites.romgenerator.ApplicationContext;
+import com.grelobites.romgenerator.model.Game;
+import com.grelobites.romgenerator.model.SnapshotGame;
+import com.grelobites.romgenerator.model.Trainer;
+import com.grelobites.romgenerator.model.TrainerList;
+import com.grelobites.romgenerator.util.winape.model.WinApeGame;
+import com.grelobites.romgenerator.util.winape.model.WinApePoke;
+import com.grelobites.romgenerator.util.winape.model.WinApePokeDatabase;
+import com.grelobites.romgenerator.util.winape.model.WinApePokeValue;
+import com.grelobites.romgenerator.util.winape.model.WinApeTrainer;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,15 +28,18 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
+import javafx.util.Pair;
 import javafx.util.StringConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
-public class PokAppController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PokAppController.class);
+public class WinApePokesController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WinApePokesController.class);
 
     @FXML
     private TableView<WinApeGame> gameTable;
@@ -72,9 +82,10 @@ public class PokAppController {
 
     private ObservableList<WinApeGame> games = FXCollections.observableArrayList();
     private ObservableList<WinApeTrainer> trainers = FXCollections.observableArrayList();
-    private TrainerExporter exporter = new TrainerExporter();
+    private ObservableList<WinApePoke> pokes = FXCollections.observableArrayList();
 
     private WinApePokeDatabase database;
+    private ApplicationContext applicationContext;
 
     private static Shape getOKStatusShape() {
         return new Circle(5, Color.GREEN);
@@ -84,15 +95,65 @@ public class PokAppController {
         return new Circle(5, Color.RED);
     }
 
+    private static List<Pair<Integer, Integer>> pokePairs(WinApeTrainer trainer) {
+        List<Pair<Integer, Integer>> result = new ArrayList<>();
+        trainer.getPokes().forEach(p -> {
+            int address = p.getAddress();
+            for (Integer value : p.getValue().values()) {
+                result.add(new Pair<>(address++, value));
+            }
+        });
+        return result;
+    }
+
+    private boolean trainerDisableConditions(WinApeTrainer trainer) {
+        return trainer == null ||
+                !trainer.exportable() ||
+                pokePairs(trainer).size() > Trainer.MAX_POKES_PER_TRAINER;
+    }
+
+    private boolean selectedGameDisableConditions() {
+        Game selectedGame = applicationContext.selectedGameProperty().get();
+        if (selectedGame instanceof SnapshotGame) {
+            SnapshotGame snapshotGame = (SnapshotGame) selectedGame;
+            return snapshotGame.getTrainerList().getChildren().size()
+                    == TrainerList.MAX_TRAINERS_PER_GAME;
+        } else {
+            return false;
+        }
+    }
+
     private String parsePokeValue(WinApePoke poke) {
         return poke.getValue().render();
     }
 
-    @FXML
-    private void initialize() throws IOException {
-        database = WinApePokeDatabase.fromInputStream(PokAppController.class
+    public WinApePokesController(ApplicationContext applicationContext) throws IOException {
+        this.applicationContext = applicationContext;
+        this.database = WinApePokeDatabase.fromInputStream(WinApePokesController.class
                 .getResourceAsStream("/winape.pok"));
 
+    }
+
+    private ObservableBooleanValue getDisableButtonObservable() {
+        Game selectedGame = applicationContext.selectedGameProperty().get();
+        Observable[] observables;
+        if (selectedGame instanceof SnapshotGame) {
+            observables = new Observable[] {applicationContext.selectedGameProperty(),
+                    ((SnapshotGame) selectedGame).getTrainerList().getChildren()};
+        } else {
+            observables = new Observable[] {applicationContext.selectedGameProperty()};
+        }
+
+        return trainerTable.getSelectionModel().selectedItemProperty().isNull()
+                .or(Bindings.createBooleanBinding(() -> {
+                    WinApeTrainer trainer = trainerTable.getSelectionModel().selectedItemProperty().getValue();
+                    return trainerDisableConditions(trainer);
+                }, trainerTable.getSelectionModel().selectedItemProperty()))
+                .or(Bindings.createBooleanBinding(this::selectedGameDisableConditions,
+                        observables));
+    }
+    @FXML
+    private void initialize() throws IOException {
         gameNameColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         trainerDescriptionColumn.setCellValueFactory(
@@ -150,34 +211,31 @@ public class PokAppController {
             trainerTable.getItems().set(trainerTable.getSelectionModel().getSelectedIndex(),
                     trainerTable.getSelectionModel().getSelectedItem());
 
-            LOGGER.debug("After edit the poke is {}", e.getRowValue());
+            LOGGER.debug("After edit poke is {}", e.getRowValue());
         });
 
         games.setAll(database.games());
         gameTable.setItems(games);
         trainerTable.setItems(trainers);
         trainerTable.setPlaceholder(new Label("Select a Game"));
-        pokeTable.setItems(exporter.getPokes());
+        pokeTable.setItems(pokes);
         pokeTable.setPlaceholder(new Label("Select a Trainer"));
 
         gameTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     LOGGER.debug("New game selected: {}", newValue);
                     trainers.setAll(newValue.getTrainers());
-                    exporter.bind(null);
                 });
-        trainerTable.selectionModelProperty().addListener(e -> {
-            exporter.bind(null);
-        });
+
         trainerTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     LOGGER.debug("New trainer selected: {}", newValue);
                     if (newValue != null) {
-                        exporter.bind(newValue);
+                        pokes.setAll(newValue.getPokes());
                         selectedPokeComment.textProperty().set(
                                 newValue.getComment());
                     } else {
-                        exporter.bind(null);
+                        pokes.clear();
                         selectedPokeComment.textProperty().set("");
                     }
         });
@@ -193,14 +251,28 @@ public class PokAppController {
 
         });
 
-        importButton.disableProperty().bind(
-                trainerTable.getSelectionModel().selectedItemProperty().isNull()
-            .or(Bindings.createBooleanBinding(() -> {
-                WinApeTrainer trainer = trainerTable.getSelectionModel().selectedItemProperty().getValue();
-                return trainer != null && trainer.exportable();
-            }, trainerTable.getSelectionModel().selectedItemProperty())
-                    .not()));
 
+        applicationContext.selectedGameProperty().addListener((observable, oldValue, newValue) -> {
+            importButton.disableProperty().unbind();
+            importButton.disableProperty().bind(getDisableButtonObservable());
+        });
+
+        importButton.disableProperty().bind(getDisableButtonObservable());
+
+        importButton.setOnAction(e -> {
+            WinApeTrainer selectedTrainer = trainerTable.getSelectionModel()
+                    .getSelectedItem();
+           LOGGER.debug("Running import of trainer {}", selectedTrainer);
+           TrainerList list = ((SnapshotGame) applicationContext.selectedGameProperty()
+                   .get()).getTrainerList();
+           final List<Pair<Integer, Integer>> pokePairs = pokePairs(selectedTrainer);
+           if (pokePairs.size() <= 6) {
+               list.addTrainerNode(selectedTrainer.getDescription()).ifPresent(t -> {
+                   pokePairs.forEach(p -> {
+                       t.addPoke(p.getKey(), p.getValue());
+                   });
+               });
+           }
+        });
     }
-
 }

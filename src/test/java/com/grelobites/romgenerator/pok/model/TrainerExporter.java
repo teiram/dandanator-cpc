@@ -5,41 +5,34 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import java.util.Collections;
+import java.util.List;
+
 public class TrainerExporter {
 
-    public class PokeContainer extends WinApePoke {
-        public PokeContainer(WinApePoke poke) {
-            super(poke);
-        }
-        public WinApeTrainer trainer() {
-            return TrainerExporter.this.trainer.get();
-        }
-    }
-
     private ObjectProperty<WinApeTrainer> trainer;
-    private ObservableList<PokeContainer> pokes;
+    private ObservableList<WinApePoke> pokes;
 
     public TrainerExporter() {
         this.trainer = new SimpleObjectProperty<>();
-        this.pokes = FXCollections.observableArrayList();
+        pokes = FXCollections.observableArrayList();
     }
 
     public void bind(WinApeTrainer trainer) {
         this.trainer.set(trainer);
-        this.pokes.clear();
         if (trainer != null) {
-            for (WinApePoke poke : trainer.getPokes()) {
-                pokes.add(new PokeContainer(poke));
-            }
+            pokes.setAll(trainer.getPokes());
+        } else {
+            pokes.clear();
         }
-    }
-
-    public ObservableList<PokeContainer> getPokes() {
-        return pokes;
     }
 
     public WinApeTrainer getTrainer() {
         return trainer.get();
+    }
+
+    public ObservableList<WinApePoke> getPokes() {
+        return pokes;
     }
 
     public ObjectProperty<WinApeTrainer> trainerProperty() {

@@ -1,13 +1,16 @@
-package com.grelobites.romgenerator.pok.model;
+package com.grelobites.romgenerator.util.winape.model;
 
-import com.grelobites.romgenerator.model.Trainer;
-import com.grelobites.romgenerator.pok.PokInputStream;
+
+import com.grelobites.romgenerator.util.winape.PokInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WinApeTrainer implements Comparable<WinApeTrainer> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WinApeTrainer.class);
     private String description;
     private String comment;
     private PokeValueType valueType;
@@ -84,6 +87,7 @@ public class WinApeTrainer implements Comparable<WinApeTrainer> {
     public boolean exportable() {
         for (WinApePoke poke : pokes) {
             if (!poke.exportable()) {
+                LOGGER.debug("Some poke not exportable");
                 return false;
             }
         }

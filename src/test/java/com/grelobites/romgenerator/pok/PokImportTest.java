@@ -124,6 +124,26 @@ public class PokImportTest {
         return new String(s, StandardCharsets.US_ASCII);
     }
 
+    private static int getNextNumber0(InputStream is) throws IOException {
+        long nextValue;
+        long result = 0;
+        boolean firstBlock = true;
+        boolean negative = false;
+        while ((nextValue = is.read()) != -1) {
+            boolean hasMore = (nextValue & 0x80) != 0;
+            if (firstBlock) {
+                result = nextValue & 0x3F;
+                negative = (nextValue & 0x40) != 0;
+                firstBlock = false;
+            } else {
+                result <<= 7;
+                result |= (nextValue & 0x7F);
+            }
+            if (!hasMore) break;
+        }
+        return Long.valueOf(negative ? -result : result).intValue();
+    }
+
     private static int getNextNumber(InputStream is) throws IOException {
         long nextValue;
         long result = 0;
@@ -136,10 +156,10 @@ public class PokImportTest {
                 result = nextValue & 0x3F;
                 negative = (nextValue & 0x40) != 0;
                 firstBlock = false;
-                offset = 5;
+                offset = 6;
             } else {
                 result |= (nextValue & 0x7F) << offset;
-                offset += 6;
+                offset += 7;
             }
             if (!hasMore) break;
         }
@@ -154,7 +174,8 @@ public class PokImportTest {
         String header = getPokHeader(is);
         assertEquals("WPOK", header);
         long gameCount = getNextNumber(is);
-        int[] valueTypes = new int[5];
+        LOGGER.debug("Calculated game count as {}", gameCount);
+        int[] valueTypes = new int[6];
         int[] pokeSizes = new int[20];
         int[] pokeCounts = new int[20];
 
@@ -162,6 +183,7 @@ public class PokImportTest {
         int pokeCount = 0;
 
         for (int i = 0; i < gameCount; i++) {
+            LOGGER.debug("Getting data for game on index {}", i);
             GameData gameData = getNextGameData(is);
             LOGGER.debug("Next game is {}", gameData);
             for (int j = 0; j < gameData.numTrainers; j++) {
@@ -170,7 +192,7 @@ public class PokImportTest {
                 LOGGER.debug("Next trainer is {}", trainer);
                 valueTypes[trainer.valueType]++;
                 trainerCount++;
-                assertEquals(trainer.ramBank, 0xc0);
+                //assertEquals(trainer.ramBank, 0xc0);
                 for (int k = 0; k < trainer.numPokes; k++) {
                     Poke poke = getNextPoke(is);
                     LOGGER.debug("Next poke is {}", poke);
