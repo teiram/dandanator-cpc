@@ -2,10 +2,12 @@ package com.grelobites.romgenerator.util.winape.view;
 
 
 import com.grelobites.romgenerator.ApplicationContext;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.model.Trainer;
 import com.grelobites.romgenerator.model.TrainerList;
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.winape.model.WinApeGame;
 import com.grelobites.romgenerator.util.winape.model.WinApePoke;
 import com.grelobites.romgenerator.util.winape.model.WinApePokeDatabase;
@@ -119,7 +121,7 @@ public class WinApePokesController {
             return snapshotGame.getTrainerList().getChildren().size()
                     == TrainerList.MAX_TRAINERS_PER_GAME;
         } else {
-            return false;
+            return true;
         }
     }
 
@@ -239,6 +241,7 @@ public class WinApePokesController {
                         selectedPokeComment.textProperty().set("");
                     }
         });
+
         pokeTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     LOGGER.debug("New poke selected: {}", newValue);
@@ -250,7 +253,6 @@ public class WinApePokesController {
                     }
 
         });
-
 
         applicationContext.selectedGameProperty().addListener((observable, oldValue, newValue) -> {
             importButton.disableProperty().unbind();
@@ -266,8 +268,11 @@ public class WinApePokesController {
            TrainerList list = ((SnapshotGame) applicationContext.selectedGameProperty()
                    .get()).getTrainerList();
            final List<Pair<Integer, Integer>> pokePairs = pokePairs(selectedTrainer);
-           if (pokePairs.size() <= 6) {
-               list.addTrainerNode(selectedTrainer.getDescription()).ifPresent(t -> {
+           if (pokePairs.size() <= Trainer.MAX_POKES_PER_TRAINER) {
+               list.addTrainerNode(Util
+                       .substring(selectedTrainer.getDescription(),
+                               DandanatorCpcConstants.POKE_EFFECTIVE_NAME_SIZE))
+                       .ifPresent(t -> {
                    pokePairs.forEach(p -> {
                        t.addPoke(p.getKey(), p.getValue());
                    });
