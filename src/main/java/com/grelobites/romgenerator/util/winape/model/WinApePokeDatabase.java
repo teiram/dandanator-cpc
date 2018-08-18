@@ -26,7 +26,7 @@ public class WinApePokeDatabase {
             LOGGER.debug("Detected {} games in WinApe Poke Database", numGames);
             for (int i = 0; i < numGames; i++) {
                 WinApeGame game = WinApeGame.fromPokInputStream(pis);
-                database.games.put(game.getName(), game);
+                database.games.put(game.getName().toUpperCase(), game);
             }
             LOGGER.debug("All games extracted from database");
             return database;
@@ -36,7 +36,7 @@ public class WinApePokeDatabase {
     }
 
     public WinApeGame search(String key) {
-        return games.floorEntry(key).getValue();
+        return games.floorEntry(key.toUpperCase()).getValue();
     }
 
     public WinApeGame firstGame() {
