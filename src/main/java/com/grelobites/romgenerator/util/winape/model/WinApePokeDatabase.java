@@ -4,6 +4,7 @@ import com.grelobites.romgenerator.util.winape.PokInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -19,7 +20,7 @@ public class WinApePokeDatabase {
     private TreeMap<String, WinApeGame> games = new TreeMap<>();
 
     public static WinApePokeDatabase fromInputStream(InputStream is) throws IOException {
-        PokInputStream pis = new PokInputStream(is);
+        PokInputStream pis = new PokInputStream(new BufferedInputStream(is));
         if (pis.getHeader().equals(SIGNATURE)) {
             WinApePokeDatabase database = new WinApePokeDatabase();
             int numGames = pis.nextNumber();
