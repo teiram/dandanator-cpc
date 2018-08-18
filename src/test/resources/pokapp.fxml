@@ -15,6 +15,7 @@
          <children>
             <TableView fx:id="gameTable" prefHeight="200.0" prefWidth="200.0">
               <columns>
+                  <TableColumn fx:id="matchGameColumn" prefWidth="50.0" text="Match" />
                 <TableColumn fx:id="gameNameColumn" maxWidth="1000.0" prefWidth="199.0" resizable="false" text="Game" />
               </columns>
             </TableView>

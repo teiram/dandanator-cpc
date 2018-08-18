@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -34,10 +35,8 @@ public class WinApePokeDatabase {
         }
     }
 
-    public List<WinApeGame> search(String key, int size) {
-        String firstKey = games.ceilingKey(key);
-        return games.tailMap(key).values().stream().limit(size)
-                .collect(Collectors.toList());
+    public WinApeGame search(String key) {
+        return games.ceilingEntry(key).getValue();
     }
 
     public WinApeGame firstGame() {

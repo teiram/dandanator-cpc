@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -264,7 +265,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
     public int getSlotForMappedRam(int offset) {
         int bankPos = offset / Constants.SLOT_SIZE;
         return MEMORY_CONFIGURATIONS[gameHeader
-                .getCurrentRamConfiguration()][bankPos];
+                .getCurrentRamConfiguration() & 0x07][bankPos];
     }
 
     public HardwareMode getHardwareMode() {

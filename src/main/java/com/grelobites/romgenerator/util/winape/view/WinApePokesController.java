@@ -2,19 +2,23 @@ package com.grelobites.romgenerator.util.winape.view;
 
 
 import com.grelobites.romgenerator.ApplicationContext;
+import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.model.Trainer;
 import com.grelobites.romgenerator.model.TrainerList;
 import com.grelobites.romgenerator.util.Util;
+import com.grelobites.romgenerator.util.winape.WinApePokeFormatFactory;
 import com.grelobites.romgenerator.util.winape.model.WinApeGame;
 import com.grelobites.romgenerator.util.winape.model.WinApePoke;
 import com.grelobites.romgenerator.util.winape.model.WinApePokeDatabase;
+import com.grelobites.romgenerator.util.winape.model.WinApePokeFormat;
 import com.grelobites.romgenerator.util.winape.model.WinApePokeValue;
 import com.grelobites.romgenerator.util.winape.model.WinApeTrainer;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableBooleanValue;
@@ -62,6 +66,9 @@ public class WinApePokesController {
     private TableColumn<WinApeGame, String> gameNameColumn;
 
     @FXML
+    private TableColumn<WinApeGame, Shape> matchGameColumn;
+
+    @FXML
     private TableColumn<WinApeTrainer, String> trainerDescriptionColumn;
 
     @FXML
@@ -74,7 +81,7 @@ public class WinApePokesController {
     private TableColumn<WinApePoke, String> pokeAddressColumn;
 
     @FXML
-    private TableColumn<WinApePoke, WinApePokeValue> pokeValueColumn;
+    private TableColumn<WinApePoke, String> pokeValueColumn;
 
     @FXML
     private Label selectedPokeComment;
@@ -125,8 +132,13 @@ public class WinApePokesController {
         }
     }
 
+    private WinApeGame getNearestCatalogGame(String name) {
+        return database.search(name);
+    }
+
     private String parsePokeValue(WinApePoke poke) {
-        return poke.getValue().render();
+        return WinApePokeFormatFactory.forPokeValueType(poke.getTrainer().getValueType())
+            .render(poke);
     }
 
     public WinApePokesController(ApplicationContext applicationContext) throws IOException {
@@ -154,10 +166,38 @@ public class WinApePokesController {
                 .or(Bindings.createBooleanBinding(this::selectedGameDisableConditions,
                         observables));
     }
+
+    private boolean checkGameId(SnapshotGame selectedGame, WinApeGame candidate) {
+        int address = candidate.getIdAddr();
+        final byte[] data = candidate.getIdData();
+        for (int i = 0; i < candidate.getIdData().length; i++) {
+            int slot = selectedGame.getSlotForMappedRam(address);
+            int offset = address % Constants.SLOT_SIZE;
+            if (data[i] != selectedGame.getSlot(slot)[offset]) {
+                return false;
+            }
+            address++;
+        }
+        return true;
+    }
+
+    private void updateCheckStatus(Game selectedGame) {
+        for (WinApeGame winApeGame : games) {
+            winApeGame.matchedProperty().set(checkGameId((SnapshotGame) selectedGame, winApeGame));
+        }
+    }
+
     @FXML
     private void initialize() throws IOException {
         gameNameColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(cellData.getValue().getName()));
+
+        matchGameColumn.setCellValueFactory(
+                cellData -> Bindings.createObjectBinding(
+                        () -> cellData.getValue().matchedProperty().get() ?
+                                getOKStatusShape() : getErrorStatusShape(),
+                        cellData.getValue().matchedProperty())
+        );
         trainerDescriptionColumn.setCellValueFactory(
                 cellData -> new SimpleStringProperty(cellData.getValue().getDescription()));
         pokeAddressColumn.setCellValueFactory(
@@ -168,8 +208,9 @@ public class WinApePokesController {
         pokeTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
 
         pokeValueColumn.setCellValueFactory(
-                cellData -> new SimpleObjectProperty<>(
-                        cellData.getValue().getValue()));
+                cellData -> new SimpleStringProperty(
+                        WinApePokeFormatFactory.forPokeValueType(cellData.getValue()
+                        .getTrainer().getValueType()).render(cellData.getValue())));
 
         pokeStatusColumn.setCellValueFactory(
                 cellData -> new SimpleObjectProperty<>(
@@ -184,15 +225,15 @@ public class WinApePokesController {
         );
 
         pokeValueColumn.setCellFactory(TextFieldTableCell.forTableColumn(
-                new StringConverter<WinApePokeValue>() {
+                new StringConverter<String>() {
                     @Override
-                    public String toString(WinApePokeValue value) {
-                        return value.render();
+                    public String toString(String value) {
+                        return value;
                     }
 
                     @Override
-                    public WinApePokeValue fromString(String value) {
-                        return WinApePokeValue.fromString(value);
+                    public String fromString(String value) {
+                        return value;
                     }
                 }));
 
@@ -203,7 +244,11 @@ public class WinApePokesController {
         pokeValueColumn.setOnEditCommit(e -> {
             LOGGER.debug("On Edit Commit {}", e);
             WinApePoke poke = e.getRowValue();
-            if (poke.commitValues(e.getNewValue())) {
+            WinApePokeFormat format = WinApePokeFormatFactory
+                    .forPokeValueType(poke.getTrainer().getValueType());
+            WinApePokeValue newValue = format.generate(poke, e.getNewValue());
+            if (format.validate(poke, newValue)) {
+                poke.setValue(newValue);
                 LOGGER.debug("Values committed");
             } else {
                 LOGGER.debug("Failure committing values");
@@ -226,7 +271,11 @@ public class WinApePokesController {
         gameTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, oldValue, newValue) -> {
                     LOGGER.debug("New game selected: {}", newValue);
-                    trainers.setAll(newValue.getTrainers());
+                    if (newValue != null) {
+                        trainers.setAll(newValue.getTrainers());
+                    } else {
+                        trainers.clear();
+                    }
                 });
 
         trainerTable.getSelectionModel().selectedItemProperty()
@@ -254,9 +303,22 @@ public class WinApePokesController {
 
         });
 
+        gameTable.getSelectionModel().select(getNearestCatalogGame(applicationContext
+                .selectedGameProperty().get().getName()));
+        gameTable.scrollTo(gameTable.getSelectionModel().getSelectedIndex());
+
+        updateCheckStatus(applicationContext.selectedGameProperty().get());
+
         applicationContext.selectedGameProperty().addListener((observable, oldValue, newValue) -> {
             importButton.disableProperty().unbind();
             importButton.disableProperty().bind(getDisableButtonObservable());
+            if (newValue != null) {
+                gameTable.getSelectionModel().select(getNearestCatalogGame(newValue.getName()));
+                gameTable.scrollTo(gameTable.getSelectionModel().getSelectedIndex());
+                updateCheckStatus(newValue);
+            } else {
+                gameTable.getSelectionModel().clearSelection();
+            }
         });
 
         importButton.disableProperty().bind(getDisableButtonObservable());

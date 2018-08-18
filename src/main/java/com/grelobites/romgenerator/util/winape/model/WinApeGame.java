@@ -2,6 +2,8 @@ package com.grelobites.romgenerator.util.winape.model;
 
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.winape.PokInputStream;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ public class WinApeGame implements Comparable<WinApeGame> {
     private byte[] idData;
     private int idAddr;
     private List<WinApeTrainer> trainers = new ArrayList<>();
+    private BooleanProperty matched;
 
     public static WinApeGame fromPokInputStream(PokInputStream is) throws IOException {
         WinApeGame game = new WinApeGame();
@@ -22,6 +25,8 @@ public class WinApeGame implements Comparable<WinApeGame> {
         byte[] idData = new byte[idSize];
         is.read(idData);
         game.setIdData(idData);
+        game.matched = new SimpleBooleanProperty(false);
+
         int numTrainers = is.nextNumber();
         for (int i = 0; i < numTrainers; i++) {
             game.getTrainers().add(WinApeTrainer.fromPokInputStream(is));
@@ -72,6 +77,18 @@ public class WinApeGame implements Comparable<WinApeGame> {
         } else {
             return 1;
         }
+    }
+
+    public boolean isMatched() {
+        return matched.get();
+    }
+
+    public BooleanProperty matchedProperty() {
+        return matched;
+    }
+
+    public void setMatched(boolean matched) {
+        this.matched.set(matched);
     }
 
     @Override

@@ -15,18 +15,19 @@
          <children>
             <TableView fx:id="gameTable" prefHeight="200.0" prefWidth="200.0">
               <columns>
+                  <TableColumn fx:id="matchGameColumn" prefWidth="50.0" text="Match" />
                 <TableColumn fx:id="gameNameColumn" maxWidth="1000.0" prefWidth="199.0" resizable="false" text="Game" />
               </columns>
             </TableView>
             <TableView fx:id="trainerTable" prefHeight="200.0" prefWidth="200.0">
               <columns>
-                  <TableColumn fx:id="trainerStatusColumn" prefWidth="50.0" text="Status" />
+                  <TableColumn fx:id="trainerStatusColumn" prefWidth="40.0" text="Valid" />
                 <TableColumn fx:id="trainerDescriptionColumn" prefWidth="199.0" resizable="false" text="Trainer" />
               </columns>
             </TableView>
             <TableView fx:id="pokeTable" editable="true" prefHeight="200.0" prefWidth="200.0">
               <columns>
-                  <TableColumn fx:id="pokeStatusColumn" prefWidth="50.0" text="Status" />
+                  <TableColumn fx:id="pokeStatusColumn" prefWidth="40.0" text="Valid" />
                 <TableColumn fx:id="pokeAddressColumn" prefWidth="60.0" resizable="false" text="Address" />
                   <TableColumn fx:id="pokeValueColumn" prefWidth="100.0" resizable="false" text="Value" />
               </columns>

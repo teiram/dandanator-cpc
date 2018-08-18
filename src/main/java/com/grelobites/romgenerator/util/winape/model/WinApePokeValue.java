@@ -23,6 +23,12 @@ public class WinApePokeValue {
         return poke;
     }
 
+    public static WinApePokeValue fromValues(Integer[] values) {
+        WinApePokeValue poke = new WinApePokeValue();
+        poke.values = values;
+        return poke;
+    }
+
     public static WinApePokeValue fromString(String candidate) {
         WinApePokeValue poke = new WinApePokeValue();
         String[] stringValues = candidate.split(PokConstants.POKE_SEPARATOR);
