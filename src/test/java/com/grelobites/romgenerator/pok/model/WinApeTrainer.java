@@ -1,6 +1,5 @@
 package com.grelobites.romgenerator.pok.model;
 
-import com.grelobites.romgenerator.model.Trainer;
 import com.grelobites.romgenerator.pok.PokInputStream;
 
 import java.io.IOException;

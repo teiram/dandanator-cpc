@@ -18,7 +18,6 @@ import com.grelobites.romgenerator.util.winape.model.WinApePokeValue;
 import com.grelobites.romgenerator.util.winape.model.WinApeTrainer;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableBooleanValue;
