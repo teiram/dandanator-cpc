@@ -36,7 +36,7 @@ public class WinApePokeDatabase {
     }
 
     public WinApeGame search(String key) {
-        return games.ceilingEntry(key).getValue();
+        return games.floorEntry(key).getValue();
     }
 
     public WinApeGame firstGame() {
