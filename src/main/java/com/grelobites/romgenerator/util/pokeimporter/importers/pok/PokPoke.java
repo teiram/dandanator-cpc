@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * <p>
  * All values are decimal, separation is done by one or more spaces.
  * <p>
- * The field 'bbb' (128K memory bank) is built from
+ * The field 'bbb' (128K peripheral bank) is built from
  * bit 0-2 : bank value
  * 3 : ignore bank (1=yes, always set for 48K games)
  * <p>

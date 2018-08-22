@@ -96,7 +96,7 @@ public class SnaFactory {
                         createSnaChunk(game, new int[]{4, 5, 6, 7}, SnaChunk.CHUNK_MEM1));
             }
         } else {
-            throw new IllegalArgumentException("Illegal memory dump size");
+            throw new IllegalArgumentException("Illegal peripheral dump size");
         }
         return snaImage;
     }

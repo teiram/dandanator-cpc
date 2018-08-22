@@ -395,7 +395,7 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
             this.memory = new byte[memoryDumpSize * 1024];
             buffer.get(this.memory);
         } else {
-            LOGGER.warn("Overriding memory size on buffer underrun");
+            LOGGER.warn("Overriding peripheral size on buffer underrun");
             this.memoryDumpSize = 0;
         }
 

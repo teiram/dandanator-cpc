@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.memory;
+package com.grelobites.romgenerator.util.emulator.peripheral;
 
 public class GateArray {
     private static final int BANK_SIZE = 0x4000;

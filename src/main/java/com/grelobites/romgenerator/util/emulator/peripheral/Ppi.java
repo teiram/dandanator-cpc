@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator;
+package com.grelobites.romgenerator.util.emulator.peripheral;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +41,7 @@ public class Ppi {
     private boolean refreshRate50Hz = true;
     private boolean vSyncActive = false;
     private int vendor = 0x7; //Amstrad
+    private int portACurrentValue = 0;
 
     public int getSelectedPsgRegister() {
         return selectedPsgRegister;
@@ -140,18 +141,7 @@ public class Ppi {
 
     public void portAOutput(int value) {
         if (!portAInputDirection) {
-            switch (psgFunction) {
-                case SELECT:
-                    selectedPsgRegister = value;
-                    break;
-                case WRITE:
-                    psgRegisterData[selectedPsgRegister] =
-                            Integer.valueOf(value).byteValue();
-                    break;
-                default:
-                    LOGGER.debug("Unexpected function on output to PSG");
-
-            }
+            portACurrentValue = value;
         }
     }
 
@@ -172,11 +162,24 @@ public class Ppi {
                 (vSyncActive ? 1 : 0);
     }
 
+    private void applyPsgFunction() {
+        switch (psgFunction) {
+            case SELECT:
+                selectedPsgRegister = portACurrentValue;
+                break;
+            case READ:
+                portACurrentValue = psgRegisterData[selectedPsgRegister];
+                break;
+            case WRITE:
+                psgRegisterData[selectedPsgRegister] = (byte) portACurrentValue;
+        }
+    }
     public void portCOutput(int value) {
         psgFunction = PsgFunction.fromId((value & 0xC0) >> 6);
         keyboardLineToScan = value & 0x0F;
         casseteDataOutput = (value & 0x20) != 0;
         motorOn = (value & 0x10) != 0;
+        applyPsgFunction();
     }
 
     public void controlOutput(int value) {
@@ -190,6 +193,7 @@ public class Ppi {
                 psgFunction = clear ?
                         PsgFunction.fromId(psgFunction.id() & ~(1 << (bitToSet - 5))) :
                         PsgFunction.fromId(psgFunction.id() | (1 << (bitToSet - 5)));
+                applyPsgFunction();
             } else if (bitToSet == 5) {
                 casseteDataOutput = clear;
             } else if (bitToSet == 4) {

@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.memory;
+package com.grelobites.romgenerator.util.emulator.peripheral;
 
 import com.grelobites.romgenerator.util.emulator.Memory;
 

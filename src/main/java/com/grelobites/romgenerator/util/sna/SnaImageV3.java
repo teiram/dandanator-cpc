@@ -315,7 +315,7 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
                 ", psgSelectedRegisterIndex=" + psgSelectedRegisterIndex +
                 ", psgRegisterData=" + Util.dumpAsHexString(psgRegisterData) +
                 ", memoryDumpSize=" + memoryDumpSize +
-                ", memory.length=" + (memory != null ? memory.length : 0) +
+                ", peripheral.length=" + (memory != null ? memory.length : 0) +
                 ", snaChunks.size=" + snaChunks.size() +
                 '}';
     }

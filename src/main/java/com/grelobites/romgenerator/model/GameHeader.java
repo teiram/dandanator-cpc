@@ -369,7 +369,7 @@ public class GameHeader {
             } else if (SnaChunk.CHUNK_MEM1.equals(chunkEntry.getKey())) {
                 imageSize += mem1Declared ? 0 : 64;
             } else if (chunkEntry.getKey().startsWith("MEM")) {
-                LOGGER.warn("Unsupported SNA with extra memory definitions");
+                LOGGER.warn("Unsupported SNA with extra peripheral definitions");
                 throw new IllegalArgumentException("SNA with RAM expansions");
             }
         }

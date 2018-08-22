@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator;
+package com.grelobites.romgenerator.util.emulator.peripheral;
 
 /*
  * CRTC types 3 and 4 are not emulated properly regarding read capabilities

@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator;
+package com.grelobites.romgenerator.util.emulator.peripheral;
 
 public class Crtc {
     private static final int NUM_REGISTERS = 18;

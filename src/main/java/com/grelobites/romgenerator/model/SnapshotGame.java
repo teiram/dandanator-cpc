@@ -97,7 +97,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
 
 	public int getScreenSlot() {
         int index = getScreenPage() / Constants.SLOT_SIZE;
-        LOGGER.debug("Index in memory configuration is {}, current RAM configuration is {}",
+        LOGGER.debug("Index in peripheral configuration is {}, current RAM configuration is {}",
                 index, gameHeader.getCurrentRamConfiguration());
         //Upper bits in RAM configuration sets the type of RAM extension, ignore them
         /*

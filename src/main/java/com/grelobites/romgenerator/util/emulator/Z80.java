@@ -23,7 +23,7 @@
  *          15/01/2008 faltaban los flags de las instrucciones IN r,(C).
  *
  *          03/12/2008 se descomponen las instrucciones para poder
- *          implementar la contended-memory del Spectrum.
+ *          implementar la contended-peripheral del Spectrum.
  *
  *          21/09/2009 modificación a lo bestia del emulador. Los flags
  *          se convierten de boolean a bits en un int. El único

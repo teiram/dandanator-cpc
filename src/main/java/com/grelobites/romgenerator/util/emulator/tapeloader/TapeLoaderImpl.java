@@ -2,16 +2,16 @@ package com.grelobites.romgenerator.util.emulator.tapeloader;
 
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.util.emulator.Clock;
-import com.grelobites.romgenerator.util.emulator.Crtc;
-import com.grelobites.romgenerator.util.emulator.CrtcType;
-import com.grelobites.romgenerator.util.emulator.Ppi;
+import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
+import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
+import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import com.grelobites.romgenerator.util.emulator.RomResources;
 import com.grelobites.romgenerator.util.emulator.TapePlayer;
 import com.grelobites.romgenerator.util.emulator.TapeLoader;
 import com.grelobites.romgenerator.util.emulator.Z80;
 import com.grelobites.romgenerator.util.emulator.Z80operations;
-import com.grelobites.romgenerator.util.emulator.memory.CpcMemory;
-import com.grelobites.romgenerator.util.emulator.memory.GateArray;
+import com.grelobites.romgenerator.util.emulator.peripheral.CpcMemory;
+import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +20,13 @@ import java.io.InputStream;
 
 public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
+    private static final int CPU_HZ = 4000000;
+    private static final int VSYNC_HZ = 50;
+    private static final int VSYNC_TSTATES = CPU_HZ / VSYNC_HZ;
+    private static final int HSYNC_TSTATES = 64 * 4; // 64 microseconds
+    private static final int INTERRUPT_HSYNC_COUNT = 52;
+    private static final int INTERRUPT_TSTATES = HSYNC_TSTATES * INTERRUPT_HSYNC_COUNT;
+    private static final int HSYNC_32_DELAY = HSYNC_TSTATES * 32;
 
     private final RomResources romResources;
     private final GateArray gateArray;
@@ -127,6 +134,27 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             LOGGER.debug("Unhandled I/O OUT Operation on port {}",
                     String.format("%04x", port));
         }
+    }
+
+    protected void executeFrame() {
+        long vsync_tstates = clock.getTstates() + VSYNC_TSTATES;
+        long lastInterruptTstates = 0;
+        while (clock.getTstates() < vsync_tstates) {
+            long toNextInterrupt = clock.getTstates() + INTERRUPT_TSTATES;
+            z80.execute(toNextInterrupt);
+            if (!z80.isINTLine() &&
+                    (clock.getTstates() - lastInterruptTstates) > HSYNC_32_DELAY) {
+                boolean preIFF1 = z80.isIFF1();
+                z80.setINTLine(true);
+                lastInterruptTstates = clock.getTstates();
+                z80.execute();
+                boolean asserted = preIFF1 != z80.isIFF1();
+                if (asserted) {
+                    z80.setINTLine(false);
+                }
+            }
+        }
+        z80.setINTLine(false);
     }
 
     @Override
