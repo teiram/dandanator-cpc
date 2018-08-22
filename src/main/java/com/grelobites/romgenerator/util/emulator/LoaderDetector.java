@@ -7,13 +7,13 @@ public class LoaderDetector {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoaderDetector.class);
     private long lastTstates = 0;
     private int lastB = 0;
-    private final Tape tape;
+    private final TapePlayer tapePlayer;
     private final Clock clock;
     private int successiveReads;
 
-    public LoaderDetector(Tape tape) {
-        this.tape = tape;
-        this.clock = tape.getClock();
+    public LoaderDetector(TapePlayer tapePlayer) {
+        this.tapePlayer = tapePlayer;
+        this.clock = tapePlayer.getClock();
     }
 
     public void reset() {
@@ -22,20 +22,20 @@ public class LoaderDetector {
     }
 
     public void onAudioInput(Z80 processor) {
-        if (!tape.isEOT()) {
+        if (!tapePlayer.isEOT()) {
             long tstatesDelta = clock.getTstates() - lastTstates;
             int bdiff = (processor.getRegB() - lastB) & 0xff;
 
             //LOGGER.debug("On audio detector with bdiff " + bdiff + " and tstatesDelta " + tstatesDelta);
-            if (tape.isPlaying()) {
+            if (tapePlayer.isPlaying()) {
                 if (tstatesDelta > 1000 ||
                         (bdiff != 1 && bdiff != 0 && bdiff != 0xff)) {
                     successiveReads++;
                     if (successiveReads >= 2) {
-                        LOGGER.debug("LoaderDetector stops tape " + tape
+                        LOGGER.debug("LoaderDetector stops tapePlayer " + tapePlayer
                                 + " on tstatesDelta "
                                 + tstatesDelta + ", bdiff " + bdiff);
-                        tape.stop();
+                        tapePlayer.stop();
                     }
                 } else {
                     successiveReads = 0;
@@ -44,10 +44,10 @@ public class LoaderDetector {
                 if (tstatesDelta <= 500 && (bdiff == 1 || bdiff == 0xff)) {
                     successiveReads++;
                     if (successiveReads >= 10) {
-                        LOGGER.debug("LoaderDetector starts tape " + tape
+                        LOGGER.debug("LoaderDetector starts tapePlayer " + tapePlayer
                                 + " on tstatesDelta "
                                 + tstatesDelta + ", bdiff " + bdiff);
-                        tape.play();
+                        tapePlayer.play();
                     }
                 } else {
                     successiveReads = 0;

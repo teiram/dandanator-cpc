@@ -1,0 +1,205 @@
+package com.grelobites.romgenerator.util.emulator;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class Ppi {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Ppi.class);
+    private enum PsgFunction {
+        NONE(0),
+        READ(1),
+        WRITE(2),
+        SELECT(3);
+        private int id;
+
+        PsgFunction(int id) {
+            this.id = id;
+        }
+        public int id() {
+            return id;
+        }
+        public static PsgFunction fromId(int id) {
+            for (PsgFunction f : PsgFunction.values()) {
+                if (f.id == id) {
+                    return f;
+                }
+            }
+            throw new IllegalArgumentException("Unexisting PSG function: " + id);
+        }
+    }
+
+    private PsgFunction psgFunction = PsgFunction.NONE;
+    private int selectedPsgRegister;
+    private byte[] psgRegisterData = new byte[16];
+    private boolean motorOn = false;
+    private int keyboardLineToScan;
+    private boolean casseteDataOutput;
+    private boolean expansionPortAsserted = false;
+    private boolean printerBusy = false;
+    private boolean casseteDataInput;
+    private boolean portAInputDirection = false;
+    private boolean refreshRate50Hz = true;
+    private boolean vSyncActive = false;
+    private int vendor = 0x7; //Amstrad
+
+    public int getSelectedPsgRegister() {
+        return selectedPsgRegister;
+    }
+
+    public void setSelectedPsgRegister(int selectedPsgRegister) {
+        this.selectedPsgRegister = selectedPsgRegister;
+    }
+
+    public byte[] getPsgRegisterData() {
+        return psgRegisterData;
+    }
+
+    public void setPsgRegisterData(byte[] psgRegisterData) {
+        this.psgRegisterData = psgRegisterData;
+    }
+
+    public boolean isMotorOn() {
+        return motorOn;
+    }
+
+    public void setMotorOn(boolean motorOn) {
+        this.motorOn = motorOn;
+    }
+
+    public int getKeyboardLineToScan() {
+        return keyboardLineToScan;
+    }
+
+    public void setKeyboardLineToScan(int keyboardLineToScan) {
+        this.keyboardLineToScan = keyboardLineToScan;
+    }
+
+    public boolean isCasseteDataOutput() {
+        return casseteDataOutput;
+    }
+
+    public void setCasseteDataOutput(boolean casseteDataOutput) {
+        this.casseteDataOutput = casseteDataOutput;
+    }
+
+    public boolean isExpansionPortAsserted() {
+        return expansionPortAsserted;
+    }
+
+    public void setExpansionPortAsserted(boolean expansionPortAsserted) {
+        this.expansionPortAsserted = expansionPortAsserted;
+    }
+
+    public boolean isPrinterBusy() {
+        return printerBusy;
+    }
+
+    public void setPrinterBusy(boolean printerBusy) {
+        this.printerBusy = printerBusy;
+    }
+
+    public boolean isCasseteDataInput() {
+        return casseteDataInput;
+    }
+
+    public void setCasseteDataInput(boolean casseteDataInput) {
+        this.casseteDataInput = casseteDataInput;
+    }
+
+    public boolean isPortAInputDirection() {
+        return portAInputDirection;
+    }
+
+    public void setPortAInputDirection(boolean portAInputDirection) {
+        this.portAInputDirection = portAInputDirection;
+    }
+
+    public boolean isRefreshRate50Hz() {
+        return refreshRate50Hz;
+    }
+
+    public void setRefreshRate50Hz(boolean refreshRate50Hz) {
+        this.refreshRate50Hz = refreshRate50Hz;
+    }
+
+    public boolean isvSyncActive() {
+        return vSyncActive;
+    }
+
+    public void setvSyncActive(boolean vSyncActive) {
+        this.vSyncActive = vSyncActive;
+    }
+
+    public int getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(int vendor) {
+        this.vendor = vendor;
+    }
+
+    public void portAOutput(int value) {
+        if (!portAInputDirection) {
+            switch (psgFunction) {
+                case SELECT:
+                    selectedPsgRegister = value;
+                    break;
+                case WRITE:
+                    psgRegisterData[selectedPsgRegister] =
+                            Integer.valueOf(value).byteValue();
+                    break;
+                default:
+                    LOGGER.debug("Unexpected function on output to PSG");
+
+            }
+        }
+    }
+
+    public int portAInput() {
+        if (portAInputDirection) {
+            return psgRegisterData[selectedPsgRegister];
+        } else {
+            return 0; //Right?
+        }
+    }
+
+    public int portBInput() {
+        return ((casseteDataInput ? 1 : 0) << 7) |
+                ((printerBusy ? 1 : 0) << 6) |
+                ((expansionPortAsserted ? 0 : 1) << 5) |
+                ((refreshRate50Hz ? 1 : 0) << 4) |
+                (vendor << 1) |
+                (vSyncActive ? 1 : 0);
+    }
+
+    public void portCOutput(int value) {
+        psgFunction = PsgFunction.fromId((value & 0xC0) >> 6);
+        keyboardLineToScan = value & 0x0F;
+        casseteDataOutput = (value & 0x20) != 0;
+        motorOn = (value & 0x10) != 0;
+    }
+
+    public void controlOutput(int value) {
+        if ((value & 0x80) != 0) {
+            portAInputDirection = (value & 0x10) != 0;
+        } else {
+            int bitToSet = (value >> 1) & 0x7;
+            boolean clear = (value & 0x1) == 0;
+            if (bitToSet > 5) {
+                //Recalculate PSG function
+                psgFunction = clear ?
+                        PsgFunction.fromId(psgFunction.id() & ~(1 << (bitToSet - 5))) :
+                        PsgFunction.fromId(psgFunction.id() | (1 << (bitToSet - 5)));
+            } else if (bitToSet == 5) {
+                casseteDataOutput = clear;
+            } else if (bitToSet == 4) {
+                motorOn = clear;
+            } else {
+                keyboardLineToScan = clear ?
+                        keyboardLineToScan & ~(1 << bitToSet) :
+                        keyboardLineToScan | (1 << bitToSet);
+            }
+        }
+    }
+
+}

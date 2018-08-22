@@ -9,7 +9,4 @@ public interface Memory {
 
     void poke16(int address, int word);
 
-    void load(byte[] data, int srcPos, int address, int size);
-
-    byte[] asByteArray();
 }
