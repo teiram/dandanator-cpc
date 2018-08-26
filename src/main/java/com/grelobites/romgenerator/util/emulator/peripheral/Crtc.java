@@ -2,7 +2,7 @@ package com.grelobites.romgenerator.util.emulator.peripheral;
 
 public class Crtc {
     private static final int NUM_REGISTERS = 18;
-    private int[] crtcRegisterData = new int[NUM_REGISTERS];
+    private byte[] crtcRegisterData = new byte[NUM_REGISTERS];
     private int statusRegister = 0;
     private int selectedRegister;
     private CrtcType crtcType;
@@ -20,7 +20,7 @@ public class Crtc {
     }
 
     public void onWriteRegisterOperation(int value) {
-        crtcRegisterData[selectedRegister] = value;
+        crtcRegisterData[selectedRegister] = (byte) value;
     }
 
     public int onReadStatusRegisterOperation() {
@@ -40,8 +40,21 @@ public class Crtc {
                 crtcRegisterData[selectedRegister] : 0;
     }
 
-    public int[] getCrtcRegisterData() {
+    public byte[] getCrtcRegisterData() {
         return crtcRegisterData;
+    }
+
+    public void setCrtcRegisterData(byte[] data) {
+        System.arraycopy(data, 0, crtcRegisterData, 0,
+                Math.min(data.length, NUM_REGISTERS));
+    }
+
+    public int getSelectedRegister() {
+        return selectedRegister;
+    }
+
+    public void setSelectedRegister(int value) {
+        this.selectedRegister = value;
     }
 
 }

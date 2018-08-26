@@ -1,12 +1,20 @@
 package com.grelobites.romgenerator.util.emulator.tapeloader;
 
 import com.grelobites.romgenerator.model.Game;
+import com.grelobites.romgenerator.model.GameHeader;
+import com.grelobites.romgenerator.model.GameType;
+import com.grelobites.romgenerator.model.HardwareMode;
+import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
+import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
+import com.grelobites.romgenerator.util.emulator.Z80State;
 import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
 import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import com.grelobites.romgenerator.util.emulator.RomResources;
-import com.grelobites.romgenerator.util.emulator.TapePlayer;
+import com.grelobites.romgenerator.util.gameloader.GameImageLoaderFactory;
+import com.grelobites.romgenerator.util.gameloader.GameImageType;
+import com.grelobites.romgenerator.util.tape.CDTTapePlayer;
 import com.grelobites.romgenerator.util.emulator.TapeLoader;
 import com.grelobites.romgenerator.util.emulator.Z80;
 import com.grelobites.romgenerator.util.emulator.Z80operations;
@@ -32,32 +40,170 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private final GateArray gateArray;
     private final Z80 z80;
     private final Clock clock;
-    private final TapePlayer tapePlayer;
+    private final CDTTapePlayer tapePlayer;
     private final Crtc crtc;
     private final Ppi ppi;
     private final CpcMemory memory;
+    private final HardwareMode hardwareMode;
+    private int upperRomNumber = 0;
 
     private void loadRoms() throws IOException {
         memory.loadLowRom(romResources.lowRom());
         memory.loadHighRom(romResources.highRom());
     }
 
-    public TapeLoaderImpl(RomResources romResources) throws IOException {
+    public TapeLoaderImpl(HardwareMode hardwareMode,
+                          RomResources romResources) throws IOException {
         this.romResources = romResources;
         clock = new Clock();
+        this.hardwareMode = hardwareMode;
         z80 = new Z80(clock, this);
-        tapePlayer = new TapePlayer(clock, true);
+        ppi = new Ppi();
         gateArray = GateArray.newBuilder()
                 .withCpc464DefaultValues().build();
-        memory = new CpcMemory(gateArray);
         crtc = new Crtc(CrtcType.CRTC_TYPE_1);
-        ppi = new Ppi();
+        memory = new CpcMemory(gateArray);
+        tapePlayer = new CDTTapePlayer(clock, ppi, true);
         loadRoms();
+    }
+
+    protected static Z80.IntMode fromOrdinal(int mode) {
+        switch (mode) {
+            case 0:
+                return Z80.IntMode.IM0;
+            case 1:
+                return Z80.IntMode.IM1;
+            case 2:
+                return Z80.IntMode.IM2;
+        }
+        throw new IllegalArgumentException("Invalid Interrupt mode: " + mode);
+    }
+
+    private Z80State getZ80State(GameHeader header) {
+        Z80State z80State = new Z80State();
+        z80State.setRegAF(header.getAfRegister());
+        z80State.setRegBC(header.getBcRegister());
+        z80State.setRegDE(header.getDeRegister());
+        z80State.setRegHL(header.getHlRegister());
+        z80State.setRegIX(header.getIxRegister());
+        z80State.setRegIY(header.getIyRegister());
+        z80State.setRegI(header.getiRegister());
+        z80State.setRegR(header.getrRegister());
+        z80State.setRegPC(header.getPc());
+        z80State.setRegSP(header.getSp());
+        z80State.setIFF1(header.getIff0() != 0);
+        z80State.setIM(fromOrdinal(header.getInterruptMode()));
+        z80State.setRegAFx(header.getAltAfRegister());
+        z80State.setRegBCx(header.getAltBcRegister());
+        z80State.setRegDEx(header.getAltDeRegister());
+        z80State.setRegHLx(header.getAltHlRegister());
+        return z80State;
+    }
+
+    private void loadSnapshot() throws IOException {
+        SnapshotGame game = (SnapshotGame) GameImageLoaderFactory.getLoader(
+                GameImageType.SNA).load(TapeLoaderImpl.class
+                .getResourceAsStream("/emulator/464.loader.sna"));
+
+        GameHeader header = game.getGameHeader();
+        z80.setZ80State(getZ80State(game.getGameHeader()));
+
+        gateArray.setSelectedPen(header.getGateArraySelectedPen());
+        gateArray.setPalette(header.getGateArrayCurrentPalette());
+        gateArray.setScreenModeAndRomConfigurationRegister(
+                header.getGateArrayMultiConfiguration());
+        gateArray.setRamBankingRegister(
+                header.getCurrentRamConfiguration());
+
+        crtc.setSelectedRegister(header.getCrtcSelectedRegisterIndex());
+        crtc.setCrtcRegisterData(header.getCrtcRegisterData());
+
+        upperRomNumber = header.getCurrentRomSelection();
+
+        ppi.setPortACurrentValue(header.getPpiPortA());
+        ppi.setPortBCurrentValue(header.getPpiPortB());
+        ppi.setPortCCurrentValue(header.getPpiPortC());
+        ppi.setControlCurrentValue(header.getPpiControlPort());
+        ppi.setSelectedPsgRegister(header.getPsgSelectedRegisterIndex());
+        ppi.setPsgRegisterData(header.getPsgRegisterData());
+
+        //TODO: Set memory
+        LOGGER.debug("Setting memory from Snapshot with {} slots",
+                game.getSlotCount());
+        for (int i = 0; i < game.getSlotCount(); i++) {
+            memory.loadRamBank(game.getSlot(i), i);
+        }
+
+    }
+    private GameHeader getGameHeader() {
+        GameHeader header = new GameHeader();
+        Z80State z80State = z80.getZ80State();
+
+        header.setAfRegister(z80State.getRegAF());
+        header.setBcRegister(z80State.getRegBC());
+        header.setDeRegister(z80State.getRegDE());
+        header.setHlRegister(z80State.getRegHL());
+        header.setIxRegister(z80State.getRegIX());
+        header.setIyRegister(z80State.getRegIY());
+        header.setiRegister(z80State.getRegI());
+        header.setrRegister(z80State.getRegR());
+        header.setPc(z80State.getRegPC());
+        header.setSp(z80State.getRegSP());
+        header.setIff0(z80State.isIFF1() ? 1 : 0); //Check
+        header.setInterruptMode(z80State.getIM().ordinal());
+        header.setAltAfRegister(z80State.getRegAFx());
+        header.setAltBcRegister(z80State.getRegBCx());
+        header.setAltDeRegister(z80State.getRegDEx());
+        header.setAltHlRegister(z80State.getRegHLx());
+
+        header.setGateArraySelectedPen(gateArray.getSelectedPen());
+        header.setGateArrayCurrentPalette(gateArray.getPalette());
+        header.setGateArrayMultiConfiguration(gateArray
+                .getScreenModeAndRomConfigurationRegister()); //Check
+
+        header.setCurrentRamConfiguration(gateArray.getRamBankingRegister()); //Check
+
+        header.setCrtcSelectedRegisterIndex(crtc.getSelectedRegister());
+        header.setCrtcRegisterData(crtc.getCrtcRegisterData());
+
+        header.setCurrentRomSelection(upperRomNumber);
+
+        header.setPpiPortA(ppi.getPortACurrentValue());
+        header.setPpiPortB(ppi.getPortBCurrentValue());
+        header.setPpiPortC(ppi.getPortCCurrentValue());
+        header.setPpiControlPort(ppi.getControlCurrentValue());
+
+        header.setPsgSelectedRegisterIndex(ppi.getSelectedPsgRegister());
+        header.setPsgRegisterData(ppi.getPsgRegisterData());
+
+        header.setMemoryDumpSize(gateArray.hasRamBanking() ? 64 : 128);
+        header.setCpcType(hardwareMode.snaValue());
+        return header;
+    }
+
+    private SnapshotGame toSnapshotGame() {
+        SnapshotGame game = new SnapshotGame(memory.getRamSize() == 65536 ?
+                GameType.RAM64 : GameType.RAM128,
+                memory.toByteArrayList());
+        game.setGameHeader(getGameHeader());
+        return game;
     }
 
     @Override
     public Game loadTape(InputStream tapeFile) {
-        return null;
+        tapePlayer.insert(tapeFile);
+        while (!ppi.isMotorOn()) {
+            executeFrame();
+        }
+        try {
+            while (!tapePlayer.isEOT() && ppi.isMotorOn()) {
+                executeFrame();
+            }
+        } catch (TapeFinishedException tfe) {
+            LOGGER.debug("Tape finished with cpu status " + z80.getZ80State(), tfe);
+        }
+        tapePlayer.stop();
+        return toSnapshotGame();
     }
 
     @Override
@@ -130,6 +276,9 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         } else if ((port & 0xFF00) == 0xF700) {
             LOGGER.debug("Ppi Control Port OUT");
             ppi.controlOutput(value);
+        } else if ((port & 0xDF00) == 0xD000) {
+            LOGGER.debug("Selection of upper ROM number {}", value);
+            upperRomNumber = value;
         } else {
             LOGGER.debug("Unhandled I/O OUT Operation on port {}",
                     String.format("%04x", port));

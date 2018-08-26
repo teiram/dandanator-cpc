@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.emulator;
 
+import com.grelobites.romgenerator.util.tape.CDTTapePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,11 +8,11 @@ public class LoaderDetector {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoaderDetector.class);
     private long lastTstates = 0;
     private int lastB = 0;
-    private final TapePlayer tapePlayer;
+    private final CDTTapePlayer tapePlayer;
     private final Clock clock;
     private int successiveReads;
 
-    public LoaderDetector(TapePlayer tapePlayer) {
+    public LoaderDetector(CDTTapePlayer tapePlayer) {
         this.tapePlayer = tapePlayer;
         this.clock = tapePlayer.getClock();
     }

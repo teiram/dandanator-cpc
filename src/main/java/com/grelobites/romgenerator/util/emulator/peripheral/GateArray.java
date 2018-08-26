@@ -18,16 +18,15 @@ public class GateArray {
     private static final int RAM_BANKING_FN = 3;
 
 
-    private int[] palette = new int[17];
-
+    private byte[] palette = new byte[17];
     private Integer ramBankingRegister;
     private int screenModeAndRomConfigurationRegister;
-
     private int selectedPen;
 
     public static Builder newBuilder() {
         return new Builder();
     }
+
 
     public static class Builder {
         GateArray gateArray = new GateArray();
@@ -74,8 +73,37 @@ public class GateArray {
         return ramBankingRegister != null;
     }
 
-    public int[] getPalette() {
+    public void setPalette(byte[] palette) {
+        System.arraycopy(palette, 0, this.palette,
+                0, Math.min(palette.length, this.palette.length));
+    }
+
+    public byte[] getPalette() {
         return palette;
+    }
+
+    public void setSelectedPen(int selectedPen) {
+        this.selectedPen = selectedPen;
+    }
+
+    public int getSelectedPen() {
+        return selectedPen;
+    }
+
+    public int getScreenModeAndRomConfigurationRegister() {
+        return screenModeAndRomConfigurationRegister;
+    }
+
+    public void setScreenModeAndRomConfigurationRegister(int value) {
+        this.screenModeAndRomConfigurationRegister = value;
+    }
+
+    public int getRamBankingRegister() {
+        return ramBankingRegister != null ? ramBankingRegister : 0;
+    }
+
+    public void setRamBankingRegister(int value) {
+        this.ramBankingRegister = value;
     }
 
     private static int decodeSelectedPen(int value) {
@@ -91,7 +119,7 @@ public class GateArray {
                 selectedPen = decodeSelectedPen(value);
                 break;
             case PALETTE_DATA_FN:
-                palette[selectedPen] = value & 0x1f;
+                palette[selectedPen] = (byte) (value & 0x1f);
                 break;
             case SCREEN_MODE_AND_ROM_CFG_FN:
                 screenModeAndRomConfigurationRegister = value;

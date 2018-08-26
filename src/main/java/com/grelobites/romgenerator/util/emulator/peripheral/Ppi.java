@@ -42,6 +42,9 @@ public class Ppi {
     private boolean vSyncActive = false;
     private int vendor = 0x7; //Amstrad
     private int portACurrentValue = 0;
+    private int portBCurrentValue;
+    private int portCCurrentValue;
+    private int controlCurrentValue;
 
     public int getSelectedPsgRegister() {
         return selectedPsgRegister;
@@ -103,6 +106,10 @@ public class Ppi {
         return casseteDataInput;
     }
 
+    public void changeCasseteDataInput() {
+        casseteDataInput = !casseteDataInput;
+    }
+
     public void setCasseteDataInput(boolean casseteDataInput) {
         this.casseteDataInput = casseteDataInput;
     }
@@ -139,6 +146,38 @@ public class Ppi {
         this.vendor = vendor;
     }
 
+    public int getPortACurrentValue() {
+        return portACurrentValue;
+    }
+
+    public void setPortACurrentValue(int value) {
+        this.portACurrentValue = value;
+    }
+
+    public int getPortBCurrentValue() {
+        return portBCurrentValue;
+    }
+
+    public void setPortBCurrentValue(int value) {
+        this.portBCurrentValue = value;
+    }
+
+    public int getPortCCurrentValue() {
+        return portCCurrentValue;
+    }
+
+    public void setPortCCurrentValue(int value) {
+        this.portCCurrentValue = value;
+    }
+
+    public int getControlCurrentValue() {
+        return controlCurrentValue;
+    }
+
+    public void setControlCurrentValue(int value) {
+        this.controlCurrentValue = value;
+    }
+
     public void portAOutput(int value) {
         if (!portAInputDirection) {
             portACurrentValue = value;
@@ -154,12 +193,13 @@ public class Ppi {
     }
 
     public int portBInput() {
-        return ((casseteDataInput ? 1 : 0) << 7) |
+        portBCurrentValue = ((casseteDataInput ? 1 : 0) << 7) |
                 ((printerBusy ? 1 : 0) << 6) |
                 ((expansionPortAsserted ? 0 : 1) << 5) |
                 ((refreshRate50Hz ? 1 : 0) << 4) |
                 (vendor << 1) |
                 (vSyncActive ? 1 : 0);
+        return portBCurrentValue;
     }
 
     private void applyPsgFunction() {
@@ -175,6 +215,7 @@ public class Ppi {
         }
     }
     public void portCOutput(int value) {
+        portCCurrentValue = value;
         psgFunction = PsgFunction.fromId((value & 0xC0) >> 6);
         keyboardLineToScan = value & 0x0F;
         casseteDataOutput = (value & 0x20) != 0;
@@ -183,6 +224,7 @@ public class Ppi {
     }
 
     public void controlOutput(int value) {
+        controlCurrentValue = value;
         if ((value & 0x80) != 0) {
             portAInputDirection = (value & 0x10) != 0;
         } else {

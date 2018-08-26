@@ -1,6 +1,11 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
+import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.util.emulator.Memory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class CpcMemory implements Memory {
     private static final int BANK_SIZE = 0x4000;
@@ -57,6 +62,19 @@ public class CpcMemory implements Memory {
         poke8(address + 1, word >>> 8);
     }
 
+    public void loadRamBank(byte[] source, int slot) {
+        if (slot < ramBanks.length) {
+            if (source.length == BANK_SIZE) {
+                System.arraycopy(source, 0, ramBanks[slot], 0,
+                        BANK_SIZE);
+            } else {
+                throw new IllegalArgumentException("Only 16K blocks can be loaded");
+            }
+        } else {
+            throw new IllegalArgumentException("Slot exceeds current RAM configuration");
+        }
+    }
+
     private void loadRom(byte[] source, int romId) {
         System.arraycopy(source, 0, romBanks[romId], 0, BANK_SIZE);
     }
@@ -69,4 +87,18 @@ public class CpcMemory implements Memory {
         loadRom(source, HIGH_ROM);
     }
 
+    public int getRamSize() {
+        return ramBanks.length * BANK_SIZE;
+    }
+
+    public List<byte[]> toByteArrayList() {
+        List<byte[]> banks = new ArrayList<>();
+        for (int i = 0; i < ramBanks.length; i++) {
+            //Detach the banks from the current RAM representation
+            byte[] ramCopy = new byte[BANK_SIZE];
+            System.arraycopy(ramBanks[i], 0, ramCopy, 0, BANK_SIZE);
+            banks.add(ramCopy);
+        }
+        return banks;
+    }
 }
