@@ -201,8 +201,15 @@ public class Ppi {
         }
     }
 
+    private void updatePsgRegisters() {
+        if (selectedPsgRegister == KEYSCAN_PSG_REGISTER) {
+            psgRegisterData[KEYSCAN_PSG_REGISTER] = keyStatus[keyboardLineToScan];
+        }
+    }
+
     public int portAInput() {
         if (portAInputDirection) {
+            updatePsgRegisters();
             return psgRegisterData[selectedPsgRegister];
         } else {
             return 0; //Right?
