@@ -9,6 +9,7 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameMapper;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.SlotZero;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.SlotZeroBase;
 import com.grelobites.romgenerator.model.Trainer;
+import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.PositionAwareInputStream;
 import com.grelobites.romgenerator.util.Util;
 import org.slf4j.Logger;
@@ -112,7 +113,7 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
                 + ", blocks " + compressedCharsetBlocks);
 
         screen = uncompress(zis, compressedScreenOffset, compressedScreenBlocks);
-        screenPalette = Arrays.copyOfRange(screen, 16384 - 17, 16384);
+        screenPalette = ImageUtil.embeddedPalette(screen);
 
         byte[] textData = uncompress(zis, compressedTextDataOffset, compressedTextDataBlocks);
         byte[] encodedCharset = uncompress(zis, compressedCharsetOffset, compressedCharsetBlocks);

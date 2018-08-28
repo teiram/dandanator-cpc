@@ -3,11 +3,12 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc.v1;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameBlock;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameChunk;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameMapper;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.GameType;
+import com.grelobites.romgenerator.model.MLDGame;
+import com.grelobites.romgenerator.model.MLDInfo;
 import com.grelobites.romgenerator.model.RomGame;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.model.TrainerList;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 public class GameMapperV1 implements GameMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(GameMapperV1.class);
@@ -47,6 +49,41 @@ public class GameMapperV1 implements GameMapper {
         return size > 0 && size < COMPRESSED_SLOT_MAXSIZE;
     }
 
+    private static void addGameSlots(PositionAwareInputStream is, GameMapperV1 mapper)
+            throws IOException {
+        for (int i = 0; i < 8; i++) {
+            GameBlock block = new GameBlock();
+            block.setInitSlot(is.read());
+            block.setStart(is.getAsLittleEndian());
+            block.setSize(is.getAsLittleEndian());
+            block.setGameCompressed(mapper.isGameCompressed);
+            block.setCompressed(mapper.isGameCompressed && isSlotCompressed(i, block.getSize()));
+            if (block.getInitSlot() < INVALID_SLOT_ID) {
+                LOGGER.debug("Read block for game " + mapper.name + ": " + block);
+                mapper.getBlocks().add(block);
+            }
+        }
+    }
+
+    private static void addMldGameSlots(PositionAwareInputStream is, GameMapperV1 mapper)
+            throws IOException {
+        int initSlot = is.read();
+        int start = is.getAsLittleEndian();
+        int numBlocks = is.getAsLittleEndian();
+        is.skip(5 * 7); //Skip the remaining 7 blocks
+        for (int i = 0; i < numBlocks; i++) {
+            GameBlock block = new GameBlock();
+            block.setInitSlot(initSlot++);
+            block.setSize(Constants.SLOT_SIZE);
+            block.setGameCompressed(false);
+            block.setCompressed(false);
+            if (block.getInitSlot() < INVALID_SLOT_ID) {
+                LOGGER.debug("Read block for game " + mapper.name + ": " + block);
+                mapper.getBlocks().add(block);
+            }
+        }
+    }
+
     public static GameMapperV1 fromRomSet(PositionAwareInputStream is, SlotZeroV1 slotZero) throws IOException {
         LOGGER.debug("About to read game data. Offset is " + is.position());
         GameMapperV1 mapper = new GameMapperV1(slotZero);
@@ -59,18 +96,12 @@ public class GameMapperV1 implements GameMapper {
 
         is.skip(2); //Active ROMS
         is.skip(V1Constants.GAME_LAUNCHCODE_SIZE);
-        for (int i = 0; i < 8; i++) {
-            GameBlock block = new GameBlock();
-            block.setInitSlot(is.read());
-            block.setStart(is.getAsLittleEndian());
-            block.setSize(is.getAsLittleEndian());
-            block.setGameCompressed(mapper.isGameCompressed);
-            block.setCompressed(mapper.isGameCompressed && isSlotCompressed(i, block.getSize()));
-            if (block.getInitSlot() < INVALID_SLOT_ID) {
-                LOGGER.debug("Read block for game {}", block);
-                mapper.getBlocks().add(block);
-            }
+        if (GameType.isMLD(mapper.gameType)) {
+            addMldGameSlots(is, mapper);
+        } else {
+            addGameSlots(is, mapper);
         }
+
         mapper.name = Util.getNullTerminatedString(is, 4, DandanatorCpcConstants.GAMENAME_SIZE);
 
         LOGGER.debug("Read game {} data. Offset is {}", mapper.name, is.position());
@@ -148,6 +179,16 @@ public class GameMapperV1 implements GameMapper {
                         snapshotGame.setCompressedData(getGameCompressedData());
                     }
                     game = snapshotGame;
+                    break;
+                case RAM128_MLD:
+                case RAM64_MLD:
+                    List<byte[]> gameSlots = getMLDGameSlots();
+                    Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(gameSlots);
+                    if (mldInfo.isPresent()) {
+                        game = new MLDGame(mldInfo.get(), gameSlots);
+                    } else {
+                        LOGGER.error("Unable to restore MLDGame from ROMSet. No MLDInfo found");
+                    }
                     break;
                 default:
                     LOGGER.error("Unsupported type of game " + gameType.screenName());

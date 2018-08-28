@@ -12,9 +12,12 @@ import java.io.OutputStream;
 public class TapGameImageLoader implements GameImageLoader {
     @Override
     public Game load(InputStream is) throws IOException {
+        /*
         TapeLoader tapeLoader = TapeLoaderFactory.getTapeLoader(
                 HardwareMode.valueOf(Configuration.getInstance().getTapLoaderTarget()));
         return tapeLoader.loadTape(is);
+        */
+        return null;
     }
 
     @Override

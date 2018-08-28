@@ -14,6 +14,7 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.view.DandanatorCpcFram
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameHeaderOffsets;
 import com.grelobites.romgenerator.model.GameType;
+import com.grelobites.romgenerator.model.MLDGame;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.CpcGradient;
@@ -194,6 +195,16 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         } else {
             blocks = game.getData();
         }
+        //For MLD games we encode the number of slots in the first CBlock. The rest set to FF
+        if (game instanceof MLDGame) {
+            int requiredSlots = game.getSlotCount(); //Since game.getSize() includes save space
+            int startOffset = offsets.forwardOffset - (requiredSlots * Constants.SLOT_SIZE);
+            LOGGER.debug("Writing MLD CBlock with offset {}", startOffset);
+            gameCBlocks.write(startOffset / Constants.SLOT_SIZE);
+            gameCBlocks.write(asLittleEndianWord(Constants.B_00));
+            gameCBlocks.write(asLittleEndianWord(requiredSlots));
+            offsets.forwardOffset = startOffset;
+        } else {
         for (byte[] block: blocks) {
             if (block != null) {
                 if (block.length < Constants.SLOT_SIZE) {
@@ -215,6 +226,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 LOGGER.debug("Writing empty CBlock");
                 gameCBlocks.write(EMPTY_CBLOCK);
             }
+        }
         }
 
         //Fill the remaining space with 0xFF
@@ -322,6 +334,32 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
+    private static int gameUncompressedSlotCount(Game game) throws IOException {
+        List<byte[]> blocks;
+        int count = 0;
+        if (game instanceof SnapshotGame && ((SnapshotGame) game).getCompressed()) {
+            SnapshotGame snapshotGame = (SnapshotGame) game;
+            blocks = snapshotGame.getCompressedData(ramGameCompressor);
+        } else {
+            blocks = game.getData();
+        }
+        for (byte[] block : blocks) {
+            if (block != null && block.length == Constants.SLOT_SIZE) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static int getUncompressedSlotCount(List<Game> games) throws IOException {
+        int value = 0;
+        for (Game game: games) {
+            value += gameUncompressedSlotCount(game);
+        }
+        LOGGER.debug("Total Number of uncompressed slots " + value);
+        return value;
+    }
+
     private void dumpUncompressedGameData(OutputStream os, Game game) throws IOException {
         if (isGameCompressed(game)) {
             //Dump only compressed slots with size == 16384
@@ -344,6 +382,18 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 }
             }
         }
+    }
+
+    private int dumpMLDGameData(OutputStream os, Game game, int lastMldSaveSector,
+                                int currentSlot) throws IOException {
+        MLDGame mldGame = (MLDGame) game;
+        mldGame.reallocate(currentSlot);
+        lastMldSaveSector = mldGame.allocateSaveSpace(lastMldSaveSector);
+
+        for (int i = 0; i < game.getSlotCount(); i++) {
+            os.write(game.getSlot(i));
+        }
+        return lastMldSaveSector;
     }
 
     @Override
@@ -437,11 +487,20 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 }
             }
 
+            int currentSlot = DandanatorCpcConstants.GAME_SLOTS + 1
+                    - getUncompressedSlotCount(games);
+
+            int lastMldSaveSector = (4 * currentSlot) - 1;
 
             ByteArrayOutputStream uncompressedStream = new ByteArrayOutputStream();
             for (int i = games.size() - 1; i >= 0; i--) {
                 Game game = games.get(i);
-                dumpUncompressedGameData(uncompressedStream, game);
+                if (game instanceof MLDGame) {
+                    lastMldSaveSector = dumpMLDGameData(uncompressedStream, game,
+                            lastMldSaveSector, currentSlot);
+                } else {
+                    dumpUncompressedGameData(uncompressedStream, game);
+                }
             }
 
             //Uncompressed data goes at the end minus the extra ROM size

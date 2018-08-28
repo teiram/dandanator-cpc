@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 public class ImageUtil {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ImageUtil.class);
@@ -206,5 +207,13 @@ public class ImageUtil {
         System.arraycopy(palette, 0, image, Constants.CPC_SCREEN_SIZE,
                 palette.length);
         return image;
+    }
+
+    public static byte[] embeddedPalette(byte[] screen) {
+	    if (screen.length == Constants.CPC_SCREEN_SIZE) {
+            return Arrays.copyOfRange(screen, 16384 - 17, 16384);
+        } else {
+	        throw new IllegalArgumentException("Screen of invalid size " + screen.length);
+        }
     }
 }
