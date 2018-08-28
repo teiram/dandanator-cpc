@@ -10,8 +10,9 @@ import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
 import com.grelobites.romgenerator.util.emulator.Z80State;
 import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
 import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
+import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
-import com.grelobites.romgenerator.util.emulator.RomResources;
+import com.grelobites.romgenerator.util.emulator.LoaderResources;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoaderFactory;
 import com.grelobites.romgenerator.util.gameloader.GameImageType;
 import com.grelobites.romgenerator.util.tape.CDTTapePlayer;
@@ -20,6 +21,7 @@ import com.grelobites.romgenerator.util.emulator.Z80;
 import com.grelobites.romgenerator.util.emulator.Z80operations;
 import com.grelobites.romgenerator.util.emulator.peripheral.CpcMemory;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
+import javafx.scene.input.KeyCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final int INTERRUPT_TSTATES = HSYNC_TSTATES * INTERRUPT_HSYNC_COUNT;
     private static final int HSYNC_32_DELAY = HSYNC_TSTATES * 32;
 
-    private final RomResources romResources;
+    private final LoaderResources loaderResources;
     private final GateArray gateArray;
     private final Z80 z80;
     private final Clock clock;
@@ -48,13 +50,13 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private int upperRomNumber = 0;
 
     private void loadRoms() throws IOException {
-        memory.loadLowRom(romResources.lowRom());
-        memory.loadHighRom(romResources.highRom());
+        memory.loadLowRom(loaderResources.lowRom());
+        memory.loadHighRom(loaderResources.highRom());
     }
 
     public TapeLoaderImpl(HardwareMode hardwareMode,
-                          RomResources romResources) throws IOException {
-        this.romResources = romResources;
+                          LoaderResources loaderResources) throws IOException {
+        this.loaderResources = loaderResources;
         clock = new Clock();
         this.hardwareMode = hardwareMode;
         z80 = new Z80(clock, this);
@@ -100,10 +102,8 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         return z80State;
     }
 
-    private void loadSnapshot() throws IOException {
-        SnapshotGame game = (SnapshotGame) GameImageLoaderFactory.getLoader(
-                GameImageType.SNA).load(TapeLoaderImpl.class
-                .getResourceAsStream("/emulator/464.loader.sna"));
+    private void loadLoaderSnapshot() throws IOException {
+        SnapshotGame game = loaderResources.snaLoader();
 
         GameHeader header = game.getGameHeader();
         z80.setZ80State(getZ80State(game.getGameHeader()));
@@ -133,8 +133,8 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         for (int i = 0; i < game.getSlotCount(); i++) {
             memory.loadRamBank(game.getSlot(i), i);
         }
-
     }
+
     private GameHeader getGameHeader() {
         GameHeader header = new GameHeader();
         Z80State z80State = z80.getZ80State();
@@ -189,9 +189,20 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         return game;
     }
 
+    private void pressKeyDuringFrames(KeyboardCode key, int frames) {
+        ppi.pressKey(key);
+        for (int i = 0; i < frames; i++) {
+            executeFrame();
+        }
+        ppi.releaseKey(key);
+    }
+
     @Override
-    public Game loadTape(InputStream tapeFile) {
+    public Game loadTape(InputStream tapeFile) throws IOException {
         tapePlayer.insert(tapeFile);
+        loadLoaderSnapshot();
+        //Press enter key to continue with load
+        pressKeyDuringFrames(KeyboardCode.KEY_ENTER, 20);
         while (!ppi.isMotorOn()) {
             executeFrame();
         }

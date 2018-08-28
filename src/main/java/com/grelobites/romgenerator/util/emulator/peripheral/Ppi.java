@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 
 public class Ppi {
     private static final Logger LOGGER = LoggerFactory.getLogger(Ppi.class);
+    private static final int KEYSCAN_PSG_REGISTER = 14;
+    private static final int KEYBOARD_SCANLINES = 10;
     private enum PsgFunction {
         NONE(0),
         READ(1),
@@ -45,6 +47,21 @@ public class Ppi {
     private int portBCurrentValue;
     private int portCCurrentValue;
     private int controlCurrentValue;
+    private byte[] keyStatus = new byte[KEYBOARD_SCANLINES];
+
+    public Ppi() {
+        for (int i = 0; i < keyStatus.length; i++) {
+            keyStatus[i] = (byte) 0xff;
+        }
+    }
+
+    public void pressKey(KeyboardCode code) {
+        keyStatus[code.line()] &= ~code.mask();
+    }
+
+    public void releaseKey(KeyboardCode code) {
+        keyStatus[code.line()] |= code.mask();
+    }
 
     public int getSelectedPsgRegister() {
         return selectedPsgRegister;
@@ -214,6 +231,7 @@ public class Ppi {
                 psgRegisterData[selectedPsgRegister] = (byte) portACurrentValue;
         }
     }
+
     public void portCOutput(int value) {
         portCCurrentValue = value;
         psgFunction = PsgFunction.fromId((value & 0xC0) >> 6);
