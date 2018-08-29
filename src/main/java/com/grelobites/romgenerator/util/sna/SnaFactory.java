@@ -54,7 +54,6 @@ public class SnaFactory {
     public static SnaImage fromSnapshotGame(SnapshotGame game) throws IOException {
         SnaImageV3 snaImage = new SnaImageV3();
         GameHeader header = game.getGameHeader();
-
         snaImage.setAfRegister(header.getAfRegister());
         snaImage.setBcRegister(header.getBcRegister());
         snaImage.setDeRegister(header.getDeRegister());
@@ -74,6 +73,7 @@ public class SnaFactory {
         snaImage.setAltHlRegister(header.getAltHlRegister());
         snaImage.setGateArraySelectedPen(header.getGateArraySelectedPen());
         snaImage.setGateArrayMultiConfiguration(header.getGateArrayMultiConfiguration());
+        snaImage.setGateArrayCurrentPalette(header.getGateArrayCurrentPalette());
         snaImage.setCurrentRamConfiguration(header.getCurrentRamConfiguration());
         snaImage.setCrtcSelectedRegisterIndex(header.getCrtcSelectedRegisterIndex());
         snaImage.setCrtcRegisterData(header.getCrtcRegisterData());

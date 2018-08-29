@@ -1,10 +1,12 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
+import com.grelobites.romgenerator.util.emulator.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Ppi {
     private static final Logger LOGGER = LoggerFactory.getLogger(Ppi.class);
+    private static final int PSG_REGISTERS = 16;
     private static final int KEYSCAN_PSG_REGISTER = 14;
     private static final int KEYBOARD_SCANLINES = 10;
     private enum PsgFunction {
@@ -32,7 +34,7 @@ public class Ppi {
 
     private PsgFunction psgFunction = PsgFunction.NONE;
     private int selectedPsgRegister;
-    private byte[] psgRegisterData = new byte[16];
+    private byte[] psgRegisterData = new byte[PSG_REGISTERS];
     private boolean motorOn = false;
     private int keyboardLineToScan;
     private boolean casseteDataOutput;
@@ -76,7 +78,8 @@ public class Ppi {
     }
 
     public void setPsgRegisterData(byte[] psgRegisterData) {
-        this.psgRegisterData = psgRegisterData;
+        System.arraycopy(psgRegisterData, 0,
+                this.psgRegisterData, 0, PSG_REGISTERS);
     }
 
     public boolean isMotorOn() {
@@ -210,7 +213,7 @@ public class Ppi {
     public int portAInput() {
         if (portAInputDirection) {
             updatePsgRegisters();
-            return psgRegisterData[selectedPsgRegister];
+            return psgRegisterData[selectedPsgRegister] & 0xff;
         } else {
             return 0; //Right?
         }
@@ -251,6 +254,7 @@ public class Ppi {
     public void controlOutput(int value) {
         controlCurrentValue = value;
         if ((value & 0x80) != 0) {
+            portACurrentValue = portBCurrentValue = portCCurrentValue = 0;
             portAInputDirection = (value & 0x10) != 0;
         } else {
             int bitToSet = (value >> 1) & 0x7;
@@ -260,6 +264,7 @@ public class Ppi {
                 psgFunction = clear ?
                         PsgFunction.fromId(psgFunction.id() & ~(1 << (bitToSet - 5))) :
                         PsgFunction.fromId(psgFunction.id() | (1 << (bitToSet - 5)));
+                LOGGER.warn("Recalculated PSG Function from Control port");
                 applyPsgFunction();
             } else if (bitToSet == 5) {
                 casseteDataOutput = clear;

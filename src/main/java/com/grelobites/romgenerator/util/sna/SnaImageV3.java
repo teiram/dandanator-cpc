@@ -250,16 +250,22 @@ public class SnaImageV3 extends SnaImageV2 implements SnaImage {
         fillHeader(header);
 
         os.write(header.array());
-        os.write(memory);
+        if (memory != null) {
+            //Only v3 chunks
+            os.write(memory);
+        }
 
         for (SnaChunk chunk : snaChunks.values()) {
             ByteBuffer buffer = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
             buffer.put(chunk.getName().getBytes(), 0, 4);
-            buffer.putLong(chunk.getData().length);
+            buffer.putInt(chunk.getData().length);
             os.write(buffer.array());
+            /* Already compressed
             SnaCompressedOutputStream zos = new SnaCompressedOutputStream(os);
             zos.write(chunk.getData());
             zos.flush();
+            */
+            os.write(chunk.getData());
         }
     }
 

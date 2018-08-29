@@ -16,6 +16,7 @@ public class MLDInfo {
     public static final int MLD_ALLOCATED_SECTORS_OFFSET = MLD_HEADER_OFFSET + 3;
     private static final int MLD_SIGNATURE_OFFSET = 16380;
     private static final int MLD_HEADER_SIZE = 22;
+    public static final int MLD_DEFAULT_SCREENMODE = 0;
 
     private int headerSlot;
     private int baseSlot;

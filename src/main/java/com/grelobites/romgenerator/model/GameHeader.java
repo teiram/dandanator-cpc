@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.model;
 
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.sna.SnaChunk;
 import com.grelobites.romgenerator.util.sna.SnaImage;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class GameHeader {
     private int currentRamConfiguration;
 
     private int crtcSelectedRegisterIndex;
-    private byte[] crtcRegisterData = new byte[16];
+    private byte[] crtcRegisterData = new byte[18];
 
     private int currentRomSelection;
 
@@ -346,7 +347,7 @@ public class GameHeader {
 
         //Last two registers are read-only
         header.setCrtcRegisterData(Arrays.copyOfRange(snaImage.getCrtcRegisterData(),
-            0, 16));
+            0, 18));
 
         header.setCurrentRomSelection(snaImage.getCurrentRomSelection());
         header.setPpiPortA(snaImage.getPpiPortA());
@@ -398,18 +399,18 @@ public class GameHeader {
                 ", altDeRegister=0x" + String.format("%04x", altDeRegister) +
                 ", altHlRegister=0x" + String.format("%04x", altHlRegister) +
                 ", gateArraySelectedPen=" + gateArraySelectedPen +
-                ", gateArrayCurrentPalette=" + Arrays.toString(gateArrayCurrentPalette) +
-                ", gateArrayMultiConfiguration=" + gateArrayMultiConfiguration +
-                ", currentRamConfiguration=0x" + currentRamConfiguration +
+                ", gateArrayCurrentPalette=" + Util.dumpAsHexString(gateArrayCurrentPalette) +
+                ", gateArrayMultiConfiguration=0x" + String.format("%02x", gateArrayMultiConfiguration) +
+                ", currentRamConfiguration=0x" + String.format("%02x", currentRamConfiguration) +
                 ", crtcSelectedRegisterIndex=" + crtcSelectedRegisterIndex +
-                ", crtcRegisterData=" + Arrays.toString(crtcRegisterData) +
+                ", crtcRegisterData=" + Util.dumpAsHexString(crtcRegisterData) +
                 ", currentRomSelection=" + currentRomSelection +
-                ", ppiPortA=" + ppiPortA +
-                ", ppiPortB=" + ppiPortB +
-                ", ppiPortC=" + ppiPortC +
-                ", ppiControlPort=" + ppiControlPort +
+                ", ppiPortA=0x" + String.format("%02x", ppiPortA) +
+                ", ppiPortB=0x" + String.format("%02x", ppiPortB) +
+                ", ppiPortC=0x" + String.format("%02x", ppiPortC) +
+                ", ppiControlPort=0x" + String.format("%02x", ppiControlPort) +
                 ", psgSelectedRegisterIndex=" + psgSelectedRegisterIndex +
-                ", psgRegisterData=" + Arrays.toString(psgRegisterData) +
+                ", psgRegisterData=" + Util.dumpAsHexString(psgRegisterData) +
                 ", memoryDumpSize=" + memoryDumpSize +
                 ", cpcType=" + cpcType +
                 ", fddMotorDriveState=" + fddMotorDriveState +

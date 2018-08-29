@@ -24,7 +24,7 @@ public class CDTBlock {
     public static final int MESSAGE_BLOCK = 0x31;
     public static final int ARCHIVE_INFO = 0x32;
     public static final int HARDWARE_TYPE = 0x33;
-    public static final int CUSTOM_INFO_BOCK = 0x35;
+    public static final int CUSTOM_INFO_BLOCK = 0x35;
     public static final int GLUE_BLOCK = 0x5A;
 
 }

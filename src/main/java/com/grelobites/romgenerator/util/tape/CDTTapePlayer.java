@@ -5,6 +5,8 @@ import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.emulator.ClockTimeoutListener;
 import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
+import com.sun.org.apache.bcel.internal.generic.Select;
+import jdk.nashorn.internal.ir.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,20 +18,20 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.zip.InflaterInputStream;
 
 public class CDTTapePlayer implements ClockTimeoutListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(CDTTapePlayer.class);
 
-    private static final int LEADER_LENGHT = 2168;
-    private static final int SYNC1_LENGHT = 667;
-    private static final int SYNC2_LENGHT = 735;
-    private static final int ZERO_LENGHT = 855;
-    private static final int ONE_LENGHT = 1710;
-    private static final int HEADER_PULSES = 8063;
-    private static final int DATA_PULSES = 3223;
-    private static final int END_BLOCK_PAUSE = 3500000;
-
+    private static final int LEADER_LENGHT = adjustDuration(2168);
+    private static final int SYNC1_LENGHT = adjustDuration(667);
+    private static final int SYNC2_LENGHT = adjustDuration(735);
+    private static final int ZERO_LENGHT = adjustDuration(855);
+    private static final int ONE_LENGHT = adjustDuration(1710);
+    private static final int HEADER_PULSES = adjustDuration(8063);
+    private static final int DATA_PULSES = adjustDuration(3223);
+    private static final int END_BLOCK_PAUSE = adjustDuration(3500000);
 
     public enum State {
         STOP, START, LEADER, LEADER_NOCHG, SYNC, NEWBYTE,
@@ -71,6 +73,13 @@ public class CDTTapePlayer implements ClockTimeoutListener {
     int loopStart;
     private boolean throwOnEot = false;
 
+    private List<BlockChangeListener> blockChangeListeners = new ArrayList<>();
+
+    //Adjust duration in 3.5Mhz clock pulses to 4Mhz clock pulses
+    private static int adjustDuration(int duration) {
+        return (duration * 40) / 35;
+    }
+
     public CDTTapePlayer(Clock clock, Ppi ppi) {
         this.clock = clock;
         this.ppi = ppi;
@@ -79,6 +88,24 @@ public class CDTTapePlayer implements ClockTimeoutListener {
         ppi.setCasseteDataInput(false);
         idxHeader = 0;
         playing = false;
+    }
+
+    public void addBlockChangeListener(BlockChangeListener listener) {
+        blockChangeListeners.add(listener);
+    }
+
+    public void removeBlockChangeListener(BlockChangeListener listener) {
+        blockChangeListeners.remove(listener);
+    }
+
+    private void notifyBlockChangeListeners(int currentBlock) {
+        blockChangeListeners.forEach(c -> {
+            try {
+                c.onBlockChange(currentBlock);
+            } catch (IOException e) {
+                LOGGER.warn("Block Change Listener failed with exception", e);
+            }
+        });
     }
 
     public CDTTapePlayer(Clock clock, Ppi ppi, boolean throwOnEot) {
@@ -95,6 +122,10 @@ public class CDTTapePlayer implements ClockTimeoutListener {
         return res;
     }
 
+    public State state() {
+        return state;
+    }
+
     public Clock getClock() {
         return clock;
     }
@@ -107,46 +138,162 @@ public class CDTTapePlayer implements ClockTimeoutListener {
         return new String(Arrays.copyOfRange(buffer, offset, offset + length));
     }
 
-    private boolean findBlockOffsets() {
-        int offset = 0;
+    private static void breakWithError(int offset) {
+        throw new IllegalArgumentException("Invalid block/offset detected at " + offset);
+    }
 
-        int blocksToBlackList = 0;
+    private void findBlockOffsets() {
+        int offset = 0;
+        int len;
 
         while (offset < tapeBuffer.length) {
-            if ((tapeBuffer.length - offset) < 2) {
-                return false;
-            }
-            int len = readInt(tapeBuffer, offset, 2);
-
-            if (offset + len + 2 > tapeBuffer.length) {
-                return false;
-            }
-            String name = readBlockName(tapeBuffer, offset + 4, 10);
             blockOffsets.add(offset);
-            LOGGER.debug("Adding tapePlayer block with length " + len + " and name " + name + " at offset " + offset);
+            switch (tapeBuffer[offset] & 0xff) {
+                case CDTBlock.STANDARD_SPEED:
+                    if (tapeBuffer.length - offset < 5) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 3, 2);
+                    offset += len + 5;
+                    break;
+                case CDTBlock.TURBO_SPEED:
+                    if (tapeBuffer.length - offset < 19) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 16, 3);
+                    offset += len + 19;
+                    break;
+                case CDTBlock.PURE_TONE:
+                    offset += 5;
+                    break;
+                case CDTBlock.PULSE_SEQUENCE:
+                    if (tapeBuffer.length - offset < 2) {
+                        breakWithError(offset);
+                    }
+                    len = tapeBuffer[offset + 1] & 0xff;
+                    offset += len * 2 + 2;
+                    break;
+                case CDTBlock.PURE_DATA_BLOCK:
+                    if (tapeBuffer.length - offset < 11) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 8, 3);
+                    offset += len + 11;
+                    break;
+                case CDTBlock.DIRECT_RECORDING:
+                    if (tapeBuffer.length - offset < 9) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 6, 3);
+                    offset += len + 9;
+                    break;
+                case CDTBlock.CSW_RECORDING:
+                case CDTBlock.GENERALIZED_DATA:
+                    if (tapeBuffer.length - offset < 5) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 1, 4);
+                    offset += len + 5;
+                    break;
+                case CDTBlock.SILENCE:
+                case CDTBlock.JUMP_TO_BLOCK:
+                case CDTBlock.LOOP_START:
+                    offset += 3;
+                    break;
+                case CDTBlock.GROUP_START:
+                    if (tapeBuffer.length - offset < 2) {
+                        breakWithError(offset);
+                    }
+                    len = tapeBuffer[offset + 1] & 0xff;
+                    offset += len + 2;
+                    break;
+                case CDTBlock.GROUP_END:
+                case CDTBlock.LOOP_END:
+                case CDTBlock.RETURN_FROM_SEQUENCE:
+                    offset++;
+                    break;
+                case CDTBlock.CALL_SEQUENCE:
+                    if (tapeBuffer.length - offset < 3) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 1, 2);
+                    offset += len * 2 + 3;
+                    break;
+                case CDTBlock.SELECT_BLOCK:
+                case CDTBlock.ARCHIVE_INFO:
+                    if (tapeBuffer.length - offset < 3) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 1, 2);
+                    offset += len + 3;
+                    break;
+                case CDTBlock.STOP_TAPE_48KMODE:
+                    offset += 5;
+                    break;
+                case CDTBlock.SET_SIGNAL_LEVEL:
+                    offset += 6;
+                    break;
+                case CDTBlock.TEXT_DESCRIPTION:
+                    if (tapeBuffer.length - offset < 2) {
+                        breakWithError(offset);
+                    }
+                    len = tapeBuffer[offset + 1] & 0xff;
+                    offset += len + 2;
+                    break;
+                case CDTBlock.MESSAGE_BLOCK:
+                    if (tapeBuffer.length - offset < 3) {
+                        breakWithError(offset);
+                    }
+                    len = tapeBuffer[offset + 2] & 0xff;
+                    offset += len + 3;
+                    break;
+                case CDTBlock.HARDWARE_TYPE:
+                    if (tapeBuffer.length - offset < 2) {
+                        breakWithError(offset);
+                    }
+                    len = tapeBuffer[offset + 1] & 0xff;
+                    offset += len * 3 + 2;
+                    break;
+                case CDTBlock.CUSTOM_INFO_BLOCK:
+                    if (tapeBuffer.length - offset < 21) {
+                        breakWithError(offset);
+                    }
+                    len = readInt(tapeBuffer, offset + 17, 4);
+                    offset += len + 21;
+                    break;
+                case CDTBlock.GLUE_BLOCK:
+                    offset += 10;
+                    break;
+                default:
+                    LOGGER.error("Unexpected block type {}", String.format("%02x", tapeBuffer[offset]));
+                    breakWithError(offset);
+            }
 
-            offset += len + 2;
+            if (offset > tapeBuffer.length) {
+                throw new IllegalArgumentException("Tape stream exhausted");
+            }
         }
-        LOGGER.debug("Number of blocks in tapePlayer " + blockOffsets.size());
-
-        return true;
+        LOGGER.debug("Found {} blocks in tape", blockOffsets.size());
     }
 
-    public boolean insert(File fileName) {
+    public void insert(File fileName) {
         try (FileInputStream is = new FileInputStream(fileName)) {
-            return insert(is);
+            insert(is);
         } catch (IOException ioe) {
-            LOGGER.error("Inserting tapePlayer", ioe);
+            throw new IllegalArgumentException("Trying to read file stream", ioe);
         }
-        return false;
     }
 
-    public boolean insert(InputStream is) {
+    public void insert(InputStream is) {
         try {
-            tapeBuffer = Util.fromInputStream(is);
+            Optional<CDTHeader> header = CDTHeader.fromInputStream(is);
+            if (header.isPresent()) {
+                tapeBuffer = Util.fromInputStream(is);
+            } else {
+                throw new IllegalArgumentException("No header found in tape stream");
+            }
         } catch (IOException ioe) {
-            LOGGER.error("Inserting tapePlayer", ioe);
-            return false;
+            throw new IllegalArgumentException("Trying to read tape stream", ioe);
         }
 
         tapePos = idxHeader = readBytes = 0;
@@ -154,10 +301,7 @@ public class CDTTapePlayer implements ClockTimeoutListener {
         eot = playing = false;
 
         state = State.STOP;
-        if (!findBlockOffsets()) {
-            return false;
-        }
-        return true;
+        findBlockOffsets();
     }
 
     public void rewind() {
@@ -173,7 +317,7 @@ public class CDTTapePlayer implements ClockTimeoutListener {
         state = State.STOP;
     }
 
-    private boolean playCdt() {
+    private void playCdt() {
         boolean repeat;
         int timeout;
 
@@ -231,12 +375,10 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                             break;
                         }
                     }
-
                     if (mask != 0) {
                         state = State.NEWBIT;
                         break;
                     }
-
                     tapePos++;
                     if (--blockLen > 0) {
                         state = State.NEWBYTE;
@@ -252,7 +394,7 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                         break;
                     }
                     state = State.PAUSE;
-                    clock.setTimeout(3500); // 1 ms by TZX spec
+                    clock.setTimeout(4000); // 1 ms by TZX spec
                     break;
                 case PAUSE:
                     ppi.setCasseteDataInput(invertedOutput);
@@ -397,15 +539,16 @@ public class CDTTapePlayer implements ClockTimeoutListener {
 
                     } catch (IOException ioe) {
                         LOGGER.warn("Reading stream", ioe);
+                        eot = true;
                     }
                     break;
             }
         } while (repeat);
-        return true;
     }
 
     private void decodeTzxHeader() {
         boolean repeat = true;
+        int currentBlock = idxHeader;
 
         while (repeat) {
             if (idxHeader >= blockOffsets.size()) {
@@ -415,7 +558,8 @@ public class CDTTapePlayer implements ClockTimeoutListener {
             tapePos = blockOffsets.get(idxHeader);
 
             switch (tapeBuffer[tapePos] & 0xff) {
-                case CDTBlock.STANDARD_SPEED: // Standard speed data block
+                case CDTBlock.STANDARD_SPEED:
+                    LOGGER.debug("Standard Speed block");
                     leaderLength = LEADER_LENGHT;
                     sync1Length = SYNC1_LENGHT;
                     sync2Length = SYNC2_LENGHT;
@@ -435,12 +579,13 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     endBlockPause *= (END_BLOCK_PAUSE / 1000);
                     repeat = false;
                     break;
-                case CDTBlock.TURBO_SPEED: // Turbo speed data block
-                    leaderLength = readInt(tapeBuffer, tapePos + 1, 2);
-                    sync1Length = readInt(tapeBuffer, tapePos + 3, 2);
-                    sync2Length = readInt(tapeBuffer, tapePos + 5, 2);
-                    zeroLength = readInt(tapeBuffer, tapePos + 7, 2);
-                    oneLength = readInt(tapeBuffer, tapePos + 9, 2);
+                case CDTBlock.TURBO_SPEED:
+                    LOGGER.debug("Turbo Speed block");
+                    leaderLength =  adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
+                    sync1Length =   adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
+                    sync2Length =   adjustDuration(readInt(tapeBuffer, tapePos + 5, 2));
+                    zeroLength =    adjustDuration(readInt(tapeBuffer, tapePos + 7, 2));
+                    oneLength =     adjustDuration(readInt(tapeBuffer, tapePos + 9, 2));
                     leaderPulses = readInt(tapeBuffer, tapePos + 11, 2);
                     bitsLastByte = tapeBuffer[tapePos + 13] & 0xff;
                     endBlockPause = readInt(tapeBuffer, tapePos + 14, 2);
@@ -454,24 +599,27 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     endBlockPause *= (END_BLOCK_PAUSE / 1000);
                     repeat = false;
                     break;
-                case CDTBlock.PURE_TONE: // Pure Tone Block
-                    leaderLength = readInt(tapeBuffer, tapePos + 1, 2);
-                    leaderPulses = readInt(tapeBuffer, tapePos + 3, 2);
+                case CDTBlock.PURE_TONE:
+                    LOGGER.debug("Pure Tone block");
+                    leaderLength =  adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
+                    leaderPulses =  adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
                     tapePos += 5;
                     state = State.PURE_TONE_NOCHG;
                     idxHeader++;
                     repeat = false;
                     break;
-                case CDTBlock.PULSE_SEQUENCE: // Pulse Sequence Block
+                case CDTBlock.PULSE_SEQUENCE:
+                    LOGGER.debug("Pulse Sequence block");
                     leaderPulses = tapeBuffer[tapePos + 1] & 0xff;
                     tapePos += 2;
                     state = State.PULSE_SEQUENCE_NOCHG;
                     idxHeader++;
                     repeat = false;
                     break;
-                case CDTBlock.PURE_DATA_BLOCK: // Pure Data Block
-                    zeroLength = readInt(tapeBuffer, tapePos + 1, 2);
-                    oneLength = readInt(tapeBuffer, tapePos + 3, 2);
+                case CDTBlock.PURE_DATA_BLOCK:
+                    LOGGER.debug("Pure Data block");
+                    zeroLength =    adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
+                    oneLength =     adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
                     bitsLastByte = tapeBuffer[tapePos + 5] & 0xff;
                     endBlockPause = readInt(tapeBuffer, tapePos + 6, 2)
                             * (END_BLOCK_PAUSE / 1000);
@@ -482,7 +630,8 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     repeat = false;
                     break;
                 case CDTBlock.DIRECT_RECORDING: // Direct Data Block
-                    zeroLength = readInt(tapeBuffer, tapePos + 1, 2);
+                    LOGGER.debug("Direct Recording block");
+                    zeroLength = adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
                     endBlockPause = readInt(tapeBuffer, tapePos + 3, 2)
                             * (END_BLOCK_PAUSE / 1000);
                     bitsLastByte = tapeBuffer[tapePos + 5] & 0xff;
@@ -492,7 +641,8 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     idxHeader++;
                     repeat = false;
                     break;
-                case CDTBlock.CSW_RECORDING: // CSW Recording Block
+                case CDTBlock.CSW_RECORDING:
+                    LOGGER.debug("CSW Recording block");
                     endBlockPause = readInt(tapeBuffer, tapePos + 5, 2)
                             * (END_BLOCK_PAUSE / 1000);
                     cswStatesSample = 3500000.0f / readInt(tapeBuffer, tapePos + 7, 3);
@@ -506,25 +656,18 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     }
                     tapePos += 15;
                     idxHeader++;
-                    // al entrar la primera vez deshará el cambio
+                    // Undone on first execution
                     ppi.changeCasseteDataInput();
                     repeat = false;
                     break;
-                case CDTBlock.GENERALIZED_DATA: // Generalized Data Block
+                case CDTBlock.GENERALIZED_DATA:
+                    LOGGER.warn("Generalized Data block (Unsupported). Skipping");
                     endBlockPause = readInt(tapeBuffer, tapePos + 5, 2)
                             * (END_BLOCK_PAUSE / 1000);
-                    /*
-                    totp = readInt(tapeBuffer, tapePos + 7, 4);
-                    npp = tapeBuffer[tapePos + 11] & 0xff;
-                    asp = tapeBuffer[tapePos + 12] & 0xff;
-                    totd = readInt(tapeBuffer, tapePos + 13, 4);
-                    npd = tapeBuffer[tapePos + 17] & 0xff;
-                    asd = tapeBuffer[tapePos + 18] & 0xff;
-                    */
                     idxHeader++;
-                    LOGGER.warn("Generalized Data Block not supported. Skipping");
                     break;
-                case CDTBlock.SILENCE: // Pause (silence) or 'Stop the Tape' command
+                case CDTBlock.SILENCE:
+                    LOGGER.debug("Pause or Stop the Tape block");
                     endBlockPause = readInt(tapeBuffer, tapePos + 1, 2)
                             * (END_BLOCK_PAUSE / 1000);
                     tapePos += 3;
@@ -532,28 +675,34 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     idxHeader++;
                     repeat = false;
                     break;
-                case CDTBlock.GROUP_START: // Group Start
+                case CDTBlock.GROUP_START:
+                    LOGGER.debug("Group Start block");
                     idxHeader++;
                     break;
-                case CDTBlock.GROUP_END: // Group End
+                case CDTBlock.GROUP_END:
+                    LOGGER.debug("Group End block");
                     idxHeader++;
                     break;
-                case CDTBlock.JUMP_TO_BLOCK: // Jump to Block
+                case CDTBlock.JUMP_TO_BLOCK:
                     short target = (short) readInt(tapeBuffer, tapePos + 1, 2);
+                    LOGGER.debug("Jump to Block {} block", target);
                     idxHeader += target;
                     break;
-                case CDTBlock.LOOP_START: // Loop Start
+                case CDTBlock.LOOP_START:
                     nLoops = readInt(tapeBuffer, tapePos + 1, 2);
+                    LOGGER.debug("Loop Start ({}) block", nLoops);
                     loopStart = ++idxHeader;
                     break;
-                case CDTBlock.LOOP_END: // Loop End
+                case CDTBlock.LOOP_END:
+                    LOGGER.debug("Loop End block. Remaining {}", nLoops);
                     if (--nLoops == 0) {
                         idxHeader++;
                         break;
                     }
                     idxHeader = loopStart;
                     break;
-                case CDTBlock.CALL_SEQUENCE: // Call Sequence
+                case CDTBlock.CALL_SEQUENCE:
+                    LOGGER.debug("Call Sequence block");
                     if (callSeq == null) {
                         nCalls = readInt(tapeBuffer, tapePos + 1, 2);
                         callSeq = new short[nCalls];
@@ -568,7 +717,8 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                         idxHeader++;
                     }
                     break;
-                case CDTBlock.RETURN_FROM_SEQUENCE: // Return from Sequence
+                case CDTBlock.RETURN_FROM_SEQUENCE:
+                    LOGGER.debug("Return from Sequence block");
                     if (nCalls < callSeq.length) {
                         idxHeader = callBlk + callSeq[nCalls++];
                     } else {
@@ -576,32 +726,41 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                         callSeq = null;
                     }
                     break;
-                case 0x28: // Select Block
+                case CDTBlock.SELECT_BLOCK:
+                    LOGGER.debug("Select Block block");
                     idxHeader++;
                     break;
-                case CDTBlock.STOP_TAPE_48KMODE: // Stop the tape if in 48K mode
+                case CDTBlock.STOP_TAPE_48KMODE:
+                    LOGGER.debug("Stop Tape in 48K Mode block");
                     idxHeader++;
                     break;
-                case CDTBlock.SET_SIGNAL_LEVEL: // Set Signal Level
+                case CDTBlock.SET_SIGNAL_LEVEL:
+                    LOGGER.debug("Set Signal Level block");
                     ppi.setCasseteDataInput(tapeBuffer[tapePos + 5] != 0);
                     idxHeader++;
                     break;
-                case CDTBlock.TEXT_DESCRIPTION: // Text Description
+                case CDTBlock.TEXT_DESCRIPTION:
+                    LOGGER.debug("Text Description block");
                     idxHeader++;
                     break;
-                case CDTBlock.MESSAGE_BLOCK: // Message Block
+                case CDTBlock.MESSAGE_BLOCK:
+                    LOGGER.debug("Message block");
                     idxHeader++;
                     break;
-                case CDTBlock.ARCHIVE_INFO: // Archive Info
+                case CDTBlock.ARCHIVE_INFO:
+                    LOGGER.debug("Archive Info block");
                     idxHeader++;
                     break;
-                case CDTBlock.HARDWARE_TYPE: // Hardware Type
+                case CDTBlock.HARDWARE_TYPE:
+                    LOGGER.debug("Hardware Type block");
                     idxHeader++;
                     break;
-                case CDTBlock.CUSTOM_INFO_BOCK: // Custom Info Block
+                case CDTBlock.CUSTOM_INFO_BLOCK:
+                    LOGGER.debug("Custom Info block");
                     idxHeader++;
                     break;
-                case CDTBlock.GLUE_BLOCK: // TZX Header && "Glue" Block
+                case CDTBlock.GLUE_BLOCK:
+                    LOGGER.debug("Glue block");
                     idxHeader++;
                     break;
                 default:
@@ -611,14 +770,14 @@ public class CDTTapePlayer implements ClockTimeoutListener {
                     idxHeader++;
             }
         }
+        notifyBlockChangeListeners(currentBlock);
     }
 
 
-    public boolean play() {
+    public void play() {
         if (!playing) {
             if (idxHeader >= blockOffsets.size()) {
-                LOGGER.warn("Trying to play with blocks exhausted");
-                return false;
+                throw new IllegalStateException("Trying to play with blocks exhausted");
             }
             state = State.START;
             tapePos = blockOffsets.get(idxHeader);
@@ -626,21 +785,19 @@ public class CDTTapePlayer implements ClockTimeoutListener {
             clockTimeout();
             playing = true;
         }
-        return true;
     }
 
 
     public void stop() {
         if (playing) {
-            if (state == State.PAUSE_STOP) {
-                idxHeader++;
-                if (idxHeader >= blockOffsets.size()) {
-                    eot = true;
-                }
-            }
             state = State.STOP;
             clock.removeClockTimeoutListener(this);
             playing = false;
+            LOGGER.debug("On tape stop pos: {}, buffer size: {}",
+                    tapePos, tapeBuffer.length);
+
+            eot = tapePos >= tapeBuffer.length;
+
         }
     }
 

@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
 import java.util.List;
 
 public class MLDGame extends BaseGame implements RamGame {
@@ -60,7 +59,7 @@ public class MLDGame extends BaseGame implements RamGame {
                             )));
                     screenshot = ImageUtil
                             .scrLoader(ImageUtil.newScreenshot(),
-                                    0,
+                                    MLDInfo.MLD_DEFAULT_SCREENMODE,
                                     screenData,
                                     CrtcDisplayData.DEFAULT_VALUE,
                                     ImageUtil.embeddedPalette(screenData));

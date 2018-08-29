@@ -6,25 +6,25 @@ import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
-import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
-import com.grelobites.romgenerator.util.emulator.Z80State;
-import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
-import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
-import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
-import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import com.grelobites.romgenerator.util.emulator.LoaderResources;
-import com.grelobites.romgenerator.util.gameloader.GameImageLoaderFactory;
-import com.grelobites.romgenerator.util.gameloader.GameImageType;
-import com.grelobites.romgenerator.util.tape.CDTTapePlayer;
+import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
 import com.grelobites.romgenerator.util.emulator.TapeLoader;
 import com.grelobites.romgenerator.util.emulator.Z80;
+import com.grelobites.romgenerator.util.emulator.Z80State;
 import com.grelobites.romgenerator.util.emulator.Z80operations;
 import com.grelobites.romgenerator.util.emulator.peripheral.CpcMemory;
+import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
+import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
-import javafx.scene.input.KeyCode;
+import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
+import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
+import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
+import com.grelobites.romgenerator.util.tape.CDTTapePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -63,7 +63,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         ppi = new Ppi();
         gateArray = GateArray.newBuilder()
                 .withCpc464DefaultValues().build();
-        crtc = new Crtc(CrtcType.CRTC_TYPE_1);
+        crtc = new Crtc(CrtcType.CRTC_TYPE_0);
         memory = new CpcMemory(gateArray);
         tapePlayer = new CDTTapePlayer(clock, ppi, true);
         loadRoms();
@@ -127,7 +127,6 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         ppi.setSelectedPsgRegister(header.getPsgSelectedRegisterIndex());
         ppi.setPsgRegisterData(header.getPsgRegisterData());
 
-        //TODO: Set memory
         LOGGER.debug("Setting memory from Snapshot with {} slots",
                 game.getSlotCount());
         for (int i = 0; i < game.getSlotCount(); i++) {
@@ -178,6 +177,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
         header.setMemoryDumpSize(gateArray.hasRamBanking() ? 64 : 128);
         header.setCpcType(hardwareMode.snaValue());
+        LOGGER.debug("Game header calculated as {}", header);
         return header;
     }
 
@@ -206,13 +206,22 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         while (!ppi.isMotorOn()) {
             executeFrame();
         }
+        LOGGER.info("Motor is on!");
+        final SNAGameImageLoader exporter = new SNAGameImageLoader();
+        tapePlayer.addBlockChangeListener((c) -> {
+            String fileName = String.format("/home/mteira/Escritorio/test%d.sna", c);
+            LOGGER.debug("Detected block change. Saving snapshot {}", fileName);
+            exporter.save(toSnapshotGame(), new FileOutputStream(new File(fileName)));
+        });
+        tapePlayer.play();
         try {
-            while (!tapePlayer.isEOT() && ppi.isMotorOn()) {
+            while (!tapePlayer.isEOT()) {
                 executeFrame();
             }
         } catch (TapeFinishedException tfe) {
             LOGGER.debug("Tape finished with cpu status " + z80.getZ80State(), tfe);
         }
+        LOGGER.info("Ended");
         tapePlayer.stop();
         return toSnapshotGame();
     }
@@ -224,42 +233,44 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
     @Override
     public int peek8(int address) {
+        clock.addTstates(3);
         return memory.peek8(address);
     }
 
     @Override
     public void poke8(int address, int value) {
+        clock.addTstates(3);
         memory.poke8(address, value);
     }
 
     @Override
     public int peek16(int address) {
+        clock.addTstates(3);
         return memory.peek16(address);
     }
 
     @Override
     public void poke16(int address, int word) {
+        clock.addTstates(3);
         memory.poke16(address, word);
     }
 
     @Override
     public int inPort(int port) {
         clock.addTstates(4); // 4 clocks for read byte from bus (right?)
-        if ((port & 0x4300) == 0x0200) {
-            LOGGER.debug("CRTC Read Status");
+        if ((port & 0xFF00) == 0xBE00) {
+            //LOGGER.debug("CRTC Read Status");
             return crtc.onReadStatusRegisterOperation();
-        } else if ((port & 0x4300) == 0x0300) {
-            LOGGER.debug("CRTC Read Register");
+        } else if ((port & 0xFF00) == 0xBF00) {
+            //LOGGER.debug("CRTC Read Data");
             return crtc.onReadRegisterOperation();
         } else if ((port & 0xFF00) == 0xF400) {
-            LOGGER.debug("Ppi PortA (PSG)");
+            //LOGGER.debug("Ppi PortA (PSG)");
             return ppi.portAInput();
         } else if ((port & 0xFF00) == 0xF500) {
-            LOGGER.debug("Ppi PortB Input");
             return ppi.portBInput();
         } else {
-            LOGGER.debug("Unhandled I/O IN Operation on port {}",
-                    String.format("%04x", port));
+            //LOGGER.debug("Unhandled I/O IN Operation on port {}", String.format("%04x", port));
         }
         return 0;
     }
@@ -267,41 +278,46 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     @Override
     public void outPort(int port, int value) {
         clock.addTstates(4); // 4 clocks for writing byte to bus (right?)
-        if ((port & 0xC000) == 0x4000) {
-            LOGGER.debug("Gate array I/O operation");
-            gateArray.onPortWriteOperation(port & 0xff);
-        } else if ((port & 0x4300) == 0) {
-            LOGGER.debug("CRTC register index selection");
-            crtc.onSelectRegisterOperation(port & 0xff);
-        } else if ((port & 0x4300) == 0x0100) {
-            LOGGER.debug("CRTC register data selection");
-            crtc.onWriteRegisterOperation(port & 0xff);
+        if ((port & 0xFF00) == 0x7F00) {
+            //LOGGER.debug("GateArray I/O Port {}, Value {}",
+              //      String.format("%04x", port), String.format("%02x", value));
+            //gateArray.onPortWriteOperation(port & 0xff);
+            gateArray.onPortWriteOperation( value & 0xff);
+        } else if ((port & 0xFF00) == 0xBC00) {
+            //LOGGER.debug("CRTC register index selection");
+            crtc.onSelectRegisterOperation(value & 0xff);
+        } else if ((port & 0xFF00) == 0xBD00) {
+            //LOGGER.debug("CRTC register data selection");
+            crtc.onWriteRegisterOperation(value & 0xff);
         } else if ((port & 0xFF00) == 0xF400) {
-            LOGGER.debug("Ppi PortA OUT");
-            ppi.portAOutput(value);
+            //LOGGER.debug("Ppi PortA OUT");
+            ppi.portAOutput(value & 0xff);
         } else if ((port & 0xFF00) == 0xF500) {
-            LOGGER.warn("Ppi Port B OUT");
+            //LOGGER.warn("Ppi Port B OUT");
         } else if ((port & 0xFF00) == 0xF600) {
-            LOGGER.debug("Ppi Port C OUT");
-            ppi.portCOutput(value);
+            //LOGGER.debug("Ppi Port C OUT");
+            ppi.portCOutput(value & 0xff);
         } else if ((port & 0xFF00) == 0xF700) {
-            LOGGER.debug("Ppi Control Port OUT");
-            ppi.controlOutput(value);
-        } else if ((port & 0xDF00) == 0xD000) {
-            LOGGER.debug("Selection of upper ROM number {}", value);
-            upperRomNumber = value;
+            //LOGGER.debug("Ppi Control Port OUT");
+            ppi.controlOutput(value & 0xff);
+        } else if ((port & 0xFF00) == 0xDF00) {
+            //LOGGER.debug("Selection of upper ROM number {}", value);
+            upperRomNumber = value & 0xff;
         } else {
-            LOGGER.debug("Unhandled I/O OUT Operation on port {}",
-                    String.format("%04x", port));
+            //LOGGER.debug("Unhandled I/O OUT Operation on port {}", String.format("%04x", port));
         }
     }
 
     protected void executeFrame() {
         long vsync_tstates = clock.getTstates() + VSYNC_TSTATES;
         long lastInterruptTstates = 0;
+        int interruptAttempt = 0;
         while (clock.getTstates() < vsync_tstates) {
             long toNextInterrupt = clock.getTstates() + INTERRUPT_TSTATES;
             z80.execute(toNextInterrupt);
+            if (++interruptAttempt == 5) {
+                ppi.setvSyncActive(true);
+            }
             if (!z80.isINTLine() &&
                     (clock.getTstates() - lastInterruptTstates) > HSYNC_32_DELAY) {
                 boolean preIFF1 = z80.isIFF1();
@@ -315,6 +331,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             }
         }
         z80.setINTLine(false);
+        ppi.setvSyncActive(false);
     }
 
     @Override

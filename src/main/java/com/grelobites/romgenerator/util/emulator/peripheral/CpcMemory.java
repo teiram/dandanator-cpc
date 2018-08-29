@@ -2,12 +2,15 @@ package com.grelobites.romgenerator.util.emulator.peripheral;
 
 import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.util.emulator.Memory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class CpcMemory implements Memory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CpcMemory.class);
     private static final int BANK_SIZE = 0x4000;
     private static final int LOW_ROM = 0;
     private static final int HIGH_ROM = 3;
@@ -41,7 +44,7 @@ public class CpcMemory implements Memory {
 
     @Override
     public int peek8(int address) {
-        return bankSlot(address, false)[bankAddress(address)];
+        return bankSlot(address, false)[bankAddress(address)] & 0xff;
     }
 
     @Override

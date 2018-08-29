@@ -303,6 +303,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
                 ", holdScreen=" + holdScreen.get() +
                 ", compressed=" + compressed.get() +
                 ", hardwareMode=" + hardwareMode +
+                ", gameHeader=" + gameHeader +
                 '}';
     }
 }

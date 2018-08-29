@@ -1,6 +1,10 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class GateArray {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GateArray.class);
     private static final int BANK_SIZE = 0x4000;
     private static final int BORDER_PALETTE_INDEX = 16;
     private static final int[][] MEMORY_CONFIGURATIONS = new int[][] {
@@ -109,7 +113,7 @@ public class GateArray {
     private static int decodeSelectedPen(int value) {
         return (value & 0x10) != 0 ?
                 BORDER_PALETTE_INDEX :
-                value & 0x07;
+                value & 0x0F;
     }
 
     public void onPortWriteOperation(int value) {
@@ -125,6 +129,7 @@ public class GateArray {
                 screenModeAndRomConfigurationRegister = value;
                 break;
             case RAM_BANKING_FN:
+                LOGGER.debug("Setting ramBankingRegister to {}", value);
                 ramBankingRegister = value;
                 break;
         }
