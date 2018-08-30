@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator;
+package com.grelobites.romgenerator.util.tape;
 
 import com.grelobites.romgenerator.model.Game;
 

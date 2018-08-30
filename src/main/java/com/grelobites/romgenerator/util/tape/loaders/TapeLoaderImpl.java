@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.tapeloader;
+package com.grelobites.romgenerator.util.tape.loaders;
 
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameHeader;
@@ -6,9 +6,9 @@ import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
-import com.grelobites.romgenerator.util.emulator.LoaderResources;
+import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
-import com.grelobites.romgenerator.util.emulator.TapeLoader;
+import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.emulator.Z80;
 import com.grelobites.romgenerator.util.emulator.Z80State;
 import com.grelobites.romgenerator.util.emulator.Z80operations;
@@ -19,12 +19,10 @@ import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
 import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
-import com.grelobites.romgenerator.util.tape.CDTTapePlayer;
+import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -42,7 +40,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private final GateArray gateArray;
     private final Z80 z80;
     private final Clock clock;
-    private final CDTTapePlayer tapePlayer;
+    private final CdtTapePlayer tapePlayer;
     private final Crtc crtc;
     private final Ppi ppi;
     private final CpcMemory memory;
@@ -55,7 +53,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     }
 
     public TapeLoaderImpl(HardwareMode hardwareMode,
-                          LoaderResources loaderResources) throws IOException {
+                          LoaderResources loaderResources) {
         this.loaderResources = loaderResources;
         clock = new Clock();
         this.hardwareMode = hardwareMode;
@@ -65,8 +63,13 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                 .withCpc464DefaultValues().build();
         crtc = new Crtc(CrtcType.CRTC_TYPE_0);
         memory = new CpcMemory(gateArray);
-        tapePlayer = new CDTTapePlayer(clock, ppi, true);
-        loadRoms();
+        tapePlayer = new CdtTapePlayer(clock, ppi, true);
+        try {
+            loadRoms();
+        } catch (IOException ioe) {
+            LOGGER.error("Loading ROM resources", ioe);
+            throw new IllegalArgumentException("Invalid ROM Resources", ioe);
+        }
     }
 
     protected static Z80.IntMode fromOrdinal(int mode) {
@@ -208,11 +211,6 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         }
         LOGGER.info("Motor is on!");
         final SNAGameImageLoader exporter = new SNAGameImageLoader();
-        tapePlayer.addBlockChangeListener((c) -> {
-            String fileName = String.format("/home/mteira/Escritorio/test%d.sna", c);
-            LOGGER.debug("Detected block change. Saving snapshot {}", fileName);
-            exporter.save(toSnapshotGame(), new FileOutputStream(new File(fileName)));
-        });
         tapePlayer.play();
         try {
             while (!tapePlayer.isEOT()) {
@@ -221,8 +219,19 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         } catch (TapeFinishedException tfe) {
             LOGGER.debug("Tape finished with cpu status " + z80.getZ80State(), tfe);
         }
-        LOGGER.info("Ended");
+        LOGGER.info("Tape finished");
         tapePlayer.stop();
+        long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
+
+        while (!memory.isAddressInRam(z80.getRegPC())) {
+            executeFrame();
+            if (clock.getTstates() > deadline) {
+                break;
+            }
+        }
+        LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
+                String.format("0x%04x", z80.getRegPC()),
+                memory.isAddressInRam(z80.getRegPC()));
         return toSnapshotGame();
     }
 
@@ -233,25 +242,25 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
     @Override
     public int peek8(int address) {
-        clock.addTstates(3);
+        clock.addTstates(4);
         return memory.peek8(address);
     }
 
     @Override
     public void poke8(int address, int value) {
-        clock.addTstates(3);
+        clock.addTstates(4);
         memory.poke8(address, value);
     }
 
     @Override
     public int peek16(int address) {
-        clock.addTstates(3);
+        clock.addTstates(4);
         return memory.peek16(address);
     }
 
     @Override
     public void poke16(int address, int word) {
-        clock.addTstates(3);
+        clock.addTstates(4);
         memory.poke16(address, word);
     }
 

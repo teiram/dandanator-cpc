@@ -4,7 +4,7 @@ import com.grelobites.romgenerator.util.Util;
 
 import java.io.IOException;
 
-public class DAADConstants {
+public class DaadConstants {
 
     public static final int METADATA_OFFSET = 15298;
     public static final int METADATA_SIZE = 1086;
@@ -21,7 +21,7 @@ public class DAADConstants {
     public static byte[] getDAADLoader() throws IOException {
         if (DAAD_LOADER == null) {
             DAAD_LOADER = Util.fromInputStream(
-                    DAADConstants.class.getClassLoader()
+                    DaadConstants.class.getClassLoader()
                             .getResourceAsStream(DAAD_LOADER_RESOURCE));
         }
         return DAAD_LOADER;
@@ -30,7 +30,7 @@ public class DAADConstants {
     public static byte[] getDefaultScreen() throws IOException {
         if (DAAD_SCREEN == null) {
             DAAD_SCREEN = Util.fromInputStream(
-                    DAADConstants.class.getClassLoader()
+                    DaadConstants.class.getClassLoader()
                             .getResourceAsStream(DAAD_SCREEN_RESOURCE));
         }
         return DAAD_SCREEN;

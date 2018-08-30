@@ -208,7 +208,7 @@ public class Z80 {
     //INT Line Status
     private boolean activeINT = false;
     //Interrupt modes
-    public enum IntMode { IM0, IM1, IM2 };
+    public enum IntMode { IM0, IM1, IM2 }
     //Interrupt mode
     private IntMode modeINT = IntMode.IM0;
     //True during HALT execution
@@ -4553,7 +4553,7 @@ public class Z80 {
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.warn("Found opcode " + Integer.toHexString(opCode));
-                };
+                }
 
                 if (breakpointAt[regPC]) {
                     Z80opsImpl.breakpoint();

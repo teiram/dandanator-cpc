@@ -1,12 +1,12 @@
 package com.grelobites.romgenerator.util.daad;
 
-public class DAADResource implements RelocatableItem {
+public class DaadResource implements RelocatableItem {
     private byte[] data;
     private int index;
     private int slot;
     private int slotOffset;
 
-    public DAADResource(int index, byte[] data) {
+    public DaadResource(int index, byte[] data) {
         this.index = index;
         this.data = data;
         this.slot = 0;

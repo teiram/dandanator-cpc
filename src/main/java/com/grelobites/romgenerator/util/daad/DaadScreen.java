@@ -1,10 +1,10 @@
 package com.grelobites.romgenerator.util.daad;
 
-public class DAADScreen {
+public class DaadScreen {
     private int slotOffset;
     private byte[] data;
 
-    public DAADScreen(byte[] data) {
+    public DaadScreen(byte[] data) {
         this.data = data;
         this.slotOffset = 0;
     }

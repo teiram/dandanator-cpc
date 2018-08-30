@@ -3,8 +3,8 @@ package com.grelobites.romgenerator.com.grelobites.romgenerator.util.emulator.ta
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.Util;
-import com.grelobites.romgenerator.util.emulator.Cpc464LoaderResources;
-import com.grelobites.romgenerator.util.emulator.tapeloader.TapeLoaderImpl;
+import com.grelobites.romgenerator.util.emulator.resources.Cpc464LoaderResources;
+import com.grelobites.romgenerator.util.tape.loaders.TapeLoaderImpl;
 import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,8 +19,8 @@ public class TapeLoaderTests {
     @Test
     public void tapeLoadTest() throws Exception {
         TapeLoaderImpl loader = new TapeLoaderImpl(HardwareMode.HW_CPC464,
-                new Cpc464LoaderResources());
-        InputStream cdt = TapeLoaderTests.class.getResourceAsStream("/cdt/lala.cdt");
+                Cpc464LoaderResources.getInstance());
+        InputStream cdt = TapeLoaderTests.class.getResourceAsStream("/cdt/freddy1.cdt");
         Game game = loader.loadTape(cdt);
         new SNAGameImageLoader().save(game,
                 new FileOutputStream(new File("/home/mteira/Escritorio/test.sna")));

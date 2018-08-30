@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator;
+package com.grelobites.romgenerator.util.emulator.resources;
 
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.Util;

@@ -1,13 +1,13 @@
 package com.grelobites.romgenerator.util.daad;
 
-public class DAADBinary implements RelocatableItem {
+public class DaadBinary implements RelocatableItem {
     private byte[] data;
     private int loadAddress;
     private int slot;
     private int slotOffset;
 
     public static class Builder {
-        private DAADBinary part = new DAADBinary();
+        private DaadBinary part = new DaadBinary();
 
         public Builder withData(byte[] data) {
             part.setData(data);
@@ -17,7 +17,7 @@ public class DAADBinary implements RelocatableItem {
             part.setLoadAddress(loadAddress);
             return this;
         }
-        public DAADBinary build() {
+        public DaadBinary build() {
             return part;
         }
     }

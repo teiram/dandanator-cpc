@@ -1,6 +1,6 @@
 package com.grelobites.romgenerator.util.tape;
 
-public class CDTBlockParameters {
+public class CdtBlockParameters {
     private int leaderLength;
     private int sync1Length;
     private int sync2Length;

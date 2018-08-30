@@ -2,13 +2,13 @@ package com.grelobites.romgenerator.util.daad;
 
 import java.nio.ByteBuffer;
 
-public class DAADTableEntry {
+public class DaadTableEntry {
     private int slot;
     private int offset;
     private int compression;
 
     public static class Builder {
-        private DAADTableEntry entry = new DAADTableEntry();
+        private DaadTableEntry entry = new DaadTableEntry();
 
         public Builder withSlot(int slot) {
             entry.setSlot(slot);
@@ -25,7 +25,7 @@ public class DAADTableEntry {
             return this;
         }
 
-        public DAADTableEntry build() {
+        public DaadTableEntry build() {
             return entry;
         }
     }

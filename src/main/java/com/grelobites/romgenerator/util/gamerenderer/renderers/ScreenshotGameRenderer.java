@@ -16,13 +16,13 @@ import java.io.InputStream;
 
 public class ScreenshotGameRenderer extends PassiveGameRendererBase implements GameRenderer  {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScreenshotGameRenderer.class);
-    private WritableImage spectrum48kImage;
-    private WritableImage cartridgeImage;
+    private WritableImage defaultGameImage;
+    private WritableImage romGameImage;
     private ImageView targetView;
 
     private void initializeImages() throws IOException {
-        setDefaultImage(false);
-        cartridgeImage = ImageUtil.scrLoader(
+        setDefaultImage(Configuration.getInstance().getTapeLoaderTarget(),false);
+        romGameImage = ImageUtil.scrLoader(
                 ImageUtil.newScreenshot(), 1,
                 ScreenshotGameRenderer.class.getClassLoader()
                         .getResourceAsStream("cpc6128.scr"));
@@ -31,7 +31,7 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
     private void loadDefaultImage(String imageResource) {
         LOGGER.debug("Loading default image " + imageResource);
         try {
-            spectrum48kImage = ImageUtil.scrLoader(
+            defaultGameImage = ImageUtil.scrLoader(
                     ImageUtil.newScreenshot(), 1,
                     ScreenshotGameRenderer.class.getClassLoader()
                             .getResourceAsStream(imageResource));
@@ -40,16 +40,28 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
         }
     }
 
-    private void setDefaultImage(boolean update) {
-        loadDefaultImage("cpc6128.scr");
-
+    private void setDefaultImage(String tapeLoaderTarget, boolean update) {
+        switch (HardwareMode.valueOf(tapeLoaderTarget)) {
+            case HW_CPC464:
+                loadDefaultImage("cpc464.scr");
+                break;
+            case HW_CPC6128:
+                loadDefaultImage("cpc6128.scr");
+                break;
+            default:
+                loadDefaultImage("cpc6128.scr");
+        }
         if (update) {
-            targetView.setImage(spectrum48kImage);
+            targetView.setImage(defaultGameImage);
         }
     }
 
     public ScreenshotGameRenderer() throws IOException {
         initializeImages();
+        Configuration.getInstance().tapeLoaderTargetProperty()
+                .addListener((observable, oldValue, newValue) ->
+                        setDefaultImage(newValue,
+                                targetView.getImage() == defaultGameImage));
     }
 
     @Override
@@ -64,12 +76,12 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
             if (game instanceof RamGame) {
                 targetView.setImage(((RamGame) game).getScreenshot());
             } else if (game.getType() == GameType.ROM) {
-                targetView.setImage(cartridgeImage);
+                targetView.setImage(romGameImage);
             } else {
-                targetView.setImage(spectrum48kImage);
+                targetView.setImage(defaultGameImage);
             }
         } else {
-            targetView.setImage(spectrum48kImage);
+            targetView.setImage(defaultGameImage);
         }
     }
 

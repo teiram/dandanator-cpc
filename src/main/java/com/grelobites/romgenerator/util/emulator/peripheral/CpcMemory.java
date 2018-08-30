@@ -1,12 +1,10 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
-import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.util.emulator.Memory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class CpcMemory implements Memory {
@@ -40,6 +38,13 @@ public class CpcMemory implements Memory {
 
     private int bankAddress(int address) {
         return address % BANK_SIZE;
+    }
+
+    public boolean isAddressInRam(int address) {
+        int bankSlot = gateArray.getMemoryBankSlot(address);
+        return bankSlot == 1 || bankSlot == 2 ||
+                (bankSlot == 0 && !gateArray.isLowRomEnabled()) ||
+                (bankSlot == 3 && !gateArray.isHighRomEnabled());
     }
 
     @Override
@@ -96,10 +101,10 @@ public class CpcMemory implements Memory {
 
     public List<byte[]> toByteArrayList() {
         List<byte[]> banks = new ArrayList<>();
-        for (int i = 0; i < ramBanks.length; i++) {
+        for (byte[] ramBank : ramBanks) {
             //Detach the banks from the current RAM representation
             byte[] ramCopy = new byte[BANK_SIZE];
-            System.arraycopy(ramBanks[i], 0, ramCopy, 0, BANK_SIZE);
+            System.arraycopy(ramBank, 0, ramCopy, 0, BANK_SIZE);
             banks.add(ramCopy);
         }
         return banks;

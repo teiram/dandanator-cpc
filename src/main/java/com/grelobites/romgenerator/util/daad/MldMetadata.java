@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
 
-public class MLDMetadata {
+public class MldMetadata {
     public static final int MLD_DATA_ROWS = 256;
     public static final int MLD_VERSION = 0;
     public static final int MLD_DATAROW_LENGTH = 4;
@@ -13,14 +13,14 @@ public class MLDMetadata {
     public static final int BASE_SLOT_OFFSET = TAP_TABLE_OFFSET + 40;
 
     public static class Builder {
-        private MLDMetadata metadata = new MLDMetadata();
+        private MldMetadata metadata = new MldMetadata();
 
         public Builder withBaseSlot(int baseSlot) {
             metadata.setBaseSlot(baseSlot);
             return this;
         }
 
-        public Builder withMldType(MLDType mldType) {
+        public Builder withMldType(MldType mldType) {
             metadata.setMldType(mldType);
             return this;
         }
@@ -55,37 +55,37 @@ public class MLDMetadata {
             return this;
         }
 
-        public Builder withDAADScreen(DAADScreen daadScreen) {
+        public Builder withDAADScreen(DaadScreen daadScreen) {
             metadata.setDaadScreen(daadScreen);
             return this;
         }
 
-        public Builder withDAADResources(List<DAADResource> daadResources) {
+        public Builder withDAADResources(List<DaadResource> daadResources) {
             metadata.setDaadResources(daadResources);
             return this;
         }
 
-        public Builder withDAADBinaries(DAADBinary[] daadBinaries) {
+        public Builder withDAADBinaries(DaadBinary[] daadBinaries) {
             metadata.setDaadBinaries(daadBinaries);
             return this;
         }
 
-        public MLDMetadata build() {
+        public MldMetadata build() {
             return metadata;
         }
     }
 
     private int baseSlot;
-    private MLDType mldType = MLDType.MLD_48K;
+    private MldType mldType = MldType.MLD_48K;
     private int allocatedSectors = 0;
-    private int tableOffset = DAADConstants.METADATA_OFFSET;
+    private int tableOffset = DaadConstants.METADATA_OFFSET;
     private int dataRowLength = MLD_DATAROW_LENGTH;
     private int dataRows = MLD_DATA_ROWS;
     private int slotRowOffset = MLD_SLOTROW_OFFSET;
     private int version = MLD_VERSION;
-    private DAADScreen daadScreen;
-    private List<DAADResource> daadResources;
-    private DAADBinary[] daadBinaries;
+    private DaadScreen daadScreen;
+    private List<DaadResource> daadResources;
+    private DaadBinary[] daadBinaries;
 
     public static Builder newBuilder() {
         return new Builder();
@@ -99,11 +99,11 @@ public class MLDMetadata {
         this.baseSlot = baseSlot;
     }
 
-    public MLDType getMldType() {
+    public MldType getMldType() {
         return mldType;
     }
 
-    public void setMldType(MLDType mldType) {
+    public void setMldType(MldType mldType) {
         this.mldType = mldType;
     }
 
@@ -155,36 +155,36 @@ public class MLDMetadata {
         this.version = version;
     }
 
-    public DAADScreen getDaadScreen() {
+    public DaadScreen getDaadScreen() {
         return daadScreen;
     }
 
-    public void setDaadScreen(DAADScreen daadScreen) {
+    public void setDaadScreen(DaadScreen daadScreen) {
         this.daadScreen = daadScreen;
     }
 
-    public List<DAADResource> getDaadResources() {
+    public List<DaadResource> getDaadResources() {
         return daadResources;
     }
 
-    public void setDaadResources(List<DAADResource> daadResources) {
+    public void setDaadResources(List<DaadResource> daadResources) {
         this.daadResources = daadResources;
     }
 
-    public DAADBinary[] getDaadBinaries() {
+    public DaadBinary[] getDaadBinaries() {
         return daadBinaries;
     }
 
-    public void setDaadBinaries(DAADBinary[] daadBinaries) {
+    public void setDaadBinaries(DaadBinary[] daadBinaries) {
         this.daadBinaries = daadBinaries;
     }
 
     public byte[] toByteArray() {
-        ByteBuffer buffer = ByteBuffer.allocate(DAADConstants.METADATA_SIZE)
+        ByteBuffer buffer = ByteBuffer.allocate(DaadConstants.METADATA_SIZE)
                 .order(ByteOrder.LITTLE_ENDIAN);
-        for (DAADResource resource : daadResources) {
+        for (DaadResource resource : daadResources) {
             int offset = resource.getIndex() * MLD_DATAROW_LENGTH;
-            DAADTableEntry.newBuilder()
+            DaadTableEntry.newBuilder()
                     .withSlot(resource.getSlot())
                     .withOffset(resource.getSlotOffset())
                     .withCompression(0)
@@ -192,7 +192,7 @@ public class MLDMetadata {
                     .toBuffer(buffer, offset);
         }
         int offset = TAP_TABLE_OFFSET;
-        for (DAADBinary binary: daadBinaries) {
+        for (DaadBinary binary: daadBinaries) {
             TapTableEntry.newBuilder()
                     .withSlot(binary.getSlot())
                     .withOffset(binary.getSlotOffset())
@@ -219,7 +219,7 @@ public class MLDMetadata {
                         daadScreen != null ?
                                 Integer.valueOf(daadScreen.getData().length)
                                         .shortValue() : 0)
-                .put(DAADConstants.MLD_SIGNATURE.getBytes())
+                .put(DaadConstants.MLD_SIGNATURE.getBytes())
                 .put(Integer.valueOf(version).byteValue());
 
         return buffer.array();

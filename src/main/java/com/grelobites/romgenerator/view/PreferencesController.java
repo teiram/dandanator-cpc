@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
+import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.FontViewer;
 import com.grelobites.romgenerator.util.ImageUtil;
@@ -10,6 +11,8 @@ import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Pagination;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
@@ -47,6 +50,14 @@ public class PreferencesController {
     @FXML
     private Button resetCharSetButton;
 
+    @FXML
+    private RadioButton tapeMode464;
+
+    @FXML
+    private RadioButton tapeMode6128;
+
+    @FXML
+    private ToggleGroup tapeLoaderToggleGroup;
 
     private void initializeImages() throws IOException {
         backgroundImage = ImageUtil.scrLoader(
@@ -88,6 +99,38 @@ public class PreferencesController {
         } else {
             throw new IllegalArgumentException("No valid charset file provided");
         }
+    }
+
+    private void setTapeTargetMode(String hwMode) {
+        switch (HardwareMode.valueOf(hwMode)) {
+            case HW_CPC464:
+                tapeLoaderToggleGroup.selectToggle(tapeMode464);
+                break;
+            case HW_CPC6128:
+                tapeLoaderToggleGroup.selectToggle(tapeMode6128);
+                break;
+            default:
+                LOGGER.warn("Invalid hardware mode selected as Tape target");
+        }
+    }
+
+    private void tapeTargetModeSetup() {
+        Configuration configuration = Configuration.getInstance();
+
+        tapeMode464.setUserData(HardwareMode.HW_CPC464);
+        tapeMode6128.setUserData(HardwareMode.HW_CPC6128);
+
+        setTapeTargetMode(configuration.getTapeLoaderTarget());
+
+        configuration.tapeLoaderTargetProperty().addListener((observable, oldValue, newValue) -> {
+            setTapeTargetMode(newValue);
+        });
+
+        tapeLoaderToggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue)  -> {
+            LOGGER.debug("Changed Tape mode toggle to " + newValue);
+            configuration.setTapeLoaderTarget(
+                    ((HardwareMode) newValue.getUserData()).name());
+        });
     }
 
 
@@ -204,5 +247,7 @@ public class PreferencesController {
         backgroundImageSetup();
 
         charSetSetup();
+
+        tapeTargetModeSetup();
     }
 }

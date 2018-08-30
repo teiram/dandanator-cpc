@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator;
 
+import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.CharSetFactory;
 import com.grelobites.romgenerator.util.RamGameCompressor;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
@@ -21,8 +22,10 @@ public class Configuration {
     private static final String MODE_PROPERTY = "mode";
     private static final String BACKGROUNDIMAGEPATH_PROPERTY = "backgroundImagePath";
     private static final String CHARSETPATH_PROPERTY = "charSetPath";
+    private static final String TAPELOADERTARGET_PROPERTY = "tapeLoaderTarget";
     public static final String INTERNAL_CHARSET_PREFIX= "internal://";
     private static final String DEFAULT_MODE = RomSetHandlerType.DDNTR_V1.name();
+    private static final String DEFAULT_TAPELOADER_TARGET = HardwareMode.HW_CPC464.name();
 
     byte[] charSet;
     byte[] backgroundImage;
@@ -33,8 +36,7 @@ public class Configuration {
     private BooleanProperty charSetPathExternallyProvided;
     private CharSetFactory charSetFactory;
     private RamGameCompressor ramGameCompressor;
-    private BooleanProperty allowExperimentalGames;
-    private StringProperty tapLoaderTarget;
+    private StringProperty tapeLoaderTarget;
 
     private static Configuration INSTANCE;
 
@@ -51,12 +53,12 @@ public class Configuration {
         this.charSetPath = new SimpleStringProperty();
         this.charSetPathExternallyProvided = new SimpleBooleanProperty();
         this.mode = new SimpleStringProperty(DEFAULT_MODE);
-        this.allowExperimentalGames = new SimpleBooleanProperty(true);
 
-        this.charSetPath.addListener((observable, oldValue, newValue) -> {
-           charSetPathExternallyProvided.set(isCharSetExternallyProvided(newValue));
-        });
+        this.charSetPath.addListener((observable, oldValue, newValue) ->
+                charSetPathExternallyProvided.set(
+                        isCharSetExternallyProvided(newValue)));
         this.charSetFactory = new CharSetFactory();
+        this.tapeLoaderTarget = new SimpleStringProperty(DEFAULT_TAPELOADER_TARGET);
     }
 
     public static Configuration getInstance() {
@@ -192,16 +194,17 @@ public class Configuration {
         this.ramGameCompressor = ramGameCompressor;
     }
 
-    public boolean isAllowExperimentalGames() {
-        return allowExperimentalGames.get();
+    public String getTapeLoaderTarget() {
+        return tapeLoaderTarget.get();
     }
 
-    public BooleanProperty allowExperimentalGamesProperty() {
-        return allowExperimentalGames;
+    public StringProperty tapeLoaderTargetProperty() {
+        return tapeLoaderTarget;
     }
 
-    public void setAllowExperimentalGames(boolean allowExperimentalGames) {
-        this.allowExperimentalGames.set(allowExperimentalGames);
+    public void setTapeLoaderTarget(String tapeLoaderTarget) {
+        this.tapeLoaderTarget.set(tapeLoaderTarget);
+        persistConfigurationValue(TAPELOADERTARGET_PROPERTY, tapeLoaderTarget);
     }
 
     public static Preferences getApplicationPreferences() {

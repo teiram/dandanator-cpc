@@ -16,8 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MLDGameImageLoader implements GameImageLoader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MLDGameImageLoader.class);
+public class MldGameImageLoader implements GameImageLoader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MldGameImageLoader.class);
 
     @Override
     public Game load(InputStream is) throws IOException {

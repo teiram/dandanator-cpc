@@ -14,8 +14,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DAADGenerator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DAADGenerator.class);
+public class DaadGenerator {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DaadGenerator.class);
 
     private static class SlotContainer implements Container<RelocatableItem> {
         public int remaining = Constants.SLOT_SIZE;
@@ -36,9 +36,9 @@ public class DAADGenerator {
         }
     }
 
-    private DAADData data;
+    private DaadData data;
 
-    public DAADGenerator(DAADData data) {
+    public DaadGenerator(DaadData data) {
         this.data = data;
     }
 
@@ -74,20 +74,20 @@ public class DAADGenerator {
         return slots;
     }
 
-    private void writeSlot0Parts(byte[] slotData, DAADData data) throws IOException {
-        byte[] metadata = MLDMetadata.newBuilder()
+    private void writeSlot0Parts(byte[] slotData, DaadData data) throws IOException {
+        byte[] metadata = MldMetadata.newBuilder()
                 .withDAADBinaries(data.getBinaryParts())
                 .withDAADResources(data.getDAADResources())
                 .withDAADScreen(data.getScreen())
-                .withAllocatedSectors(DAADConstants.MLD_ALLOCATED_SECTORS)
+                .withAllocatedSectors(DaadConstants.MLD_ALLOCATED_SECTORS)
                 .build().toByteArray();
         LOGGER.debug("Writing metadata to slot of size {} with size {} at offset {}",
                 slotData.length,
-                metadata.length, DAADConstants.METADATA_OFFSET);
+                metadata.length, DaadConstants.METADATA_OFFSET);
         System.arraycopy(metadata, 0, slotData,
-                DAADConstants.METADATA_OFFSET, metadata.length);
+                DaadConstants.METADATA_OFFSET, metadata.length);
 
-        byte[] loader = DAADConstants.getDAADLoader();
+        byte[] loader = DaadConstants.getDAADLoader();
 
         System.arraycopy(loader, 0, slotData, 0, loader.length);
         if (data.getScreen() != null) {
@@ -109,18 +109,18 @@ public class DAADGenerator {
 
     public InputStream generate() throws IOException {
         SlotContainer slot0 = new SlotContainer();
-        slot0.remaining -= DAADConstants.getDAADLoader().length;
-        slot0.remaining -= DAADConstants.METADATA_SIZE;
+        slot0.remaining -= DaadConstants.getDAADLoader().length;
+        slot0.remaining -= DaadConstants.METADATA_SIZE;
         if (data.getScreen() != null) {
-            DAADScreen screen = data.getScreen();
+            DaadScreen screen = data.getScreen();
             byte[] compressedScreen = Util.compress(screen.getData());
             screen.setSlotOffset(Constants.SLOT_SIZE - slot0.remaining);
             screen.setData(compressedScreen);
             slot0.remaining -= compressedScreen.length;
         }
         List<RelocatableItem> items = new ArrayList<>();
-        for (int i = 0; i < DAADConstants.BINARY_PARTS; i++) {
-            DAADBinary part = data.getBinaryPart(i);
+        for (int i = 0; i < DaadConstants.BINARY_PARTS; i++) {
+            DaadBinary part = data.getBinaryPart(i);
             part.setData(Util.compress(part.getData()));
             items.add(part);
         }

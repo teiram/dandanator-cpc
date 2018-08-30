@@ -1,6 +1,6 @@
 package com.grelobites.romgenerator.util.tape;
 
-public class CDTBlock {
+public class CdtBlock {
     public static final int STANDARD_SPEED = 0x10;
     public static final int TURBO_SPEED = 0x11;
     public static final int PURE_TONE = 0x12;

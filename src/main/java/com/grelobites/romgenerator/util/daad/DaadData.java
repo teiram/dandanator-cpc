@@ -14,11 +14,11 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class DAADData {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DAADData.class);
-    private List<DAADResource> daadResources = new ArrayList<>();
-    private DAADBinary[] binaryParts;
-    private DAADScreen screen;
+public class DaadData {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DaadData.class);
+    private List<DaadResource> daadResources = new ArrayList<>();
+    private DaadBinary[] binaryParts;
+    private DaadScreen screen;
 
     private static Pattern zxsNamePattern = Pattern.compile("\\d{3}");
 
@@ -33,8 +33,8 @@ public class DAADData {
         return value < 256 ? value : -1;
     }
 
-    public static DAADData fromZipStream(ZipInputStream zipInputStream) throws IOException {
-        DAADData data = new DAADData();
+    public static DaadData fromZipStream(ZipInputStream zipInputStream) throws IOException {
+        DaadData data = new DaadData();
         ZipEntry entry;
         boolean tapEntryFound = false;
         boolean screenEntryFound = false;
@@ -79,7 +79,7 @@ public class DAADData {
         TapInputStream tis = new TapInputStream(new ByteArrayInputStream(tapByteArray));
         Optional<TapBlock> tapHeaderBlockOpt;
         int binaryBlockIndex = 0;
-        List<DAADBinary> items = new ArrayList<>();
+        List<DaadBinary> items = new ArrayList<>();
         while ((tapHeaderBlockOpt = tis.next()).isPresent()) {
             LOGGER.debug("Read TAP Header Block {}", tapHeaderBlockOpt.get());
             if (tapHeaderBlockOpt.get().getType() == TapBlockType.CODE) {
@@ -93,7 +93,7 @@ public class DAADData {
                         LOGGER.debug("Adding binary part with size {} and startAddress {}",
                                 dataBlock.getData().length,
                                 String.format("0x%04x", headerBlock.getStartAddress()));
-                        items.add(DAADBinary.newBuilder()
+                        items.add(DaadBinary.newBuilder()
                                 .withData(dataBlock.getData())
                                 .withLoadAddress(headerBlock.getStartAddress())
                                 .build());
@@ -107,7 +107,7 @@ public class DAADData {
 
         }
         if (items.size() == 3) {
-            binaryParts = items.toArray(new DAADBinary[0]);
+            binaryParts = items.toArray(new DaadBinary[0]);
         } else {
             throw new IllegalArgumentException("Invalid number of code blocks found :" +
                 items.size());
@@ -116,28 +116,28 @@ public class DAADData {
 
     private void addZxScreen(int index, byte[] data) {
         LOGGER.debug("Adding ZXScreen entry at index {} with size {}", index, data.length);
-        daadResources.add(new DAADResource(index, data));
+        daadResources.add(new DaadResource(index, data));
     }
 
-    public List<DAADResource> getDAADResources() {
+    public List<DaadResource> getDAADResources() {
         return daadResources;
     }
 
-    public DAADScreen getScreen() {
+    public DaadScreen getScreen() {
         return screen;
     }
 
-    public DAADBinary getBinaryPart(int index) {
+    public DaadBinary getBinaryPart(int index) {
         return binaryParts[index];
     }
 
-    public DAADBinary[] getBinaryParts() {
+    public DaadBinary[] getBinaryParts() {
         return binaryParts;
     }
 
     private void setScreenData(byte[] data) {
         LOGGER.debug("Setting screen data with size {}", data.length);
-        screen = new DAADScreen(data);
+        screen = new DaadScreen(data);
     }
 
 }
