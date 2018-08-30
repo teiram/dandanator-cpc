@@ -3,6 +3,7 @@ package com.grelobites.romgenerator.util.gameloader.loaders;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
+import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoader;
 import com.grelobites.romgenerator.util.tape.TapeLoaderFactory;
@@ -16,7 +17,9 @@ public class CdtGameImageLoader implements GameImageLoader {
     public Game load(InputStream is) throws IOException {
         TapeLoader tapeLoader = TapeLoaderFactory.getTapeLoader(
                 HardwareMode.valueOf(Configuration.getInstance().getTapeLoaderTarget()));
-        return tapeLoader.loadTape(is);
+        SnapshotGame game = (SnapshotGame) tapeLoader.loadTape(is);
+        game.setHoldScreen(true);
+        return game;
     }
 
     @Override
