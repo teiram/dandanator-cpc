@@ -4,6 +4,9 @@ import com.grelobites.romgenerator.util.emulator.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Ppi {
     private static final Logger LOGGER = LoggerFactory.getLogger(Ppi.class);
     private static final int PSG_REGISTERS = 16;
@@ -50,6 +53,7 @@ public class Ppi {
     private int portCCurrentValue;
     private int controlCurrentValue;
     private byte[] keyStatus = new byte[KEYBOARD_SCANLINES];
+    private List<MotorStateChangeListener> motorStateChangeListeners = new ArrayList<>();
 
     public Ppi() {
         for (int i = 0; i < keyStatus.length; i++) {
@@ -247,7 +251,11 @@ public class Ppi {
         psgFunction = PsgFunction.fromId((value & 0xC0) >> 6);
         keyboardLineToScan = value & 0x0F;
         casseteDataOutput = (value & 0x20) != 0;
-        motorOn = (value & 0x10) != 0;
+        boolean newMotorOnValue = (value & 0x10) != 0;
+        if (newMotorOnValue != motorOn) {
+            motorOn = newMotorOnValue;
+            notifyMotorStateChangeListeners();
+        }
         applyPsgFunction();
     }
 
@@ -269,7 +277,10 @@ public class Ppi {
             } else if (bitToSet == 5) {
                 casseteDataOutput = clear;
             } else if (bitToSet == 4) {
-                motorOn = clear;
+                if (clear != motorOn) {
+                    motorOn = clear;
+                    notifyMotorStateChangeListeners();
+                }
             } else {
                 keyboardLineToScan = clear ?
                         keyboardLineToScan & ~(1 << bitToSet) :
@@ -277,5 +288,22 @@ public class Ppi {
             }
         }
     }
+
+    public void addMotorStateChangeListener(MotorStateChangeListener listener) {
+        this.motorStateChangeListeners.add(listener);
+    }
+
+    public void removeMotorStateChangeListener(MotorStateChangeListener listener) {
+        if (!this.motorStateChangeListeners.remove(listener)) {
+            LOGGER.warn("Trying to remove unregistered MotorStateChangeListener");
+        }
+    }
+
+    public void notifyMotorStateChangeListeners() {
+        for (MotorStateChangeListener listener: motorStateChangeListeners) {
+            listener.onMotorStateChange(motorOn);
+        }
+    }
+
 
 }

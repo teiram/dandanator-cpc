@@ -132,6 +132,10 @@ public class CdtTapePlayer implements ClockTimeoutListener {
         return eot;
     }
 
+    public String getStatus() {
+        return String.format("Playing=%s, position=%d, block=%d/%d",
+                playing, tapePos, idxHeader + 1, blockOffsets.size());
+    }
     private static String readBlockName(byte[] buffer, int offset, int length) {
         return new String(Arrays.copyOfRange(buffer, offset, offset + length));
     }
@@ -768,13 +772,14 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     idxHeader++;
             }
         }
+        LOGGER.debug("At position {}, block {}", tapePos, idxHeader);
         notifyBlockChangeListeners(currentBlock);
     }
 
 
     public void play() {
         if (!playing) {
-            if (idxHeader >= blockOffsets.size()) {
+            if (idxHeader > blockOffsets.size()) {
                 throw new IllegalStateException("Trying to play with blocks exhausted");
             }
             state = State.START;
@@ -791,11 +796,11 @@ public class CdtTapePlayer implements ClockTimeoutListener {
             state = State.STOP;
             clock.removeClockTimeoutListener(this);
             playing = false;
-            LOGGER.debug("On tape stop pos: {}, buffer size: {}",
-                    tapePos, tapeBuffer.length);
+            LOGGER.debug("On tape stop pos: {}/{}, header: {}/{}",
+                    tapePos, tapeBuffer.length,
+                    idxHeader, blockOffsets.size());
 
-            eot = tapePos >= tapeBuffer.length;
-
+            eot = (tapePos >= tapeBuffer.length) || (idxHeader >= blockOffsets.size());
         }
     }
 

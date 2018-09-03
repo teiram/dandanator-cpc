@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
@@ -35,7 +36,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final int INTERRUPT_HSYNC_COUNT = 52;
     private static final int INTERRUPT_TSTATES = HSYNC_TSTATES * INTERRUPT_HSYNC_COUNT;
     private static final int HSYNC_32_DELAY = HSYNC_TSTATES * 32;
-
+    private static final int MAX_FRAMES_WITHOUT_TAPE_MOVEMENT = 500;
     private final LoaderResources loaderResources;
     private final GateArray gateArray;
     private final Z80 z80;
@@ -45,7 +46,10 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private final Ppi ppi;
     private final CpcMemory memory;
     private final HardwareMode hardwareMode;
+    private SnapshotGame currentSnapshot;
+    private int tapeLastSavePosition = 0;
     private int upperRomNumber = 0;
+    private int framesWithoutTapeMovement = 0;
 
     private void loadRoms() throws IOException {
         memory.loadLowRom(loaderResources.lowRom());
@@ -209,18 +213,41 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         while (!ppi.isMotorOn()) {
             executeFrame();
         }
+        ppi.addMotorStateChangeListener((c) -> {
+            if (!c) {
+                LOGGER.debug("Stopping tape from listener with status {}", tapePlayer.getStatus());
+                tapePlayer.stop();
+                currentSnapshot = toSnapshotGame();
+                tapeLastSavePosition = tapePlayer.getTapePos();
+            } else {
+                LOGGER.debug("Restarting tape from listener with status {} ", tapePlayer.getStatus());
+                tapePlayer.play();
+                framesWithoutTapeMovement = 0;
+            }
+        });
         LOGGER.info("Motor is on!");
-        final SNAGameImageLoader exporter = new SNAGameImageLoader();
         tapePlayer.play();
+        int lastTapePosition = tapePlayer.getTapePos();
+        framesWithoutTapeMovement = 0;
+        boolean stopOnTapeStalled = false;
         try {
-            while (!tapePlayer.isEOT()) {
+            while (!tapePlayer.isEOT() && !stopOnTapeStalled) {
                 executeFrame();
+                if (tapePlayer.getTapePos() == lastTapePosition) {
+                    framesWithoutTapeMovement++;
+                    if (framesWithoutTapeMovement >= MAX_FRAMES_WITHOUT_TAPE_MOVEMENT) {
+                        LOGGER.debug("{} frames without tape movement. Stopping",
+                                MAX_FRAMES_WITHOUT_TAPE_MOVEMENT);
+                        stopOnTapeStalled = true;
+                    }
+                }
             }
         } catch (TapeFinishedException tfe) {
             LOGGER.debug("Tape finished with cpu status " + z80.getZ80State(), tfe);
         }
-        LOGGER.info("Tape finished");
         tapePlayer.stop();
+        LOGGER.info("Tape finished at {}, tapeLastSavePosition was {}",
+                tapePlayer.getTapePos(), tapeLastSavePosition);
         long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
 
         while (!memory.isAddressInRam(z80.getRegPC())) {
@@ -229,6 +256,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                 break;
             }
         }
+
         LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
                 String.format("0x%04x", z80.getRegPC()),
                 memory.isAddressInRam(z80.getRegPC()));
@@ -345,7 +373,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
     @Override
     public void contendedStates(int address, int tstates) {
-        clock.addTstates(tstates);
+        //clock.addTstates(tstates);
         //TODO: Change the way this is implemented, if it is even valid on CPC
     }
 
