@@ -11,8 +11,6 @@ public interface Z80operations {
     int inPort(int port);
     void outPort(int port, int value);
 
-    void contendedStates(int address, int tstates);
-    
     void breakpoint();
     void execDone();
 }

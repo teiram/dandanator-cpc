@@ -3,7 +3,6 @@ package com.grelobites.romgenerator.util.tape;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.emulator.ClockTimeoutListener;
-import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -801,6 +800,9 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     idxHeader, blockOffsets.size());
 
             eot = (tapePos >= tapeBuffer.length) || (idxHeader >= blockOffsets.size());
+            if (eot && throwOnEot) {
+                throw new TapeFinishedException("Tape Finished");
+            }
         }
     }
 

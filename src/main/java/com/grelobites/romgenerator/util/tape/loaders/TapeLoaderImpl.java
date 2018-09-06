@@ -7,7 +7,7 @@ import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
-import com.grelobites.romgenerator.util.emulator.TapeFinishedException;
+import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.emulator.Z80;
 import com.grelobites.romgenerator.util.emulator.Z80State;
@@ -18,14 +18,12 @@ import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
 import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
-import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
 import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 
 public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
@@ -36,7 +34,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final int INTERRUPT_HSYNC_COUNT = 52;
     private static final int INTERRUPT_TSTATES = HSYNC_TSTATES * INTERRUPT_HSYNC_COUNT;
     private static final int HSYNC_32_DELAY = HSYNC_TSTATES * 32;
-    private static final int MAX_FRAMES_WITHOUT_TAPE_MOVEMENT = 500;
+    private static final int MAX_FRAMES_WITHOUT_TAPE_MOVEMENT = 5000;
     private final LoaderResources loaderResources;
     private final GateArray gateArray;
     private final Z80 z80;
@@ -251,7 +249,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
 
         while (!memory.isAddressInRam(z80.getRegPC())) {
-            executeFrame();
+            z80.execute();
             if (clock.getTstates() > deadline) {
                 break;
             }
@@ -282,13 +280,13 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
     @Override
     public int peek16(int address) {
-        clock.addTstates(4);
+        clock.addTstates(8);
         return memory.peek16(address);
     }
 
     @Override
     public void poke16(int address, int word) {
-        clock.addTstates(4);
+        clock.addTstates(8);
         memory.poke16(address, word);
     }
 
@@ -354,6 +352,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             z80.execute(toNextInterrupt);
             if (++interruptAttempt == 5) {
                 ppi.setvSyncActive(true);
+                interruptAttempt = 0;
             }
             if (!z80.isINTLine() &&
                     (clock.getTstates() - lastInterruptTstates) > HSYNC_32_DELAY) {
@@ -370,13 +369,6 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         z80.setINTLine(false);
         ppi.setvSyncActive(false);
     }
-
-    @Override
-    public void contendedStates(int address, int tstates) {
-        //clock.addTstates(tstates);
-        //TODO: Change the way this is implemented, if it is even valid on CPC
-    }
-
 
     @Override
     public void breakpoint() {
