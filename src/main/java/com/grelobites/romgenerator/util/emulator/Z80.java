@@ -143,6 +143,8 @@ public class Z80 {
 
     private final Clock clock;
     private final Z80operations Z80opsImpl;
+    private InterruptAckListener interruptAckListener;
+
     //Operation to execute
     private int opCode;
     //Notification system
@@ -1468,6 +1470,14 @@ public class Z80 {
         flagQ = true;
     }
 
+    public void setInterruptAckListener(InterruptAckListener listener) {
+        interruptAckListener = listener;
+    }
+
+    public void resetInterruptAckListener() {
+        interruptAckListener = null;
+    }
+
     //Interrupt
     /* Interrupt details for interruption modes (CPC considerations):
      * IM0:
@@ -1486,22 +1496,23 @@ public class Z80 {
      *      M5: 4 T-States -> Read high byte and jump to the ISR
      */
     private void interruption() {
-
-        //LOGGER.debug(String.format("INT at %d T-States", clock.getTstates()));
-
         //If HALTED, resume execution
         if (halted) {
             halted = false;
             regPC = (regPC + 1) & 0xffff;
         }
 
-        clock.addTstates(8);
-
+        clock.addTstates(8);        //T-states to IORQ activation?
+        if (interruptAckListener != null) {
+            interruptAckListener.onInterruptAck(clock.getTstates());
+        }
         regR++;
         ffIFF1 = ffIFF2 = false;
-        push(regPC);  //Push will add 6 T-states (+contended if needed)
+
+        push(regPC);  //Push will add 8 T-states
+
         if (modeINT == IntMode.IM2) {
-            regPC = Z80opsImpl.peek16((regI << 8) | 0xff); // +6 T-States
+            regPC = Z80opsImpl.peek16((regI << 8) | 0xff); // +8 T-States
         } else {
             regPC = 0x0038;
         }
@@ -1587,6 +1598,14 @@ public class Z80 {
         while (clock.getTstates() < statesLimit) {
             execute();
         }
+    }
+
+    public long executeTstates(long tStates) {
+        long limit = clock.getTstates() + tStates;
+        while (clock.getTstates() < limit) {
+            execute();
+        }
+        return clock.getTstates() - limit;
     }
 
     private void decodeOpcode(int opCode) {

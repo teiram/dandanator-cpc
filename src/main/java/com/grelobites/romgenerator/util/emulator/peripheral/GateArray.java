@@ -77,6 +77,10 @@ public class GateArray {
         return ramBankingRegister != null;
     }
 
+    public boolean isInterruptGenerationDelayed() {
+        return (screenModeAndRomConfigurationRegister & 0x10) != 0;
+    }
+
     public void setPalette(byte[] palette) {
         System.arraycopy(palette, 0, this.palette,
                 0, Math.min(palette.length, this.palette.length));
