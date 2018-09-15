@@ -7,6 +7,8 @@ import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.Counter;
+import com.grelobites.romgenerator.util.emulator.ClockTimeout;
+import com.grelobites.romgenerator.util.emulator.ClockTimeoutListener;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
@@ -423,6 +425,60 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     }
 
     protected void executeFrame() {
+        final long frameStartTstates = clock.getTstates();
+        final long frameEndTstates = frameStartTstates + VSYNC_TSTATES;
+        final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;
+        final long tStatesToHSync = crtc.getHSyncPos() * TSTATES_PER_US;
+        final long tStatesToLine = tStatesPerLine - tStatesToHSync;
+        final long vsyncTstates = frameStartTstates +
+                crtc.getVSyncPos() * (crtc.getMaximumRasterAddress() + 1)
+                        * tStatesPerLine;
+        final Counter gateArrayCounter = new Counter(6);
+        final Counter hSyncCounter = new Counter(8);
+        final ClockTimeout clockTimeout = new ClockTimeout();
+
+        z80.setInterruptAckListener((t) -> {
+            if (gateArray.isInterruptGenerationDelayed()) {
+                gateArrayCounter.reset();
+            } else {
+                gateArrayCounter.mask(~0x20);
+            }
+            z80.setINTLine(false);
+        });
+
+        final ClockTimeoutListener hSyncListener = (t) -> {
+            if (gateArrayCounter.increment() == 52) {
+                z80.setINTLine(true);
+                gateArrayCounter.reset();
+            }
+            if (ppi.isvSyncActive()) {
+                if (hSyncCounter.increment() == 2) {
+                    if ((gateArrayCounter.value() & 0x20) == 0) {
+                        LOGGER.debug("VSYNC INT");
+                        z80.setINTLine(true);
+                    }
+                    gateArrayCounter.reset();
+                }
+            }
+            if (clock.getTstates() > vsyncTstates) {
+                ppi.setvSyncActive(true);
+            }
+            clockTimeout.setTimeout(tStatesPerLine);
+        };
+
+        clockTimeout.setListener(hSyncListener);
+        clockTimeout.setTimeout(tStatesPerLine);
+        clock.addClockTimeout(clockTimeout);
+
+        z80.executeTstates(VSYNC_TSTATES);
+
+        ppi.setvSyncActive(false);
+        z80.resetInterruptAckListener();
+        clock.removeClockTimeout(clockTimeout);
+
+    }
+
+    protected void executeFrameCandidate() {
         final long frameStartTstates = clock.getTstates();
         final long frameEndTstates = frameStartTstates + VSYNC_TSTATES;
         final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;

@@ -97,8 +97,8 @@
  *          además de recibir una notificación después de cada instrucción ejecutada
  *          se puede recibir tras N ciclos. En cualquier caso, execDone será llamada
  *          con el número de ciclos ejecutados, sea tras una sola instrucción o tras
- *          expirar el timeout programado. Si hay un timeout, éste seguirá vigente
- *          hasta que se programe otro o se ponga a false execDone. Si el timeout
+ *          expirar el remaining programado. Si hay un remaining, éste seguirá vigente
+ *          hasta que se programe otro o se ponga a false execDone. Si el remaining
  *          se programa a cero, se llamará a execDone tras cada instrucción.
  * 
  *          08/10/2011 En los métodos xor, or y cp se aseguran de que valores > 0xff
@@ -1502,10 +1502,11 @@ public class Z80 {
             regPC = (regPC + 1) & 0xffff;
         }
 
-        clock.addTstates(8);        //T-states to IORQ activation?
+        clock.addTstates(1);        //T-states to IORQ activation?
         if (interruptAckListener != null) {
             interruptAckListener.onInterruptAck(clock.getTstates());
         }
+        clock.addTstates(6);
         regR++;
         ffIFF1 = ffIFF2 = false;
 
@@ -1517,6 +1518,7 @@ public class Z80 {
             regPC = 0x0038;
         }
         memptr = regPC;
+
     }
 
 
