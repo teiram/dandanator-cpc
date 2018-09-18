@@ -97,4 +97,8 @@ public class Crtc {
         int value = crtcRegisterData[REGISTER_SYNC_WIDTHS] & 0xf;
         return value != 0 ? value : 16;
     }
+
+    public int getVSyncLength() {
+        return (crtcRegisterData[REGISTER_SYNC_WIDTHS] >>> 4) & 0x0f;
+    }
 }

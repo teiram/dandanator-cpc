@@ -218,6 +218,7 @@ public class Z80 {
     //External RESET request
     private boolean pinReset = false;
 
+    private boolean noDelayFlag = false;
     /**
      * Internal CPU register used as follows:
      *
@@ -262,9 +263,9 @@ public class Z80 {
             }
         }
 
-        sz53n_addTable[0] |= ZERO_MASK;
+        sz53n_addTable[0]  |= ZERO_MASK;
         sz53pn_addTable[0] |= ZERO_MASK;
-        sz53n_subTable[0] |= ZERO_MASK;
+        sz53n_subTable[0]  |= ZERO_MASK;
         sz53pn_subTable[0] |= ZERO_MASK;
     }
 
@@ -1238,11 +1239,13 @@ public class Z80 {
         Z80opsImpl.poke8(regSP, word);
     }
 
+    /**
+     * Adds 8 t-states
+     */
     private void ldi() {
         int work8 = Z80opsImpl.peek8(getRegHL());
         int regDE = getRegDE();
         Z80opsImpl.poke8(regDE, work8);
-        clock.addTstates(4);
         incRegHL();
         incRegDE();
         decRegBC();
@@ -1260,11 +1263,13 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 8 t-states
+     */
     private void ldd() {
         int work8 = Z80opsImpl.peek8(getRegHL());
         int regDE = getRegDE();
         Z80opsImpl.poke8(regDE, work8);
-        clock.addTstates(4);
         decRegHL();
         decRegDE();
         decRegBC();
@@ -1282,13 +1287,15 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 4 t-states
+     */
     private void cpi() {
         int regHL = getRegHL();
         int memHL = Z80opsImpl.peek8(regHL);
         boolean carry = carryFlag; //Save from cp changes
         cp(memHL);
         carryFlag = carry;
-        clock.addTstates(8);
         incRegHL();
         decRegBC();
         memHL = regA - memHL - ((sz5h3pnFlags & HALFCARRY_MASK) != 0 ? 1 : 0);
@@ -1306,13 +1313,15 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 4 t-states
+     */
     private void cpd() {
         int regHL = getRegHL();
         int memHL = Z80opsImpl.peek8(regHL);
         boolean carry = carryFlag; //Save from cp changes
         cp(memHL);
         carryFlag = carry;
-        clock.addTstates(8);
         decRegHL();
         decRegBC();
         memHL = regA - memHL - ((sz5h3pnFlags & HALFCARRY_MASK) != 0 ? 1 : 0);
@@ -1330,9 +1339,11 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 8 t-states
+     */
     private void ini() {
         memptr = getRegBC();
-        clock.addTstates(4);
         int work8 = Z80opsImpl.inPort(memptr);
         Z80opsImpl.poke8(getRegHL(), work8);
 
@@ -1362,9 +1373,11 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 8 t-states
+     */
     private void ind() {
         memptr = getRegBC();
-        clock.addTstates(4);
         int work8 = Z80opsImpl.inPort(memptr);
         Z80opsImpl.poke8(getRegHL(), work8);
 
@@ -1394,8 +1407,10 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 8 t-states
+     */
     private void outi() {
-        clock.addTstates(4);
 
         regB = (regB - 1) & 0xff;
         memptr = getRegBC();
@@ -1425,8 +1440,10 @@ public class Z80 {
         flagQ = true;
     }
 
+    /**
+     * Adds 8 t-states
+     */
     private void outd() {
-        clock.addTstates(4);
         regB = (regB - 1) & 0xff;
         memptr = getRegBC();
 
@@ -1478,23 +1495,11 @@ public class Z80 {
         interruptAckListener = null;
     }
 
-    //Interrupt
-    /* Interrupt details for interruption modes (CPC considerations):
-     * IM0:
-     *      M1: 8 T-States -> Assert INT and decSP
-     *      M2: 4 T-States -> Write high byte and decSP
-     *      M3: 4 T-States -> Write low byte and jump to N
-     * IM1:
-     *      M1: 8 T-States -> Assert INT and decSP
-     *      M2: 4 T-States -> Write high byte and decSP
-     *      M3: 4 T-States -> Write low byte and PC=0X0038
-     * IM2:
-     *      M1: 8 T-States -> Assert INT and decSP
-     *      M2: 4 T-States -> Write high byte and decSP
-     *      M3: 4 T-States -> Write low byte
-     *      M4: 4 T-States -> Read low byte of interrupt vector
-     *      M5: 4 T-States -> Read high byte and jump to the ISR
-     */
+    private void executeIM0() {
+       LOGGER.error("Not implemented");
+       throw new IllegalStateException("Interrupt Mode 0 not implemented yet");
+    }
+
     private void interruption() {
         //If HALTED, resume execution
         if (halted) {
@@ -1502,7 +1507,13 @@ public class Z80 {
             regPC = (regPC + 1) & 0xffff;
         }
 
-        clock.addTstates(1);        //T-states to IORQ activation?
+
+        //Some instructions have tail t-states that can be used to acknowledge the interrupt
+        if (!noDelayFlag) {
+            clock.addTstates(4);
+            noDelayFlag = false;
+        }
+
         if (interruptAckListener != null) {
             interruptAckListener.onInterruptAck(clock.getTstates());
         }
@@ -1512,13 +1523,35 @@ public class Z80 {
 
         push(regPC);  //Push will add 8 T-states
 
-        if (modeINT == IntMode.IM2) {
-            regPC = Z80opsImpl.peek16((regI << 8) | 0xff); // +8 T-States
-        } else {
-            regPC = 0x0038;
+        switch (modeINT) {
+            case IM0:
+                executeIM0();
+            case IM1:
+                /* Z80 doc claims 13 T states comprised as: 2,5,3,3
+                   2 T-states interrupt acknowledge; already accounted for above
+                   5 T-states for effectively opcode, CPC hardware sees them as 4T, 1T,
+                     the 3 T states will be unused because a memory access happens next
+                   2 memory accesses at 3 T states each; stretched to 4 T states by
+                     CPC hardware total 2 cycles
+                   So if we exclude 2T states for interrupt, we're effectively left with 4,4,4,4
+                */
+                regPC = 0x0038;
+                clock.addTstates(8); //8 already added in push previously
+                break;
+
+            case IM2:
+                /*
+                    Z80 doc claims 19 T states comprised as: 2,5,3,3,3,3
+                    2 T-states interrupt acknowledge; already accounted for above
+                    5 T-states for effectively opcode, CPC hardware sees them as 4T, 1T,
+                      the 3 T states will be unused because a memory access happens next
+                    4 memory accesses at 3 T states each; stretched to 4 T states by CPC hardware total 4 cycles
+                    So if we exclude 2T states for interrupt, we're effectively left with 4,4,4,4,4,4
+                */
+                regPC = Z80opsImpl.peek16((regI << 8) | 0xff); // +8 T-States
+                clock.addTstates(8); //8 already added in peek16 and another 8 in push
         }
         memptr = regPC;
-
     }
 
 
@@ -1626,6 +1659,7 @@ public class Z80 {
             case 0x03: {            /* INC BC       8 t-states      */
                 clock.addTstates(4);
                 incRegBC();
+                noDelayFlag = true;
                 break;
             }
             case 0x04: {            /* INC B        4 t-states      */
@@ -1674,6 +1708,7 @@ public class Z80 {
             case 0x0B: {            /* DEC BC       8 t-states      */
                 clock.addTstates(4);
                 decRegBC();
+                noDelayFlag = true;
                 break;
             }
             case 0x0C: {            /* INC C        4 t-states      */
@@ -1725,6 +1760,7 @@ public class Z80 {
             case 0x13: {            /* INC DE       8 t-states      */
                 clock.addTstates(4);
                 incRegDE();
+                noDelayFlag = true;
                 break;
             }
             case 0x14: {            /* INC D        4 t-states      */
@@ -1770,6 +1806,7 @@ public class Z80 {
             case 0x1B: {            /* DEC DE       8 t-states      */
                 clock.addTstates(4);
                 decRegDE();
+                noDelayFlag = true;
                 break;
             }
             case 0x1C: {            /* INC E        4 t-states      */
@@ -1820,6 +1857,7 @@ public class Z80 {
             case 0x23: {            /* INC HL       8 t-states      */
                 clock.addTstates(4);
                 incRegHL();
+                noDelayFlag = true;
                 break;
             }
             case 0x24: {            /* INC H        4 t-states      */
@@ -1864,6 +1902,7 @@ public class Z80 {
             case 0x2B: {            /* DEC HL       8 t-states      */
                 clock.addTstates(4);
                 decRegHL();
+                noDelayFlag = true;
                 break;
             }
             case 0x2C: {            /* INC L        4 t-states      */
@@ -1911,6 +1950,7 @@ public class Z80 {
             case 0x33: {            /* INC SP       8 t-states      */
                 clock.addTstates(4);
                 regSP = (regSP + 1) & 0xffff;
+                noDelayFlag = true;
                 break;
             }
             case 0x34: {            /* INC (HL)     12 t-states     */
@@ -1961,6 +2001,7 @@ public class Z80 {
             case 0x3B: {            /* DEC SP       8 t-states      */
                 clock.addTstates(4);
                 regSP = (regSP - 1) & 0xffff;
+                noDelayFlag = true;
                 break;
             }
             case 0x3C: {            /* INC A        4 t-states      */
@@ -2491,6 +2532,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if ((sz5h3pnFlags & ZERO_MASK) == 0) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             }
@@ -2542,6 +2585,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if ((sz5h3pnFlags & ZERO_MASK) != 0) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             }
@@ -2593,6 +2638,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if (!carryFlag) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             }
@@ -2648,6 +2695,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if (carryFlag) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             }
@@ -2721,6 +2770,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if ((sz5h3pnFlags & PARITY_MASK) == 0) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             case 0xE1:              /* POP HL       12 t-states     */
@@ -2743,6 +2794,7 @@ public class Z80 {
                 Z80opsImpl.poke8((regSP + 1) & 0xffff, work16);
                 Z80opsImpl.poke8(regSP, work8);
                 memptr = getRegHL();
+                noDelayFlag = true;
                 break;
             }
             case 0xE4:              /* CALL PO,nn   12/20 t-states  */
@@ -2771,6 +2823,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if ((sz5h3pnFlags & PARITY_MASK) != 0) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             case 0xE9:              /* JP (HL)      4 t-states      */
@@ -2819,6 +2873,8 @@ public class Z80 {
                 clock.addTstates(4);
                 if (sz5h3pnFlags < SIGN_MASK) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             case 0xF1:              /* POP AF       12 t-states     */
@@ -2861,11 +2917,14 @@ public class Z80 {
                 clock.addTstates(4);
                 if (sz5h3pnFlags > 0x7f) {
                     regPC = memptr = pop();
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             case 0xF9:              /* LD SP,HL     8 t-states      */
                 clock.addTstates(4);
                 regSP = getRegHL();
+                noDelayFlag = true;
                 break;
             case 0xFA:              /* JP M,nn      12 t-states     */
                 memptr = Z80opsImpl.peek16(regPC);
@@ -4059,6 +4118,7 @@ public class Z80 {
             case 0x23: {            /* INC IX           12 t-states     */
                 clock.addTstates(4);
                 regIXY = (regIXY + 1) & 0xffff;
+                noDelayFlag = true;
                 break;
             }
             case 0x24: {            /* INC IXh          8 t-states ?   */
@@ -4088,6 +4148,7 @@ public class Z80 {
             case 0x2B: {            /* DEC IX           12 t-states     */
                 clock.addTstates(4);
                 regIXY = (regIXY - 1) & 0xffff;
+                noDelayFlag = true;
                 break;
             }
             case 0x2C: {            /* INC IXl          8 t-states      */
@@ -4143,6 +4204,13 @@ public class Z80 {
             }
             case 0x46: {            /* LD B,(IX+d)      20 t-states     */
                 clock.addTstates(4);
+            }
+            case 0x78: {            /* IN A,(C)         8 t-states     */
+                memptr = getRegBC();
+                clock.addTstates(4);
+                regA = Z80opsImpl.inPort(memptr++);
+                sz5h3pnFlags = sz53pn_addTable[regA];
+                flagQ = true;
                 memptr = (regIXY + (byte) Z80opsImpl.peek8(regPC)) & 0xffff;
                 regB = Z80opsImpl.peek8(memptr);
                 regPC = (regPC + 1) & 0xffff;
@@ -4475,6 +4543,7 @@ public class Z80 {
                 Z80opsImpl.poke8((regSP + 1) & 0xffff, work16 >>> 8);
                 Z80opsImpl.poke8(regSP, work16);
                 memptr = regIXY;
+                noDelayFlag = true;
                 break;
             }
             case 0xE5: {            /* PUSH IX          20 t-states     */
@@ -4489,6 +4558,7 @@ public class Z80 {
             case 0xF9: {            /* LD SP,IX         12 t-states     */
                 clock.addTstates(4);
                 regSP = regIXY;
+                noDelayFlag = true;
                 break;
             }
             default: {
@@ -5864,6 +5934,7 @@ public class Z80 {
                  * de ser copiado el del registro A. Detalle importante.
                  */
                 clock.addTstates(4);
+                noDelayFlag = true;
                 regI = regA;
                 break;
             }
@@ -5880,8 +5951,8 @@ public class Z80 {
                 Z80opsImpl.outPort(memptr++, regC);
                 break;
             }
-            case 0x4A: {            /* ADC HL,BC            12 t-states     */
-                clock.addTstates(4);
+            case 0x4A: {            /* ADC HL,BC            16 t-states     */
+                clock.addTstates(8);
                 adc16(getRegBC());
                 break;
             }
@@ -5894,6 +5965,7 @@ public class Z80 {
             case 0x4F: {            /* LD R,A               12 t-states     */
                 clock.addTstates(4);
                 setRegR(regA);
+                noDelayFlag = true;
                 break;
             }
             case 0x50: {            /* IN D,(C)             16 t-states     */
@@ -5934,6 +6006,7 @@ public class Z80 {
                     sz5h3pnFlags |= PARITY_MASK;
                 }
                 flagQ = true;
+                noDelayFlag = true;
                 break;
             }
             case 0x58: {            /* IN E,(C)             16 t-states     */
@@ -5974,6 +6047,7 @@ public class Z80 {
                     sz5h3pnFlags |= PARITY_MASK;
                 }
                 flagQ = true;
+                noDelayFlag = true;
                 break;
             }
             case 0x60: {            /* IN H,(C)             16 t-states     */
@@ -6036,7 +6110,7 @@ public class Z80 {
                 clock.addTstates(4);
                 break;
             }
-            case 0x70: {            /* IN --,(C)            16 t-states?    */
+            case 0x70: {            /* IN --,(C)            16 t-states    */
                 memptr = getRegBC();
                 clock.addTstates(4);
                 int inPort = Z80opsImpl.inPort(memptr++);
@@ -6044,14 +6118,14 @@ public class Z80 {
                 flagQ = true;
                 break;
             }
-            case 0x71: {            /* OUT (C),--           16 t-states?    */
+            case 0x71: {            /* OUT (C),--           16 t-states    */
                 memptr = getRegBC();
                 clock.addTstates(4);
                 Z80opsImpl.outPort(memptr++, 0x00);
                 break;
             }
-            case 0x72: {            /* SBC HL,SP            20 t-states?    */
-                clock.addTstates(12);
+            case 0x72: {            /* SBC HL,SP            16 t-states    */
+                clock.addTstates(8);
                 sbc16(regSP);
                 break;
             }
@@ -6088,103 +6162,126 @@ public class Z80 {
             }
             case 0xA0: {            /* LDI                  20 t-states     */
                 ldi();
+                clock.addTstates(4);
+                noDelayFlag = true;
                 break;
             }
-            case 0xA1: {            /* CPI                  20 t-states     */
+            case 0xA1: {            /* CPI                  16 t-states     */
                 cpi();
+                clock.addTstates(4);
                 break;
             }
             case 0xA2: {            /* INI                  20 t-states     */
                 ini();
+                clock.addTstates(4);
                 break;
             }
             case 0xA3: {            /* OUTI                 20 t-states     */
                 outi();
+                clock.addTstates(4);
                 break;
             }
             case 0xA8: {            /* LDD                  20 t-states     */
                 ldd();
+                clock.addTstates(4);
+                noDelayFlag = true;
                 break;
             }
-            case 0xA9: {            /* CPD                  20 t-states     */
+            case 0xA9: {            /* CPD                  16 t-states     */
                 cpd();
+                clock.addTstates(4);
                 break;
             }
             case 0xAA: {            /* IND                  20 t-states     */
                 ind();
+                clock.addTstates(4);
                 break;
             }
             case 0xAB: {            /* OUTD                 20 t-states     */
                 outd();
+                clock.addTstates(4);
                 break;
             }
             case 0xB0: {            /* LDIR                 20/24 t-states  */
                 ldi();
+                clock.addTstates(4);
                 if ((sz5h3pnFlags & PARITY_MASK) == PARITY_MASK) {
                     regPC = (regPC - 2) & 0xffff;
                     memptr = regPC + 1;
                     clock.addTstates(4);
                 }
+                noDelayFlag = true;
                 break;
             }
-            case 0xB1: {            /* CPIR                 20/28 t-states  */
+            case 0xB1: {            /* CPIR                 16/24 t-states  */
                 cpi();
+                clock.addTstates(4);
                 if ((sz5h3pnFlags & PARITY_MASK) == PARITY_MASK
                     && (sz5h3pnFlags & ZERO_MASK) == 0) {
                     regPC = (regPC - 2) & 0xffff;
                     memptr = regPC + 1;
                     clock.addTstates(8);
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             }
-            case 0xB2: {            /* INIR                 20/28 t-states  */
+            case 0xB2: {            /* INIR                 20/24 t-states  */
                 ini();
+                clock.addTstates(4);
                 if (regB != 0) {
                     regPC = (regPC - 2) & 0xffff;
-                    clock.addTstates(8);
+                    clock.addTstates(4);
                 }
                 break;
             }
-            case 0xB3: {            /* OTIR                 20/28 t-states  */
+            case 0xB3: {            /* OTIR                 20/24 t-states  */
                 outi();
+                clock.addTstates(4);
                 if (regB != 0) {
                     regPC = (regPC - 2) & 0xffff;
-                    clock.addTstates(8);
+                    clock.addTstates(4);
                 }
                 break;
             }
-            case 0xB8: {            /* LDDR                 20/28 t-states  */
+            case 0xB8: {            /* LDDR                 20/24 t-states  */
                 ldd();
+                clock.addTstates(4);
                 if ((sz5h3pnFlags & PARITY_MASK) == PARITY_MASK) {
                     regPC = (regPC - 2) & 0xffff;
                     memptr = regPC + 1;
-                    clock.addTstates(8);
+                    clock.addTstates(4);
                 }
+                noDelayFlag = true;
                 break;
             }
-            case 0xB9: {            /* CPDR                 20/28 t-states  */
+            case 0xB9: {            /* CPDR                 16/24 t-states  */
                 cpd();
+                clock.addTstates(4);
                 if ((sz5h3pnFlags & PARITY_MASK) == PARITY_MASK
                     && (sz5h3pnFlags & ZERO_MASK) == 0) {
                     regPC = (regPC - 2) & 0xffff;
                     memptr = regPC + 1;
                     clock.addTstates(8);
+                } else {
+                    noDelayFlag = true;
                 }
                 break;
             }
-            case 0xBA: {            /* INDR                 20/28 t-states  */
+            case 0xBA: {            /* INDR                 20/24 t-states  */
                 ind();
                 if (regB != 0) {
                     regPC = (regPC - 2) & 0xffff;
-                    clock.addTstates(8);
+                    clock.addTstates(4);
                 }
                 break;
             }
-            case 0xBB: {            /* OTDR                 20/28 t-states  */
+            case 0xBB: {            /* OTDR                 20/24 t-states  */
                 outd();
+                clock.addTstates(4);
                 if (regB != 0) {
                     regPC = (regPC - 2) & 0xffff;
-                    clock.addTstates(8);
+                    clock.addTstates(4);
                 }
                 break;
             }

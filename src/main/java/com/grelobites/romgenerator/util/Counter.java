@@ -19,7 +19,7 @@ public class Counter {
     }
 
     public int mask(int mask) {
-        value &= mask;
+        value &= (mask & this.mask);
         return value;
     }
 

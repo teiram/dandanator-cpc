@@ -33,7 +33,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final int CPU_HZ = 4000000;
     private static final int VSYNC_HZ = 50;
     private static final int TSTATES_PER_US = 4;
-    private static final int VSYNC_TSTATES = CPU_HZ / VSYNC_HZ;
+    private static final int FRAME_TSTATES = CPU_HZ / VSYNC_HZ;
     private static final int HSYNC_TSTATES = 64 * TSTATES_PER_US; // 64 microseconds
     private static final int LINES_PER_INTERRUPT = 52;
     private static final int INTERRUPT_TSTATES = HSYNC_TSTATES * LINES_PER_INTERRUPT;
@@ -200,20 +200,22 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
     private void pressKeyDuringFrames(KeyboardCode key, int frames) {
         ppi.pressKey(key);
+        long compensation = 0;
         for (int i = 0; i < frames; i++) {
-            executeFrame();
+            compensation = executeFrame(compensation);
         }
         ppi.releaseKey(key);
     }
 
     @Override
     public Game loadTape(InputStream tapeFile) throws IOException {
+        long compensation = 0;
         tapePlayer.insert(tapeFile);
         loadLoaderSnapshot();
         //Press enter key to continue with load
         pressKeyDuringFrames(KeyboardCode.KEY_ENTER, 20);
         while (!ppi.isMotorOn()) {
-            executeFrame();
+            compensation = executeFrame(compensation);
         }
         ppi.addMotorStateChangeListener((c) -> {
             if (!c) {
@@ -233,7 +235,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         boolean stopOnTapeStalled = false;
         try {
             while (!tapePlayer.isEOT() && !stopOnTapeStalled) {
-                executeFrame();
+                compensation = executeFrame(compensation);
                 if (tapePlayer.getTapePos() == tapeLastSavePosition) {
                     framesWithoutTapeMovement++;
                     if (framesWithoutTapeMovement >= MAX_FRAMES_WITHOUT_TAPE_MOVEMENT) {
@@ -348,7 +350,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     }
 
     protected void executeFrameOK() {
-        long vsync_tstates = clock.getTstates() + VSYNC_TSTATES;
+        long vsync_tstates = clock.getTstates() + FRAME_TSTATES;
         long lastInterruptTstates = 0;
         int interruptAttempt = 0;
         while (clock.getTstates() < vsync_tstates) {
@@ -374,159 +376,73 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         ppi.setvSyncActive(false);
     }
 
-    protected void executeFrameTests() {
-        long vsync_tstates = clock.getTstates() + VSYNC_TSTATES;
-        long lastInterruptTstates = 0;
-        int interruptAttempt = 0;
-        while (clock.getTstates() < vsync_tstates) {
-            long toNextInterrupt = clock.getTstates() + INTERRUPT_TSTATES;
-            z80.execute(toNextInterrupt);
-            if (++interruptAttempt == 5) {
-                ppi.setvSyncActive(true);
-                interruptAttempt = 0;
-            }
-            if (!z80.isINTLine() &&
-                    (clock.getTstates() - lastInterruptTstates) > HSYNC_32_DELAY) {
-                boolean preIFF1 = z80.isIFF1();
-                z80.setINTLine(true);
-                lastInterruptTstates = clock.getTstates();
-            }
-        }
-        //z80.setINTLine(false);
-        ppi.setvSyncActive(false);
-    }
-
-    protected void executeFrameAlsoWorks() {
-        long vsync_tstates = clock.getTstates() + VSYNC_TSTATES;
-        long interrupt_tstates = (crtc.getHorizontalTotal() * (LINES_PER_INTERRUPT - 1) + crtc.getHSyncPos() * TSTATES_PER_US);
-        long lastInterruptTstates = 0;
-        int interruptAttempt = 0;
-        while (clock.getTstates() < vsync_tstates) {
-            long toNextInterrupt = clock.getTstates() + interrupt_tstates;
-            z80.execute(toNextInterrupt);
-            if (++interruptAttempt == 5) {
-                ppi.setvSyncActive(true);
-                interruptAttempt = 0;
-            }
-            if (!z80.isINTLine() &&
-                    (clock.getTstates() - lastInterruptTstates) > HSYNC_32_DELAY) {
-                boolean preIFF1 = z80.isIFF1();
-                z80.setINTLine(true);
-                lastInterruptTstates = clock.getTstates();
-                z80.execute();
-                boolean asserted = preIFF1 != z80.isIFF1();
-                if (asserted) {
-                    z80.setINTLine(false);
-                }
-            }
-        }
-        z80.setINTLine(false);
-        ppi.setvSyncActive(false);
-    }
-
-    protected void executeFrame() {
+    protected long executeFrame(long compensation) {
         final long frameStartTstates = clock.getTstates();
-        final long frameEndTstates = frameStartTstates + VSYNC_TSTATES;
         final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;
         final long tStatesToHSync = crtc.getHSyncPos() * TSTATES_PER_US;
-        final long tStatesToLine = tStatesPerLine - tStatesToHSync;
-        final long vsyncTstates = frameStartTstates +
+        final long vSyncTstates = frameStartTstates +
                 crtc.getVSyncPos() * (crtc.getMaximumRasterAddress() + 1)
                         * tStatesPerLine;
+        final long vSyncLines = (crtc.getMaximumRasterAddress() + 1) * crtc.getVSyncLength();
         final Counter gateArrayCounter = new Counter(6);
         final Counter hSyncCounter = new Counter(8);
+
         final ClockTimeout clockTimeout = new ClockTimeout();
 
+        LOGGER.debug("Frame[compensation={}, tstatesPerLine={}, vSyncPos={}, tStatesToHSync={}, vSyncTstates={}]",
+               compensation, tStatesPerLine, crtc.getVSyncPos(), tStatesToHSync, vSyncTstates);
         z80.setInterruptAckListener((t) -> {
             if (gateArray.isInterruptGenerationDelayed()) {
                 gateArrayCounter.reset();
             } else {
                 gateArrayCounter.mask(~0x20);
             }
+            LOGGER.debug("INT ACK at {}", clock.getTstates() - frameStartTstates);
             z80.setINTLine(false);
         });
 
-        final ClockTimeoutListener hSyncListener = (t) -> {
+        clockTimeout.setListener((long t) -> {
             if (gateArrayCounter.increment() == 52) {
+                LOGGER.debug("Enabling INT at {}", clock.getTstates() - frameStartTstates);
                 z80.setINTLine(true);
                 gateArrayCounter.reset();
             }
             if (ppi.isvSyncActive()) {
+                /*
                 if (hSyncCounter.increment() == 2) {
                     if ((gateArrayCounter.value() & 0x20) == 0) {
-                        LOGGER.debug("VSYNC INT");
+                        LOGGER.debug("VSYNC INT at {}", clock.getTstates() - frameStartTstates);
                         z80.setINTLine(true);
                     }
                     gateArrayCounter.reset();
+                } else if (hSyncCounter.value() == vSyncLines) {
+                    LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
+                    ppi.setvSyncActive(false);
                 }
-            }
-            if (clock.getTstates() > vsyncTstates) {
-                ppi.setvSyncActive(true);
-            }
-            clockTimeout.setTimeout(tStatesPerLine);
-        };
-
-        clockTimeout.setListener(hSyncListener);
-        clockTimeout.setTimeout(tStatesPerLine);
-        clock.addClockTimeout(clockTimeout);
-
-        z80.executeTstates(VSYNC_TSTATES);
-
-        ppi.setvSyncActive(false);
-        z80.resetInterruptAckListener();
-        clock.removeClockTimeout(clockTimeout);
-
-    }
-
-    protected void executeFrameCandidate() {
-        final long frameStartTstates = clock.getTstates();
-        final long frameEndTstates = frameStartTstates + VSYNC_TSTATES;
-        final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;
-        final long tStatesToHSync = crtc.getHSyncPos() * TSTATES_PER_US;
-        final long tStatesToLine = tStatesPerLine - tStatesToHSync;
-        final long vsyncTstates = frameStartTstates +
-                crtc.getVSyncPos() * (crtc.getMaximumRasterAddress() + 1)
-                * tStatesPerLine;
-        final Counter gateArrayCounter = new Counter(6);
-        int hsyncCounter = 0;
-
-        z80.setInterruptAckListener((t) -> {
-            if (gateArray.isInterruptGenerationDelayed()) {
-                gateArrayCounter.reset();
-            } else {
-                gateArrayCounter.mask(~0x20);
-            }
-            z80.setINTLine(false);
-        });
-
-        int rasterLines = 0;
-        long error = 0;
-        while (clock.getTstates() < frameEndTstates) {
-            error = z80.executeTstates(tStatesToHSync - error);
-            rasterLines++;
-            if (ppi.isvSyncActive()) {
-                if (hsyncCounter++ == 2) {
-                    if ((gateArrayCounter.value() & 0x20) == 0) {
-                        LOGGER.debug("VSYNC INT");
-                        z80.setINTLine(true);
-                    }
-                    gateArrayCounter.reset();
+                */
+                if (hSyncCounter.increment() == vSyncLines) {
+                    LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
+                    ppi.setvSyncActive(false);
                 }
             } else {
-                if (gateArrayCounter.increment() == 52) {
-                    z80.setINTLine(true);
-                    gateArrayCounter.reset();
-                }
-                if (clock.getTstates() > vsyncTstates) {
+                if (clock.getTstates() >= vSyncTstates && hSyncCounter.value() == 0) {
+                    LOGGER.debug("Enabling VSYNC at {}", clock.getTstates() - frameStartTstates);
                     ppi.setvSyncActive(true);
                 }
             }
-            error = z80.executeTstates(tStatesToLine - error);
+            clockTimeout.setTimeout(tStatesPerLine); //Next HSYNC comes after a whole line
+        });
+        clockTimeout.setTimeout(tStatesToHSync);
+
+        clock.addClockTimeout(clockTimeout);
+        try {
+            compensation = z80.executeTstates(FRAME_TSTATES - compensation);
+        } finally {
+            ppi.setvSyncActive(false);
+            z80.resetInterruptAckListener();
+            clock.removeClockTimeout(clockTimeout);
         }
-        ppi.setvSyncActive(false);
-        z80.resetInterruptAckListener();
-        LOGGER.debug("Frame finished with {} raster lines. Error {}",
-                rasterLines, clock.getTstates() - frameEndTstates);
+        return compensation;
     }
 
     @Override
