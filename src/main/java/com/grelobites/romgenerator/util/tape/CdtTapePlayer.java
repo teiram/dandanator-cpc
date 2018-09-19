@@ -29,7 +29,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
     private static final int ONE_LENGHT = adjustDuration(1710);
     private static final int HEADER_PULSES = adjustDuration(8063);
     private static final int DATA_PULSES = adjustDuration(3223);
-    private static final int END_BLOCK_PAUSE = adjustDuration(3500000);
+    private static final int MILLISECOND_TS = 4000;
 
     public enum State {
         STOP, START, LEADER, LEADER_NOCHG, SYNC, NEWBYTE,
@@ -581,7 +581,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     if (idxHeader >= blockOffsets.size() && endBlockPause > 1000) {
                         endBlockPause = 1;
                     }
-                    endBlockPause *= (END_BLOCK_PAUSE / 1000);
+                    endBlockPause *= MILLISECOND_TS;
                     repeat = false;
                     break;
                 case CdtBlock.TURBO_SPEED:
@@ -599,9 +599,11 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     state = State.LEADER_NOCHG;
                     idxHeader++;
                     if (idxHeader >= blockOffsets.size() && endBlockPause > 1000) {
-                        endBlockPause = 1;
+                        LOGGER.debug("Correcting endBlockPause in Turbo block. idxHeader={}, endBlockPause={}",
+                                idxHeader, endBlockPause);
+                        //endBlockPause = 1000;
                     }
-                    endBlockPause *= (END_BLOCK_PAUSE / 1000);
+                    endBlockPause *= MILLISECOND_TS;
                     repeat = false;
                     break;
                 case CdtBlock.PURE_TONE:
@@ -627,7 +629,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     oneLength =     adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
                     bitsLastByte = tapeBuffer[tapePos + 5] & 0xff;
                     endBlockPause = readInt(tapeBuffer, tapePos + 6, 2)
-                            * (END_BLOCK_PAUSE / 1000);
+                            * MILLISECOND_TS;
                     blockLen = readInt(tapeBuffer, tapePos + 8, 3);
                     tapePos += 11;
                     state = State.NEWBYTE_NOCHG;
@@ -638,7 +640,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     LOGGER.debug("Direct Recording block");
                     zeroLength = adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
                     endBlockPause = readInt(tapeBuffer, tapePos + 3, 2)
-                            * (END_BLOCK_PAUSE / 1000);
+                            * MILLISECOND_TS;
                     bitsLastByte = tapeBuffer[tapePos + 5] & 0xff;
                     blockLen = readInt(tapeBuffer, tapePos + 6, 3);
                     tapePos += 9;
@@ -649,7 +651,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                 case CdtBlock.CSW_RECORDING:
                     LOGGER.debug("CSW Recording block");
                     endBlockPause = readInt(tapeBuffer, tapePos + 5, 2)
-                            * (END_BLOCK_PAUSE / 1000);
+                            * MILLISECOND_TS;
                     cswStatesSample = 3500000.0f / readInt(tapeBuffer, tapePos + 7, 3);
                     blockLen = readInt(tapeBuffer, tapePos + 1, 4) - 10;
                     if (tapeBuffer[tapePos + 10] == 0x02) {
@@ -668,13 +670,13 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                 case CdtBlock.GENERALIZED_DATA:
                     LOGGER.warn("Generalized Data block (Unsupported). Skipping");
                     endBlockPause = readInt(tapeBuffer, tapePos + 5, 2)
-                            * (END_BLOCK_PAUSE / 1000);
+                            * MILLISECOND_TS;
                     idxHeader++;
                     break;
                 case CdtBlock.SILENCE:
                     LOGGER.debug("Pause or Stop the Tape block");
                     endBlockPause = readInt(tapeBuffer, tapePos + 1, 2)
-                            * (END_BLOCK_PAUSE / 1000);
+                            * MILLISECOND_TS;
                     tapePos += 3;
                     state = State.PAUSE_STOP;
                     idxHeader++;

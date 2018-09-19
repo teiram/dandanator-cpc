@@ -33,7 +33,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private static final int CPU_HZ = 4000000;
     private static final int VSYNC_HZ = 50;
     private static final int TSTATES_PER_US = 4;
-    private static final int FRAME_TSTATES = CPU_HZ / VSYNC_HZ;
+    private static final int FRAME_TSTATES = 19968 * TSTATES_PER_US;
     private static final int HSYNC_TSTATES = 64 * TSTATES_PER_US; // 64 microseconds
     private static final int LINES_PER_INTERRUPT = 52;
     private static final int INTERRUPT_TSTATES = HSYNC_TSTATES * LINES_PER_INTERRUPT;
@@ -389,21 +389,21 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
         final ClockTimeout clockTimeout = new ClockTimeout();
 
-        LOGGER.debug("Frame[compensation={}, tstatesPerLine={}, vSyncPos={}, tStatesToHSync={}, vSyncTstates={}]",
-               compensation, tStatesPerLine, crtc.getVSyncPos(), tStatesToHSync, vSyncTstates);
+        //LOGGER.debug("Frame[compensation={}, tstatesPerLine={}, vSyncPos={}, tStatesToHSync={}, vSyncTstates={}]",
+               //compensation, tStatesPerLine, crtc.getVSyncPos(), tStatesToHSync, vSyncTstates);
         z80.setInterruptAckListener((t) -> {
             if (gateArray.isInterruptGenerationDelayed()) {
                 gateArrayCounter.reset();
             } else {
                 gateArrayCounter.mask(~0x20);
             }
-            LOGGER.debug("INT ACK at {}", clock.getTstates() - frameStartTstates);
+            //LOGGER.debug("INT ACK at {}", clock.getTstates() - frameStartTstates);
             z80.setINTLine(false);
         });
 
         clockTimeout.setListener((long t) -> {
             if (gateArrayCounter.increment() == 52) {
-                LOGGER.debug("Enabling INT at {}", clock.getTstates() - frameStartTstates);
+                //LOGGER.debug("Enabling INT at {}", clock.getTstates() - frameStartTstates);
                 z80.setINTLine(true);
                 gateArrayCounter.reset();
             }
@@ -421,12 +421,12 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                 }
                 */
                 if (hSyncCounter.increment() == vSyncLines) {
-                    LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
+                    //LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
                     ppi.setvSyncActive(false);
                 }
             } else {
                 if (clock.getTstates() >= vSyncTstates && hSyncCounter.value() == 0) {
-                    LOGGER.debug("Enabling VSYNC at {}", clock.getTstates() - frameStartTstates);
+                    //LOGGER.debug("Enabling VSYNC at {}", clock.getTstates() - frameStartTstates);
                     ppi.setvSyncActive(true);
                 }
             }

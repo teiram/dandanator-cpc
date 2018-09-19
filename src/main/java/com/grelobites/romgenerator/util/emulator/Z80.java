@@ -1508,8 +1508,9 @@ public class Z80 {
         }
 
 
-        //Some instructions have tail t-states that can be used to acknowledge the interrupt
+        //Some instructions have tail t-states that are used here to acknowledge the interrupt
         if (!noDelayFlag) {
+            //If no such instruction precedes the interrupt ack, 2 t-states are needed (rounded to 4)
             clock.addTstates(4);
             noDelayFlag = false;
         }
@@ -1517,7 +1518,6 @@ public class Z80 {
         if (interruptAckListener != null) {
             interruptAckListener.onInterruptAck(clock.getTstates());
         }
-        clock.addTstates(6);
         regR++;
         ffIFF1 = ffIFF2 = false;
 
@@ -1550,6 +1550,7 @@ public class Z80 {
                 */
                 regPC = Z80opsImpl.peek16((regI << 8) | 0xff); // +8 T-States
                 clock.addTstates(8); //8 already added in peek16 and another 8 in push
+                break;
         }
         memptr = regPC;
     }
@@ -1602,6 +1603,7 @@ public class Z80 {
             if (ffIFF1 && !pendingEI) {
                 lastFlagQ = false;
                 interruption();
+                return;
             }
         }
 
@@ -4073,19 +4075,8 @@ public class Z80 {
         }
     }
 
-    //0xDD / 0xFD prefixed
     /*
-     * Hay que tener en cuenta el manejo de secuencias códigos DD/FD que no
-     * hacen nada. Según el apartado 3.7 del documento
-     * [http://www.myquest.nl/z80undocumented/z80-documented-v0.91.pdf]
-     * secuencias de códigos como FD DD 00 21 00 10 NOP NOP NOP LD HL,1000h
-     * activan IY con el primer FD, IX con el segundo DD y vuelven al
-     * registro HL con el código NOP. Es decir, si detrás del código DD/FD no
-     * viene una instrucción que maneje el registro HL, el código DD/FD
-     * "se olvida" y hay que procesar la instrucción como si nunca se
-     * hubiera visto el prefijo (salvo por los 4 t-estados que ha costado).
-     * Naturalmente, en una serie repetida de DDFD no hay que comprobar las
-     * interrupciones entre cada prefijo.
+     * DD /FD prefixed opcodes
      */
     private int decodeDDFD(int regIXY) {
 
@@ -4205,7 +4196,8 @@ public class Z80 {
             case 0x46: {            /* LD B,(IX+d)      20 t-states     */
                 clock.addTstates(4);
             }
-            case 0x78: {            /* IN A,(C)         8 t-states     */
+            /*
+            case 0x78: {            // IN A,(C)         8 t-states
                 memptr = getRegBC();
                 clock.addTstates(4);
                 regA = Z80opsImpl.inPort(memptr++);
@@ -4214,8 +4206,11 @@ public class Z80 {
                 memptr = (regIXY + (byte) Z80opsImpl.peek8(regPC)) & 0xffff;
                 regB = Z80opsImpl.peek8(memptr);
                 regPC = (regPC + 1) & 0xffff;
-                break;
+                throw new IllegalStateException("Unexpected IN");
+
+               // break;
             }
+            */
             case 0x4C: {            /* LD C,IXh         8 t-states      */
                 regC = regIXY >>> 8;
                 break;
@@ -4562,14 +4557,9 @@ public class Z80 {
                 break;
             }
             default: {
-                // Detrás de un DD/FD o varios en secuencia venía un código
-                // que no correspondía con una instrucción que involucra a 
-                // IX o IY. Se trata como si fuera un código normal.
-                // Sin esto, además de emular mal, falla el test
-                // ld <bcdexya>,<bcdexya> de ZEXALL.
-
-                LOGGER.warn("Found opcode " + Integer.toHexString(opCode));
-
+                //If after a sequence of DD/FD we reached a non IX/IY opcode
+                //it is handled as a normal opcode.
+                LOGGER.warn("Found opcode after DD/FD sequence {}" + Integer.toHexString(opCode));
 
                 if (breakpointAt[regPC]) {
                     Z80opsImpl.breakpoint();
