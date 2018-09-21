@@ -22,20 +22,25 @@ import java.util.zip.InflaterInputStream;
 public class CdtTapePlayer implements ClockTimeoutListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(CdtTapePlayer.class);
 
-    private static final int LEADER_LENGHT = adjustDuration(2168);
-    private static final int SYNC1_LENGHT = adjustDuration(667);
-    private static final int SYNC2_LENGHT = adjustDuration(735);
-    private static final int ZERO_LENGHT = adjustDuration(855);
-    private static final int ONE_LENGHT = adjustDuration(1710);
-    private static final int HEADER_PULSES = adjustDuration(8063);
-    private static final int DATA_PULSES = adjustDuration(3223);
-    private static final int MILLISECOND_TS = 4000;
+    //Standard block timing
+    private static final int LEADER_LENGHT          = adjustDuration(2168);
+    private static final int SYNC1_LENGHT           = adjustDuration(667);
+    private static final int SYNC2_LENGHT           = adjustDuration(735);
+    private static final int ZERO_LENGHT            = adjustDuration(855);
+    private static final int ONE_LENGHT             = adjustDuration(1710);
+    private static final int HEADER_PILOT_PULSES    = adjustDuration(8063);
+    private static final int DATA_PILOT_PULSES      = adjustDuration(3223);
+    private static final int MILLISECOND_TSTATES    = 4000;
 
     public enum State {
-        STOP, START, LEADER, LEADER_NOCHG, SYNC, NEWBYTE,
-        NEWBYTE_NOCHG, NEWBIT, HALF2, LAST_PULSE, PAUSE, TZX_HEADER, PURE_TONE,
-        PURE_TONE_NOCHG, PULSE_SEQUENCE, PULSE_SEQUENCE_NOCHG, NEWDR_BYTE,
-        NEWDR_BIT, PAUSE_STOP, CSW_RLE, CSW_ZRLE
+        START, STOP, LAST_PULSE, PAUSE, PAUSE_STOP,
+        LEADER, LEADER_NOCHANGE, SYNC,
+        NEWBYTE, NEWBYTE_NOCHANGE, NEWBIT, HALF2,
+        TZX_HEADER,
+        PURE_TONE, PURE_TONE_NOCHANGE,
+        PULSE_SEQUENCE, PULSE_SEQUENCE_NOCHANGE,
+        NEWDR_BYTE, NEWDR_BIT,
+        CSW_RLE, CSW_ZRLE
     }
 
 
@@ -97,6 +102,14 @@ public class CdtTapePlayer implements ClockTimeoutListener {
 
     public void removeBlockChangeListener(BlockChangeListener listener) {
         blockChangeListeners.remove(listener);
+    }
+
+    public void setInvertedOutput(boolean invertedOutput) {
+        this.invertedOutput = invertedOutput;
+    }
+
+    public boolean isInvertedOutput() {
+        return invertedOutput;
     }
 
     private void notifyBlockChangeListeners(int currentBlock) {
@@ -339,8 +352,8 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     repeat = true;
                     break;
                 case LEADER:
-                    ppi.changeCasseteDataInput();
-                case LEADER_NOCHG:
+                    ppi.invertCasseteDataInput();
+                case LEADER_NOCHANGE:
                     if (leaderPulses-- > 0) {
                         state = State.LEADER;
                         clockTimeout.setTimeout(leaderLength);
@@ -350,17 +363,17 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     state = State.SYNC;
                     break;
                 case SYNC:
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
                     clockTimeout.setTimeout(sync2Length);
                     state = blockLen > 0 ? State.NEWBYTE : State.PAUSE;
                     break;
-                case NEWBYTE_NOCHG:
+                case NEWBYTE_NOCHANGE:
                     //To Undo on NEWBIT case
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
                 case NEWBYTE:
-                    mask = 0x80; // se empieza por el bit 7
+                    mask = 0x80; //Starts on MSB bit
                 case NEWBIT:
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
                     if ((tapeBuffer[tapePos] & mask) == 0) {
                         bitTime = zeroLength;
                     } else {
@@ -370,7 +383,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     clockTimeout.setTimeout(bitTime);
                     break;
                 case HALF2:
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
                     clockTimeout.setTimeout(bitTime);
                     mask >>>= 1;
                     if (blockLen == 1 && bitsLastByte < 8) {
@@ -392,7 +405,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     }
                     break;
                 case LAST_PULSE:
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
                     if (endBlockPause == 0) {
                         state = State.TZX_HEADER;
                         repeat = true;
@@ -416,8 +429,8 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     repeat = true;
                     break;
                 case PURE_TONE:
-                    ppi.changeCasseteDataInput();
-                case PURE_TONE_NOCHG:
+                    ppi.invertCasseteDataInput();
+                case PURE_TONE_NOCHANGE:
                     if (leaderPulses-- > 0) {
                         clockTimeout.setTimeout(leaderLength);
                         state = State.PURE_TONE;
@@ -427,8 +440,8 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     repeat = true;
                     break;
                 case PULSE_SEQUENCE:
-                    ppi.changeCasseteDataInput();
-                case PULSE_SEQUENCE_NOCHG:
+                    ppi.invertCasseteDataInput();
+                case PULSE_SEQUENCE_NOCHANGE:
                     if (leaderPulses-- > 0) {
                         clockTimeout.setTimeout(readInt(tapeBuffer, tapePos, 2));
                         tapePos += 2;
@@ -491,7 +504,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                         repeat = true;
                     }
 
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
 
                     timeout = tapeBuffer[tapePos++] & 0xff;
                     blockLen--;
@@ -505,7 +518,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     clockTimeout.setTimeout(timeout);
                     break;
                 case CSW_ZRLE:
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
 
                     try {
                         timeout = iis.read();
@@ -575,13 +588,13 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     blockLen = readInt(tapeBuffer, tapePos + 3, 2);
                     tapePos += 5;
                     leaderPulses =
-                            (tapeBuffer[tapePos] & 0xff) < 0x80 ? HEADER_PULSES : DATA_PULSES;
-                    state = State.LEADER_NOCHG;
+                            (tapeBuffer[tapePos] & 0xff) < 0x80 ? HEADER_PILOT_PULSES : DATA_PILOT_PULSES;
+                    state = State.LEADER_NOCHANGE;
                     idxHeader++;
                     if (idxHeader >= blockOffsets.size() && endBlockPause > 1000) {
                         endBlockPause = 1;
                     }
-                    endBlockPause *= MILLISECOND_TS;
+                    endBlockPause *= MILLISECOND_TSTATES;
                     repeat = false;
                     break;
                 case CdtBlock.TURBO_SPEED:
@@ -596,14 +609,14 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     endBlockPause = readInt(tapeBuffer, tapePos + 14, 2);
                     blockLen = readInt(tapeBuffer, tapePos + 16, 3);
                     tapePos += 19;
-                    state = State.LEADER_NOCHG;
+                    state = State.LEADER_NOCHANGE;
                     idxHeader++;
                     if (idxHeader >= blockOffsets.size() && endBlockPause > 1000) {
                         LOGGER.debug("Correcting endBlockPause in Turbo block. idxHeader={}, endBlockPause={}",
                                 idxHeader, endBlockPause);
                         //endBlockPause = 1000;
                     }
-                    endBlockPause *= MILLISECOND_TS;
+                    endBlockPause *= MILLISECOND_TSTATES;
                     repeat = false;
                     break;
                 case CdtBlock.PURE_TONE:
@@ -611,7 +624,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     leaderLength =  adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
                     leaderPulses =  adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
                     tapePos += 5;
-                    state = State.PURE_TONE_NOCHG;
+                    state = State.PURE_TONE_NOCHANGE;
                     idxHeader++;
                     repeat = false;
                     break;
@@ -619,7 +632,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     LOGGER.debug("Pulse Sequence block");
                     leaderPulses = tapeBuffer[tapePos + 1] & 0xff;
                     tapePos += 2;
-                    state = State.PULSE_SEQUENCE_NOCHG;
+                    state = State.PULSE_SEQUENCE_NOCHANGE;
                     idxHeader++;
                     repeat = false;
                     break;
@@ -629,10 +642,10 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     oneLength =     adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
                     bitsLastByte = tapeBuffer[tapePos + 5] & 0xff;
                     endBlockPause = readInt(tapeBuffer, tapePos + 6, 2)
-                            * MILLISECOND_TS;
+                            * MILLISECOND_TSTATES;
                     blockLen = readInt(tapeBuffer, tapePos + 8, 3);
                     tapePos += 11;
-                    state = State.NEWBYTE_NOCHG;
+                    state = State.NEWBYTE_NOCHANGE;
                     idxHeader++;
                     repeat = false;
                     break;
@@ -640,7 +653,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     LOGGER.debug("Direct Recording block");
                     zeroLength = adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
                     endBlockPause = readInt(tapeBuffer, tapePos + 3, 2)
-                            * MILLISECOND_TS;
+                            * MILLISECOND_TSTATES;
                     bitsLastByte = tapeBuffer[tapePos + 5] & 0xff;
                     blockLen = readInt(tapeBuffer, tapePos + 6, 3);
                     tapePos += 9;
@@ -651,7 +664,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                 case CdtBlock.CSW_RECORDING:
                     LOGGER.debug("CSW Recording block");
                     endBlockPause = readInt(tapeBuffer, tapePos + 5, 2)
-                            * MILLISECOND_TS;
+                            * MILLISECOND_TSTATES;
                     cswStatesSample = 3500000.0f / readInt(tapeBuffer, tapePos + 7, 3);
                     blockLen = readInt(tapeBuffer, tapePos + 1, 4) - 10;
                     if (tapeBuffer[tapePos + 10] == 0x02) {
@@ -664,19 +677,19 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     tapePos += 15;
                     idxHeader++;
                     // Undone on first execution
-                    ppi.changeCasseteDataInput();
+                    ppi.invertCasseteDataInput();
                     repeat = false;
                     break;
                 case CdtBlock.GENERALIZED_DATA:
                     LOGGER.warn("Generalized Data block (Unsupported). Skipping");
                     endBlockPause = readInt(tapeBuffer, tapePos + 5, 2)
-                            * MILLISECOND_TS;
+                            * MILLISECOND_TSTATES;
                     idxHeader++;
                     break;
                 case CdtBlock.SILENCE:
                     LOGGER.debug("Pause or Stop the Tape block");
                     endBlockPause = readInt(tapeBuffer, tapePos + 1, 2)
-                            * MILLISECOND_TS;
+                            * MILLISECOND_TSTATES;
                     tapePos += 3;
                     state = State.PAUSE_STOP;
                     idxHeader++;

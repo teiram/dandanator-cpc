@@ -77,6 +77,14 @@ public class Crtc {
         this.selectedRegister = value;
     }
 
+    public int getStatusRegister() {
+        return statusRegister;
+    }
+
+    public void setStatusRegister(int statusRegister) {
+        this.statusRegister = statusRegister;
+    }
+
     public long getHorizontalTotal() {
         return crtcRegisterData[REGISTER_HORIZ_TOTAL] + 1;
     }

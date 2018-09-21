@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
+import com.grelobites.romgenerator.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -133,9 +134,18 @@ public class GateArray {
                 screenModeAndRomConfigurationRegister = value;
                 break;
             case RAM_BANKING_FN:
-                LOGGER.debug("Setting ramBankingRegister to {}", value);
                 ramBankingRegister = value;
                 break;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "GateArray{" +
+                "palette=" + Util.dumpAsHexString(palette) +
+                ", ramBankingRegister=0x" + String.format("%02x", ramBankingRegister & 0xff) +
+                ", screenModeAndRomConfigurationRegister=0x" + String.format("%02x", screenModeAndRomConfigurationRegister & 0xff) +
+                ", selectedPen=" + selectedPen +
+                '}';
     }
 }

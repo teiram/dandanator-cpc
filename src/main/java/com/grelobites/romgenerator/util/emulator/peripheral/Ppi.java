@@ -1,6 +1,5 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
-import com.grelobites.romgenerator.util.emulator.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,7 +129,7 @@ public class Ppi {
         return casseteDataInput;
     }
 
-    public void changeCasseteDataInput() {
+    public void invertCasseteDataInput() {
         casseteDataInput = !casseteDataInput;
     }
 
@@ -219,7 +218,7 @@ public class Ppi {
             updatePsgRegisters();
             return psgRegisterData[selectedPsgRegister] & 0xff;
         } else {
-            return 0; //Right?
+            return portACurrentValue; //Right?
         }
     }
 
@@ -247,8 +246,8 @@ public class Ppi {
     }
 
     public void portCOutput(int value) {
-        portCCurrentValue = value;
-        psgFunction = PsgFunction.fromId((value & 0xC0) >> 6);
+        portCCurrentValue = value & 0xff;
+        psgFunction = PsgFunction.fromId((value & 0xC0) >>> 6);
         keyboardLineToScan = value & 0x0F;
         casseteDataOutput = (value & 0x20) != 0;
         boolean newMotorOnValue = (value & 0x10) != 0;
@@ -259,32 +258,36 @@ public class Ppi {
         applyPsgFunction();
     }
 
+    public int portCInput() {
+        return portCCurrentValue;
+    }
+
     public void controlOutput(int value) {
         controlCurrentValue = value;
         if ((value & 0x80) != 0) {
             portACurrentValue = portBCurrentValue = portCCurrentValue = 0;
             portAInputDirection = (value & 0x10) != 0;
         } else {
-            int bitToSet = (value >> 1) & 0x7;
-            boolean clear = (value & 0x1) == 0;
+            int bitToSet = (value >>> 1) & 0x7;
+            boolean bitValue = (value & 0x1) != 0;
             if (bitToSet > 5) {
                 //Recalculate PSG function
-                psgFunction = clear ?
-                        PsgFunction.fromId(psgFunction.id() & ~(1 << (bitToSet - 5))) :
-                        PsgFunction.fromId(psgFunction.id() | (1 << (bitToSet - 5)));
+                psgFunction = bitValue ?
+                        PsgFunction.fromId(psgFunction.id() | (1 << (bitToSet - 5))) :
+                        PsgFunction.fromId(psgFunction.id() & ~(1 << (bitToSet - 5)));
                 LOGGER.warn("Recalculated PSG Function from Control port");
                 applyPsgFunction();
             } else if (bitToSet == 5) {
-                casseteDataOutput = clear;
+                casseteDataOutput = bitValue;
             } else if (bitToSet == 4) {
-                if (clear != motorOn) {
-                    motorOn = clear;
+                if (bitValue != motorOn) {
+                    motorOn = bitValue;
                     notifyMotorStateChangeListeners();
                 }
             } else {
-                keyboardLineToScan = clear ?
-                        keyboardLineToScan & ~(1 << bitToSet) :
-                        keyboardLineToScan | (1 << bitToSet);
+                keyboardLineToScan = bitValue ?
+                        keyboardLineToScan | (1 << bitToSet) :
+                        keyboardLineToScan & ~(1 << bitToSet);
             }
         }
     }

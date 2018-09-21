@@ -231,9 +231,9 @@ public class Z80 {
     /* Precalculated flags:
      * SIGN, ZERO, 3th and 5th bits, PARITY and ADDSUB:
      */
-    private static final int sz53n_addTable[] = new int[256];
+    private static final int sz53n_addTable[] =  new int[256];
     private static final int sz53pn_addTable[] = new int[256];
-    private static final int sz53n_subTable[] = new int[256];
+    private static final int sz53n_subTable[] =  new int[256];
     private static final int sz53pn_subTable[] = new int[256];
 
     static {
@@ -1507,10 +1507,9 @@ public class Z80 {
             regPC = (regPC + 1) & 0xffff;
         }
 
-
         //Some instructions have tail t-states that are used here to acknowledge the interrupt
         if (!noDelayFlag) {
-            //If no such instruction precedes the interrupt ack, 2 t-states are needed (rounded to 4)
+            //If no such instruction precedes the interrupt ack, 2 t-states are needed (rounded to 4 in CPC)
             clock.addTstates(4);
             noDelayFlag = false;
         }

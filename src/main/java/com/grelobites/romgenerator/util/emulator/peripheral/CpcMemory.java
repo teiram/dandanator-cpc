@@ -30,8 +30,8 @@ public class CpcMemory implements Memory {
     private byte[] bankSlot(int address, boolean write) {
         int bankSlot = gateArray.getMemoryBankSlot(address);
         byte[][] target = !write && (
-                (bankSlot == 0 && gateArray.isLowRomEnabled()) ||
-                        (bankSlot == 3 && gateArray.isHighRomEnabled())) ?
+                (bankSlot == LOW_ROM && gateArray.isLowRomEnabled()) ||
+                        (bankSlot == HIGH_ROM && gateArray.isHighRomEnabled())) ?
                 romBanks : ramBanks;
         return target[bankSlot];
     }
@@ -43,8 +43,8 @@ public class CpcMemory implements Memory {
     public boolean isAddressInRam(int address) {
         int bankSlot = gateArray.getMemoryBankSlot(address);
         return bankSlot == 1 || bankSlot == 2 ||
-                (bankSlot == 0 && !gateArray.isLowRomEnabled()) ||
-                (bankSlot == 3 && !gateArray.isHighRomEnabled());
+                (bankSlot == LOW_ROM && !gateArray.isLowRomEnabled()) ||
+                (bankSlot == HIGH_ROM && !gateArray.isHighRomEnabled());
     }
 
     @Override

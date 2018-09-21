@@ -8,7 +8,6 @@ import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.Counter;
 import com.grelobites.romgenerator.util.emulator.ClockTimeout;
-import com.grelobites.romgenerator.util.emulator.ClockTimeoutListener;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
@@ -310,8 +309,15 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             return ppi.portAInput();
         } else if ((port & 0xFF00) == 0xF500) {
             return ppi.portBInput();
+        } else if ((port & 0xFF00) == 0xF600) {
+            return ppi.portCInput();
+        } else if ((port & 0xF800) == 0xF800) {
+            LOGGER.debug("Peripheral Soft Reset");
         } else {
-            //LOGGER.debug("Unhandled I/O IN Operation on port {}", String.format("%04x", port));
+            LOGGER.debug("Unhandled I/O IN Operation on port {}. Z80 Status: {}",
+                    String.format("0x%04x", port),
+                    z80.getZ80State(),
+                    new Throwable());
         }
         return 0;
     }
@@ -339,13 +345,17 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             //LOGGER.debug("Ppi Port C OUT");
             ppi.portCOutput(value & 0xff);
         } else if ((port & 0xFF00) == 0xF700) {
-            //LOGGER.debug("Ppi Control Port OUT");
+            LOGGER.debug("Ppi Control Port OUT: {}, {}", String.format("0x%04x", port), String.format("0x%02x", value & 0xff));
             ppi.controlOutput(value & 0xff);
         } else if ((port & 0xFF00) == 0xDF00) {
             //LOGGER.debug("Selection of upper ROM number {}", value);
             upperRomNumber = value & 0xff;
         } else {
-            //LOGGER.debug("Unhandled I/O OUT Operation on port {}", String.format("%04x", port));
+            LOGGER.debug("Unhandled I/O OUT Operation on port {}, value {}, Z80 Status: {}",
+                    String.format("0x%04x", port),
+                    String.format("0x%02x", value),
+                    z80.getZ80State(),
+                    new Throwable());
         }
     }
 
@@ -379,25 +389,25 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     protected long executeFrame(long compensation) {
         final long frameStartTstates = clock.getTstates();
         final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;
-        final long tStatesToHSync = crtc.getHSyncPos() * TSTATES_PER_US;
+        final long tStatesToHSync = (crtc.getHSyncPos() + crtc.getHSyncLength()) * TSTATES_PER_US;
         final long vSyncTstates = frameStartTstates +
                 crtc.getVSyncPos() * (crtc.getMaximumRasterAddress() + 1)
                         * tStatesPerLine;
         final long vSyncLines = (crtc.getMaximumRasterAddress() + 1) * crtc.getVSyncLength();
         final Counter gateArrayCounter = new Counter(6);
-        final Counter hSyncCounter = new Counter(8);
+        final Counter hSyncCounter = new Counter(16);
 
         final ClockTimeout clockTimeout = new ClockTimeout();
 
         //LOGGER.debug("Frame[compensation={}, tstatesPerLine={}, vSyncPos={}, tStatesToHSync={}, vSyncTstates={}]",
-               //compensation, tStatesPerLine, crtc.getVSyncPos(), tStatesToHSync, vSyncTstates);
+          //     compensation, tStatesPerLine, crtc.getVSyncPos(), tStatesToHSync, vSyncTstates);
         z80.setInterruptAckListener((t) -> {
+            //LOGGER.debug("INT ACK at {}. GateArrayCounter is {}", clock.getTstates() - frameStartTstates, gateArrayCounter.value());
             if (gateArray.isInterruptGenerationDelayed()) {
                 gateArrayCounter.reset();
             } else {
                 gateArrayCounter.mask(~0x20);
             }
-            //LOGGER.debug("INT ACK at {}", clock.getTstates() - frameStartTstates);
             z80.setINTLine(false);
         });
 
