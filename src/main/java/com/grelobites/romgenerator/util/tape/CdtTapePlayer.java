@@ -443,7 +443,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     ppi.invertCasseteDataInput();
                 case PULSE_SEQUENCE_NOCHANGE:
                     if (leaderPulses-- > 0) {
-                        clockTimeout.setTimeout(readInt(tapeBuffer, tapePos, 2));
+                        clockTimeout.setTimeout(adjustDuration(readInt(tapeBuffer, tapePos, 2)));
                         tapePos += 2;
                         state = State.PULSE_SEQUENCE;
                         break;
@@ -509,7 +509,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     timeout = tapeBuffer[tapePos++] & 0xff;
                     blockLen--;
                     if (timeout == 0) {
-                        timeout = readInt(tapeBuffer, tapePos, 4);
+                        timeout = adjustDuration(readInt(tapeBuffer, tapePos, 4));
                         tapePos += 4;
                         blockLen -= 4;
                     }
@@ -620,20 +620,21 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     repeat = false;
                     break;
                 case CdtBlock.PURE_TONE:
-                    LOGGER.debug("Pure Tone block");
                     leaderLength =  adjustDuration(readInt(tapeBuffer, tapePos + 1, 2));
-                    leaderPulses =  adjustDuration(readInt(tapeBuffer, tapePos + 3, 2));
+                    leaderPulses =  readInt(tapeBuffer, tapePos + 3, 2);
                     tapePos += 5;
                     state = State.PURE_TONE_NOCHANGE;
                     idxHeader++;
                     repeat = false;
+                    LOGGER.debug("Pure Tone block with leaderLength={}, leaderPulses={}",
+                            leaderLength, leaderPulses);
                     break;
                 case CdtBlock.PULSE_SEQUENCE:
-                    LOGGER.debug("Pulse Sequence block");
                     leaderPulses = tapeBuffer[tapePos + 1] & 0xff;
                     tapePos += 2;
                     state = State.PULSE_SEQUENCE_NOCHANGE;
                     idxHeader++;
+                    LOGGER.debug("Pulse Sequence block with leaderPulses={}", leaderPulses);
                     repeat = false;
                     break;
                 case CdtBlock.PURE_DATA_BLOCK:
@@ -648,6 +649,12 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     state = State.NEWBYTE_NOCHANGE;
                     idxHeader++;
                     repeat = false;
+                    LOGGER.debug("Pure data block {zeroLength={}, oneLength={}, bitsLastByte={}, endBlockPause={}, blockLen={}",
+                            zeroLength,
+                            oneLength,
+                            bitsLastByte,
+                            endBlockPause,
+                            blockLen);
                     break;
                 case CdtBlock.DIRECT_RECORDING: // Direct Data Block
                     LOGGER.debug("Direct Recording block");
@@ -829,6 +836,10 @@ public class CdtTapePlayer implements ClockTimeoutListener {
     public int getTapePos() {
         return tapePos;
     }
+    public int getTapeLength() {
+        return tapeBuffer.length;
+    }
+
     public boolean isPlaying() {
         return playing;
     }

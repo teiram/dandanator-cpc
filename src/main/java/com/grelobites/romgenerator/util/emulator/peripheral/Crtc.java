@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
+
 public class Crtc {
     private static final int NUM_REGISTERS = 18;
 
@@ -108,5 +109,25 @@ public class Crtc {
 
     public int getVSyncLength() {
         return (crtcRegisterData[REGISTER_SYNC_WIDTHS] >>> 4) & 0x0f;
+    }
+
+    private int getScreenPage() {
+        return crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0x30 << 10;
+    }
+
+    private int getScreenOffset() {
+        return (((crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0x3) << 8) |
+                (crtcRegisterData[REGISTER_DISPLAY_START_ADDR_LO] & 0xff)) << 4;
+    }
+
+    private int getScreenSize() {
+        return (crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0xC0) == 0xC0 ?
+                32768 : 16384;
+    }
+
+    public boolean isVideoAddress(int address) {
+        final int baseScreenAddress = getScreenPage() + getScreenOffset();
+        final int screenSize = getScreenSize();
+        return address >= baseScreenAddress && address < (baseScreenAddress + screenSize);
     }
 }

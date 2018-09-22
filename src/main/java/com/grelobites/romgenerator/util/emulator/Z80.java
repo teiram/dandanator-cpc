@@ -1636,13 +1636,6 @@ public class Z80 {
         }
     }
 
-    public long executeTstates(long tStates) {
-        long limit = clock.getTstates() + tStates;
-        while (clock.getTstates() < limit) {
-            execute();
-        }
-        return clock.getTstates() - limit;
-    }
 
     private void decodeOpcode(int opCode) {
 

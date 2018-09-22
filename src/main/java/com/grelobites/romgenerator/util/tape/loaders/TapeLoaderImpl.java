@@ -8,6 +8,8 @@ import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.Counter;
 import com.grelobites.romgenerator.util.emulator.ClockTimeout;
+import com.grelobites.romgenerator.util.emulator.peripheral.ChangeListener;
+import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayFunction;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
@@ -51,6 +53,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     private int tapeLastSavePosition = 0;
     private int upperRomNumber = 0;
     private int framesWithoutTapeMovement = 0;
+    private boolean executionAborted = false;
 
     private void loadRoms() throws IOException {
         memory.loadLowRom(loaderResources.lowRom());
@@ -211,7 +214,20 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         long compensation = 0;
         tapePlayer.insert(tapeFile);
         loadLoaderSnapshot();
-        //Press enter key to continue with load
+        //Pressing enter key to continue with loading
+        final ChangeListener<GateArrayFunction> paletteChangeListener = (c) -> {
+            if (c == GateArrayFunction.PALETTE_DATA_FN) {
+                //Ignore border changes
+                if ((gateArray.getSelectedPen() & 0x10) == 0) {
+                    if (isTapeAtEndPosition()) {
+                        LOGGER.debug("Aborting execution on palette change with tape at end");
+                        executionAborted = true;
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
         pressKeyDuringFrames(KeyboardCode.KEY_ENTER, 20);
         while (!ppi.isMotorOn()) {
             compensation = executeFrame(compensation);
@@ -219,21 +235,23 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         ppi.addMotorStateChangeListener((c) -> {
             if (!c) {
                 LOGGER.debug("Stopping tape from listener with status {}", tapePlayer.getStatus());
-                tapePlayer.stop();
                 currentSnapshot = toSnapshotGame();
                 tapeLastSavePosition = tapePlayer.getTapePos();
+                tapePlayer.stop();
             } else {
                 LOGGER.debug("Restarting tape from listener with status {} ", tapePlayer.getStatus());
                 tapePlayer.play();
                 framesWithoutTapeMovement = 0;
             }
         });
+
         LOGGER.info("Motor is on!");
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
         boolean stopOnTapeStalled = false;
+        gateArray.addChangeListener(paletteChangeListener);
         try {
-            while (!tapePlayer.isEOT() && !stopOnTapeStalled) {
+            while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted && !isTapeAtEndPosition()) {
                 compensation = executeFrame(compensation);
                 if (tapePlayer.getTapePos() == tapeLastSavePosition) {
                     framesWithoutTapeMovement++;
@@ -244,13 +262,18 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                     }
                 }
             }
+            tapePlayer.stop();
         } catch (TapeFinishedException tfe) {
             LOGGER.debug("Tape finished with cpu status {}, tape: {}",
                     z80.getZ80State(), tapePlayer, tfe);
         }
-        tapePlayer.stop();
+
+        gateArray.removeChangeListener(paletteChangeListener);
         LOGGER.info("Tape finished at {}, tapeLastSavePosition was {}",
                 tapePlayer.getTapePos(), tapeLastSavePosition);
+
+
+        /*
         long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
 
         while (!memory.isAddressInRam(z80.getRegPC())) {
@@ -259,11 +282,20 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                 break;
             }
         }
+        */
 
-        LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
-                String.format("0x%04x", z80.getRegPC()),
-                memory.isAddressInRam(z80.getRegPC()));
-        return toSnapshotGame();
+        if (tapePlayer.getTapePos() > tapeLastSavePosition) {
+            LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
+                    String.format("0x%04x", z80.getRegPC()),
+                    memory.isAddressInRam(z80.getRegPC()));
+            currentSnapshot = toSnapshotGame();
+        }
+
+        return currentSnapshot;
+    }
+
+    private boolean isTapeAtEndPosition() {
+        return tapePlayer.getTapePos() == tapePlayer.getTapeLength();
     }
 
     @Override
@@ -281,6 +313,10 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     public void poke8(int address, int value) {
         clock.addTstates(4);
         memory.poke8(address, value);
+        if (crtc.isVideoAddress(address) && isTapeAtEndPosition()) {
+            LOGGER.debug("Aborting execution on write to VRAM with tape at end");
+            executionAborted = true;
+        }
     }
 
     @Override
@@ -293,6 +329,10 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     public void poke16(int address, int word) {
         clock.addTstates(8);
         memory.poke16(address, word);
+        if (crtc.isVideoAddress(address) && isTapeAtEndPosition()) {
+            LOGGER.debug("Aborting execution on write to VRAM with tape at end");
+            executionAborted = true;
+        }
     }
 
     @Override
@@ -311,8 +351,6 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             return ppi.portBInput();
         } else if ((port & 0xFF00) == 0xF600) {
             return ppi.portCInput();
-        } else if ((port & 0xF800) == 0xF800) {
-            LOGGER.debug("Peripheral Soft Reset");
         } else {
             LOGGER.debug("Unhandled I/O IN Operation on port {}. Z80 Status: {}",
                     String.format("0x%04x", port),
@@ -327,7 +365,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         clock.addTstates(4); // 4 clocks for writing byte to bus (right?)
         if ((port & 0xFF00) == 0x7F00) {
             //LOGGER.debug("GateArray I/O Port {}, Value {}",
-              //      String.format("%04x", port), String.format("%02x", value));
+            //      String.format("%04x", port), String.format("%02x", value));
             //gateArray.onPortWriteOperation(port & 0xff);
             gateArray.onPortWriteOperation( value & 0xff);
         } else if ((port & 0xFF00) == 0xBC00) {
@@ -345,8 +383,10 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             //LOGGER.debug("Ppi Port C OUT");
             ppi.portCOutput(value & 0xff);
         } else if ((port & 0xFF00) == 0xF700) {
-            LOGGER.debug("Ppi Control Port OUT: {}, {}", String.format("0x%04x", port), String.format("0x%02x", value & 0xff));
+            //LOGGER.debug("Ppi Control Port OUT: {}, {}", String.format("0x%04x", port), String.format("0x%02x", value & 0xff));
             ppi.controlOutput(value & 0xff);
+        } else if ((port & 0xF800) == 0xF800) {
+            LOGGER.debug("Peripheral Soft Reset");
         } else if ((port & 0xFF00) == 0xDF00) {
             //LOGGER.debug("Selection of upper ROM number {}", value);
             upperRomNumber = value & 0xff;
@@ -446,7 +486,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
         clock.addClockTimeout(clockTimeout);
         try {
-            compensation = z80.executeTstates(FRAME_TSTATES - compensation);
+            compensation = executeTstates(FRAME_TSTATES - compensation);
         } finally {
             ppi.setvSyncActive(false);
             z80.resetInterruptAckListener();
@@ -454,6 +494,15 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         }
         return compensation;
     }
+
+    public long executeTstates(long tStates) {
+        long limit = clock.getTstates() + tStates;
+        while (clock.getTstates() < limit && !executionAborted && !isTapeAtEndPosition()) {
+            z80.execute();
+        }
+        return clock.getTstates() - limit;
+    }
+
 
     @Override
     public void breakpoint() {

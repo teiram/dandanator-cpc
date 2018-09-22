@@ -4,6 +4,9 @@ import com.grelobites.romgenerator.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class GateArray {
     private static final Logger LOGGER = LoggerFactory.getLogger(GateArray.class);
     private static final int BANK_SIZE = 0x4000;
@@ -17,16 +20,13 @@ public class GateArray {
             {0, 5, 2, 3},
             {0, 6, 2, 3},
             {0, 7, 2, 3}};
-    private static final int PEN_SELECTION_FN = 0;
-    private static final int PALETTE_DATA_FN = 1;
-    private static final int SCREEN_MODE_AND_ROM_CFG_FN = 2;
-    private static final int RAM_BANKING_FN = 3;
-
 
     private byte[] palette = new byte[17];
     private Integer ramBankingRegister;
     private int screenModeAndRomConfigurationRegister;
     private int selectedPen;
+
+    private Set<ChangeListener<GateArrayFunction>> changeListeners = new HashSet<>();
 
     public static Builder newBuilder() {
         return new Builder();
@@ -58,6 +58,14 @@ public class GateArray {
     }
 
     private GateArray() {}
+
+    public void addChangeListener(ChangeListener<GateArrayFunction> listener) {
+        changeListeners.add(listener);
+    }
+
+    public void removeChangeListener(ChangeListener<GateArrayFunction> listener) {
+        changeListeners.remove(listener);
+    }
 
     public int getMemoryBankSlot(int address) {
         return MEMORY_CONFIGURATIONS[ramBankingRegister != null ?
@@ -121,22 +129,34 @@ public class GateArray {
                 value & 0x0F;
     }
 
-    public void onPortWriteOperation(int value) {
-        final int function = (value >> 6) & 3;
-        switch (function) {
-            case PEN_SELECTION_FN:
-                selectedPen = decodeSelectedPen(value);
-                break;
-            case PALETTE_DATA_FN:
-                palette[selectedPen] = (byte) (value & 0x1f);
-                break;
-            case SCREEN_MODE_AND_ROM_CFG_FN:
-                screenModeAndRomConfigurationRegister = value;
-                break;
-            case RAM_BANKING_FN:
-                ramBankingRegister = value;
-                break;
+    private boolean notifyListeners(GateArrayFunction function) {
+        for (ChangeListener<GateArrayFunction> listener: changeListeners) {
+            if (!listener.onChange(function)) {
+                return false;
+            }
         }
+        return true;
+    }
+
+    public void onPortWriteOperation(int value) {
+        final GateArrayFunction function = GateArrayFunction.fromId((value >> 6) & 3);
+        if (notifyListeners(function)) {
+            switch (function) {
+                case PEN_SELECTION_FN:
+                    selectedPen = decodeSelectedPen(value);
+                    break;
+                case PALETTE_DATA_FN:
+                    palette[selectedPen] = (byte) (value & 0x1f);
+                    break;
+                case SCREEN_MODE_AND_ROM_CFG_FN:
+                    screenModeAndRomConfigurationRegister = value;
+                    break;
+                case RAM_BANKING_FN:
+                    ramBankingRegister = value;
+                    break;
+            }
+        }
+
     }
 
     @Override
