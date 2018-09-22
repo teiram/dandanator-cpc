@@ -614,7 +614,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     if (idxHeader >= blockOffsets.size() && endBlockPause > 1000) {
                         LOGGER.debug("Correcting endBlockPause in Turbo block. idxHeader={}, endBlockPause={}",
                                 idxHeader, endBlockPause);
-                        //endBlockPause = 1000;
+                        endBlockPause = 1;
                     }
                     endBlockPause *= MILLISECOND_TSTATES;
                     repeat = false;

@@ -219,7 +219,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             if (c == GateArrayFunction.PALETTE_DATA_FN) {
                 //Ignore border changes
                 if ((gateArray.getSelectedPen() & 0x10) == 0) {
-                    if (isTapeAtEndPosition()) {
+                    if (isTapeNearEndPosition()) {
                         LOGGER.debug("Aborting execution on palette change with tape at end");
                         executionAborted = true;
                         return false;
@@ -251,7 +251,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         boolean stopOnTapeStalled = false;
         gateArray.addChangeListener(paletteChangeListener);
         try {
-            while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted && !isTapeAtEndPosition()) {
+            while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted) {
                 compensation = executeFrame(compensation);
                 if (tapePlayer.getTapePos() == tapeLastSavePosition) {
                     framesWithoutTapeMovement++;
@@ -294,8 +294,8 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         return currentSnapshot;
     }
 
-    private boolean isTapeAtEndPosition() {
-        return tapePlayer.getTapePos() == tapePlayer.getTapeLength();
+    private boolean isTapeNearEndPosition() {
+        return tapePlayer.getTapeLength() - tapePlayer.getTapePos() < 2;
     }
 
     @Override
@@ -313,7 +313,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     public void poke8(int address, int value) {
         clock.addTstates(4);
         memory.poke8(address, value);
-        if (crtc.isVideoAddress(address) && isTapeAtEndPosition()) {
+        if (crtc.isVideoAddress(address) && isTapeNearEndPosition()) {
             LOGGER.debug("Aborting execution on write to VRAM with tape at end");
             executionAborted = true;
         }
@@ -329,7 +329,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     public void poke16(int address, int word) {
         clock.addTstates(8);
         memory.poke16(address, word);
-        if (crtc.isVideoAddress(address) && isTapeAtEndPosition()) {
+        if (crtc.isVideoAddress(address) && isTapeNearEndPosition()) {
             LOGGER.debug("Aborting execution on write to VRAM with tape at end");
             executionAborted = true;
         }
@@ -397,33 +397,6 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                     z80.getZ80State(),
                     new Throwable());
         }
-    }
-
-    protected void executeFrameOK() {
-        long vsync_tstates = clock.getTstates() + FRAME_TSTATES;
-        long lastInterruptTstates = 0;
-        int interruptAttempt = 0;
-        while (clock.getTstates() < vsync_tstates) {
-            long toNextInterrupt = clock.getTstates() + INTERRUPT_TSTATES;
-            z80.execute(toNextInterrupt);
-            if (++interruptAttempt == 5) {
-                ppi.setvSyncActive(true);
-                interruptAttempt = 0;
-            }
-            if (!z80.isINTLine() &&
-                    (clock.getTstates() - lastInterruptTstates) > HSYNC_32_DELAY) {
-                boolean preIFF1 = z80.isIFF1();
-                z80.setINTLine(true);
-                lastInterruptTstates = clock.getTstates();
-                z80.execute();
-                boolean asserted = preIFF1 != z80.isIFF1();
-                if (asserted) {
-                    z80.setINTLine(false);
-                }
-            }
-        }
-        z80.setINTLine(false);
-        ppi.setvSyncActive(false);
     }
 
     protected long executeFrame(long compensation) {
@@ -497,8 +470,11 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
     public long executeTstates(long tStates) {
         long limit = clock.getTstates() + tStates;
-        while (clock.getTstates() < limit && !executionAborted && !isTapeAtEndPosition()) {
+        while (clock.getTstates() < limit && !executionAborted) {
             z80.execute();
+            if (tapePlayer.getTapePos() == tapePlayer.getTapeLength()) {
+                executionAborted = true;
+            }
         }
         return clock.getTstates() - limit;
     }
