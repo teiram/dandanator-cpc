@@ -8,7 +8,7 @@ import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.Counter;
 import com.grelobites.romgenerator.util.emulator.ClockTimeout;
-import com.grelobites.romgenerator.util.emulator.peripheral.ChangeListener;
+import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayChangeListener;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayFunction;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
@@ -215,8 +215,8 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         tapePlayer.insert(tapeFile);
         loadLoaderSnapshot();
         //Pressing enter key to continue with loading
-        final ChangeListener<GateArrayFunction> paletteChangeListener = (c) -> {
-            if (c == GateArrayFunction.PALETTE_DATA_FN) {
+        final GateArrayChangeListener paletteGateArrayChangeListener = (f, v) -> {
+            if (f == GateArrayFunction.PALETTE_DATA_FN) {
                 //Ignore border changes
                 if ((gateArray.getSelectedPen() & 0x10) == 0) {
                     if (isTapeNearEndPosition()) {
@@ -225,6 +225,8 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                         return false;
                     }
                 }
+            } else if (f == GateArrayFunction.RAM_BANKING_FN) {
+                LOGGER.debug("Changing RAM Banking to {}", v);
             }
             return true;
         };
@@ -249,7 +251,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
         boolean stopOnTapeStalled = false;
-        gateArray.addChangeListener(paletteChangeListener);
+        gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {
             while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted) {
                 compensation = executeFrame(compensation);
@@ -268,7 +270,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                     z80.getZ80State(), tapePlayer, tfe);
         }
 
-        gateArray.removeChangeListener(paletteChangeListener);
+        gateArray.removeChangeListener(paletteGateArrayChangeListener);
         LOGGER.info("Tape finished at {}, tapeLastSavePosition was {}",
                 tapePlayer.getTapePos(), tapeLastSavePosition);
 
@@ -374,6 +376,9 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         } else if ((port & 0xFF00) == 0xBD00) {
             //LOGGER.debug("CRTC register data selection");
             crtc.onWriteRegisterOperation(value & 0xff);
+            if (isTapeNearEndPosition()) {
+                LOGGER.debug("Changing CRTC value on tape end");
+            }
         } else if ((port & 0xFF00) == 0xF400) {
             //LOGGER.debug("Ppi PortA OUT");
             ppi.portAOutput(value & 0xff);

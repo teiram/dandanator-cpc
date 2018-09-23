@@ -26,7 +26,7 @@ public class GateArray {
     private int screenModeAndRomConfigurationRegister;
     private int selectedPen;
 
-    private Set<ChangeListener<GateArrayFunction>> changeListeners = new HashSet<>();
+    private Set<GateArrayChangeListener> gateArrayChangeListeners = new HashSet<>();
 
     public static Builder newBuilder() {
         return new Builder();
@@ -59,19 +59,18 @@ public class GateArray {
 
     private GateArray() {}
 
-    public void addChangeListener(ChangeListener<GateArrayFunction> listener) {
-        changeListeners.add(listener);
+    public void addChangeListener(GateArrayChangeListener listener) {
+        gateArrayChangeListeners.add(listener);
     }
 
-    public void removeChangeListener(ChangeListener<GateArrayFunction> listener) {
-        changeListeners.remove(listener);
+    public void removeChangeListener(GateArrayChangeListener listener) {
+        gateArrayChangeListeners.remove(listener);
     }
 
     public int getMemoryBankSlot(int address) {
         return MEMORY_CONFIGURATIONS[ramBankingRegister != null ?
                 ramBankingRegister & 0x07 : 0]
                 [address / BANK_SIZE];
-
     }
 
     public boolean isLowRomEnabled() {
@@ -100,7 +99,7 @@ public class GateArray {
     }
 
     public void setSelectedPen(int selectedPen) {
-        this.selectedPen = selectedPen;
+        this.selectedPen = selectedPen & 0xff;
     }
 
     public int getSelectedPen() {
@@ -112,7 +111,7 @@ public class GateArray {
     }
 
     public void setScreenModeAndRomConfigurationRegister(int value) {
-        this.screenModeAndRomConfigurationRegister = value;
+        this.screenModeAndRomConfigurationRegister = value & 0xff;
     }
 
     public int getRamBankingRegister() {
@@ -120,7 +119,7 @@ public class GateArray {
     }
 
     public void setRamBankingRegister(int value) {
-        this.ramBankingRegister = value;
+        this.ramBankingRegister = value & 0xff;
     }
 
     private static int decodeSelectedPen(int value) {
@@ -129,9 +128,9 @@ public class GateArray {
                 value & 0x0F;
     }
 
-    private boolean notifyListeners(GateArrayFunction function) {
-        for (ChangeListener<GateArrayFunction> listener: changeListeners) {
-            if (!listener.onChange(function)) {
+    private boolean notifyListeners(GateArrayFunction function, int value) {
+        for (GateArrayChangeListener listener: gateArrayChangeListeners) {
+            if (!listener.onChange(function, value)) {
                 return false;
             }
         }
@@ -140,7 +139,7 @@ public class GateArray {
 
     public void onPortWriteOperation(int value) {
         final GateArrayFunction function = GateArrayFunction.fromId((value >> 6) & 3);
-        if (notifyListeners(function)) {
+        if (notifyListeners(function, value)) {
             switch (function) {
                 case PEN_SELECTION_FN:
                     selectedPen = decodeSelectedPen(value);
@@ -152,7 +151,7 @@ public class GateArray {
                     screenModeAndRomConfigurationRegister = value;
                     break;
                 case RAM_BANKING_FN:
-                    ramBankingRegister = value;
+                    ramBankingRegister = value != 0 ? value : null;
                     break;
             }
         }
