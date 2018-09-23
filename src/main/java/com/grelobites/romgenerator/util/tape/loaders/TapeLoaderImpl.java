@@ -376,9 +376,6 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         } else if ((port & 0xFF00) == 0xBD00) {
             //LOGGER.debug("CRTC register data selection");
             crtc.onWriteRegisterOperation(value & 0xff);
-            if (isTapeNearEndPosition()) {
-                LOGGER.debug("Changing CRTC value on tape end");
-            }
         } else if ((port & 0xFF00) == 0xF400) {
             //LOGGER.debug("Ppi PortA OUT");
             ppi.portAOutput(value & 0xff);
