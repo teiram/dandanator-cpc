@@ -617,7 +617,8 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                         endBlockPause = 1;
                     }
                     endBlockPause *= MILLISECOND_TSTATES;
-                    LOGGER.debug("Turbo Speed block[leaderLength={}, sync1Length={}, sync2Length={}, zeroLength={}, oneLength={}, leaderPulses={}, bitsLastByte={}, endBlockPause={}ms, blockLen={}]",
+                    LOGGER.debug("Turbo Speed block[leaderLength={}, sync1Length={}, sync2Length={}, zeroLength={}, " +
+                            "oneLength={}, leaderPulses={}, bitsLastByte={}, endBlockPause={}ms, blockLen={}]",
                         leaderLength, sync1Length, sync2Length,
                         zeroLength, oneLength, leaderPulses, bitsLastByte, endBlockPause / MILLISECOND_TSTATES,
                         blockLen);
