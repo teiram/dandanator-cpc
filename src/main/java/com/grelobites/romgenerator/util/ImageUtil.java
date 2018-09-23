@@ -26,19 +26,27 @@ public class ImageUtil {
         return Math.max(0, (Constants.CPC_SCREEN_HEIGHT - height) / 2);
     }
 
+    private static int getHeight(CrtcDisplayData crtcDisplayData) {
+	    return Math.min(crtcDisplayData.getVisibleHeight() * 8, 200);
+    }
+
+    private static int getWidth(CrtcDisplayData crtcDisplayData) {
+	    return Math.min(crtcDisplayData.getVisibleWidth() * 2, 80);
+    }
+
     private static void writeToImageMode0(PixelWriter writer, byte[] data,
                                           CrtcDisplayData crtcDisplayData,
                                           byte[] palette) {
-        int height = crtcDisplayData.getVisibleHeight() * 8;
-        int width = crtcDisplayData.getVisibleWidth() * 2;
+        int height = getHeight(crtcDisplayData);
+        int width = getWidth(crtcDisplayData);
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
-        LOGGER.debug("Rendering image in mode 0 with height={}, width={}, xBorderSize={}, yBorderSize={}",
+        LOGGER.debug("Rendering image in mode 0 with height={}, width={}, xBorderSize={}, " +
+                        "yBorderSize={}",
                 height, width, xBorderSize, yBorderSize);
 
         for (int y = 0; y < height; y++) {
-            int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset())
-                    % Constants.SLOT_SIZE;
+            int lineAddress = ((((y + 2) / 8) * width) + (((y + 2) % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
             for (int x = 0; x < width; x++) {
                 int pixelData = data[lineAddress + x];
                 int color0Index = ((pixelData & 0x02) << 2) |
@@ -63,16 +71,16 @@ public class ImageUtil {
 
     private static void writeToImageMode1(PixelWriter writer, byte[] data,
                                           CrtcDisplayData crtcDisplayData, byte[] palette) {
-	    int height = Math.min(200, crtcDisplayData.getVisibleHeight() * 8);
-	    int width = crtcDisplayData.getVisibleWidth() * 2;
+	    int height = getHeight(crtcDisplayData);
+	    int width = getWidth(crtcDisplayData);
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
-        LOGGER.debug("Rendering image in mode 1 with height={}, width={}, xBorderSize={}, yBorderSize={}",
+        LOGGER.debug("Rendering image in mode 1 with height={}, width={}, xBorderSize={}, " +
+                        "yBorderSize={}",
                 height, width, xBorderSize, yBorderSize);
 
         for (int y = 0; y < height; y++) {
-            int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset())
-                    % Constants.SLOT_SIZE;
+            int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
             for (int x = 0; x < width; x++) {
                 int pixelData = Byte.toUnsignedInt(data[lineAddress + x]);
                 int color0Index = ((pixelData & 0x08) >> 2) |
@@ -104,17 +112,16 @@ public class ImageUtil {
     private static void writeToImageMode2(PixelWriter writer, byte[] data,
 										  CrtcDisplayData crtcDisplayData,
                                           byte[] palette) {
-        int height = crtcDisplayData.getVisibleHeight() * 8;
-        int width = crtcDisplayData.getVisibleWidth() * 2;
+        int height = getHeight(crtcDisplayData);
+        int width = getWidth(crtcDisplayData);
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
-
-        LOGGER.debug("Rendering image in mode 2 with height={}, width={}, xBorderSize={}, yBorderSize={}",
+        LOGGER.debug("Rendering image in mode 2 with height={}, width={}, xBorderSize={}, "
+                + "yBorderSize={}",
                 height, width, xBorderSize, yBorderSize);
 
         for (int y = 0; y < height; y++) {
-			int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset())
-                    % Constants.SLOT_SIZE;
+			int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
 			for (int x = 0; x < width; x++) {
 				int pixelData = data[lineAddress + x];
 
