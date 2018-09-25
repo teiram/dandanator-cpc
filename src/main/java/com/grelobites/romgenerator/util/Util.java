@@ -148,12 +148,19 @@ public class Util {
         return result;
     }
 
-    public static byte[] paddedByteArray(byte[] source, int length, byte filler) {
+    public static byte[] paddedByteArray(byte[] source, int from, int length, byte filler) {
+        LOGGER.debug("paddedByteArray from array of length " + source.length + " from " + from
+                + ", length = " + length);
         byte[] result = new byte[length];
         Arrays.fill(result, filler);
-        System.arraycopy(source, 0, result, 0, Math.min(source.length, length));
+        System.arraycopy(source, from, result, 0, Math.min(source.length - from, length));
         return result;
     }
+
+    public static byte[] paddedByteArray(byte[] source, int length, byte filler) {
+        return paddedByteArray(source, 0, length, filler);
+    }
+
 
     public static <S extends T, T> Collection<T> collectionUpcast(Collection<S> list) {
         return list.stream().map(item -> (T) item)
@@ -232,5 +239,12 @@ public class Util {
         for (int i = 0; i < size; i++) {
             os.write(value);
         }
+    }
+
+    public static int roundToNearestMultiple(int value, int multiple) {
+        if ((multiple & (multiple - 1)) != 0) {
+            throw new IllegalArgumentException("Non power of 2 multiple argument");
+        }
+        return (value + multiple - 1) & ~(multiple - 1);
     }
 }
