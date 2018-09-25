@@ -238,11 +238,15 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             if (!c) {
                 LOGGER.debug("Stopping tape from listener with status {}", tapePlayer.getStatus());
                 currentSnapshot = toSnapshotGame();
-                tapeLastSavePosition = tapePlayer.getTapePos();
-                tapePlayer.stop();
+                tapeLastSavePosition = tapePlayer.getCurrentTapePosition();
+                tapePlayer.pause();
+                if (tapePlayer.isInLastBlock()) {
+                    LOGGER.debug("Aborting emulation with tape stopped in last block");
+                    executionAborted = true;
+                }
             } else {
                 LOGGER.debug("Restarting tape from listener with status {} ", tapePlayer.getStatus());
-                tapePlayer.play();
+                tapePlayer.resume();
                 framesWithoutTapeMovement = 0;
             }
         });
@@ -255,7 +259,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         try {
             while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted) {
                 compensation = executeFrame(compensation);
-                if (tapePlayer.getTapePos() == tapeLastSavePosition) {
+                if (tapePlayer.getCurrentTapePosition() == tapeLastSavePosition) {
                     framesWithoutTapeMovement++;
                     if (framesWithoutTapeMovement >= MAX_FRAMES_WITHOUT_TAPE_MOVEMENT) {
                         LOGGER.debug("{} frames without tape movement. Stopping",
@@ -272,7 +276,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
 
         gateArray.removeChangeListener(paletteGateArrayChangeListener);
         LOGGER.info("Tape finished at {}, tapeLastSavePosition was {}",
-                tapePlayer.getTapePos(), tapeLastSavePosition);
+                tapePlayer.getCurrentTapePosition(), tapeLastSavePosition);
 
 
         /*
@@ -286,7 +290,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         }
         */
 
-        if (tapePlayer.getTapePos() > tapeLastSavePosition) {
+        if (tapePlayer.getCurrentTapePosition() > tapeLastSavePosition) {
             LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
                     String.format("0x%04x", z80.getRegPC()),
                     memory.isAddressInRam(z80.getRegPC()));
@@ -297,7 +301,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
     }
 
     private boolean isTapeNearEndPosition() {
-        return tapePlayer.getTapeLength() - tapePlayer.getTapePos() < 2;
+        return tapePlayer.getTapeLength() - tapePlayer.getCurrentTapePosition() < 2;
     }
 
     @Override
@@ -335,6 +339,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
             LOGGER.debug("Aborting execution on write to VRAM with tape at end");
             executionAborted = true;
         }
+
     }
 
     @Override
@@ -433,22 +438,23 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
                 gateArrayCounter.reset();
             }
             if (ppi.isvSyncActive()) {
-                /*
+
                 if (hSyncCounter.increment() == 2) {
                     if ((gateArrayCounter.value() & 0x20) == 0) {
-                        LOGGER.debug("VSYNC INT at {}", clock.getTstates() - frameStartTstates);
+                        //LOGGER.debug("VSYNC INT at {}", clock.getTstates() - frameStartTstates);
                         z80.setINTLine(true);
                     }
                     gateArrayCounter.reset();
                 } else if (hSyncCounter.value() == vSyncLines) {
-                    LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
+                    //LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
                     ppi.setvSyncActive(false);
                 }
-                */
+                /*
                 if (hSyncCounter.increment() == vSyncLines) {
                     //LOGGER.debug("Disabling VSYNC at {}", clock.getTstates() - frameStartTstates);
                     ppi.setvSyncActive(false);
                 }
+                */
             } else {
                 if (clock.getTstates() >= vSyncTstates && hSyncCounter.value() == 0) {
                     //LOGGER.debug("Enabling VSYNC at {}", clock.getTstates() - frameStartTstates);
@@ -474,7 +480,7 @@ public class TapeLoaderImpl implements TapeLoader, Z80operations {
         long limit = clock.getTstates() + tStates;
         while (clock.getTstates() < limit && !executionAborted) {
             z80.execute();
-            if (tapePlayer.getTapePos() == tapePlayer.getTapeLength()) {
+            if (tapePlayer.getCurrentTapePosition() == tapePlayer.getTapeLength()) {
                 executionAborted = true;
             }
         }
