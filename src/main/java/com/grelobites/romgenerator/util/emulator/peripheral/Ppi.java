@@ -266,7 +266,6 @@ public class Ppi {
         controlCurrentValue = value;
         if ((value & 0x80) != 0) {
             portACurrentValue = portBCurrentValue = portCCurrentValue = 0;
-            //casseteDataInput = false;
             portAInputDirection = (value & 0x10) != 0;
         } else {
             int bitToSet = (value >>> 1) & 0x7;
