@@ -8,6 +8,10 @@ public class ClockTimeout {
         return remaining;
     }
 
+    public void append(long value) {
+        remaining += value;
+    }
+
     public ClockTimeoutListener getListener() {
         return listener;
     }
