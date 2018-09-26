@@ -16,6 +16,7 @@ public class Nec765 {
     private Nec765Status3 status3Register = new Nec765Status3(0);
 
     private boolean motorOn;
+    private DriveStatus[] driveStatuses = new DriveStatus[NUM_DRIVES];
 
     private DskContainer[] attachedDskContainers = new DskContainer[NUM_DRIVES];
     private Nec765Phase currentPhase;
@@ -26,6 +27,10 @@ public class Nec765 {
         mainStatusRegister.setExecMode(false);
         mainStatusRegister.setDataInput(true);
         mainStatusRegister.setRQM(true);
+        motorOn = false;
+        for (int i = 0; i < driveStatuses.length; i++) {
+            driveStatuses[i] = new DriveStatus();
+        }
     }
 
     public Nec765MainStatus getMainStatusRegister() {
@@ -98,6 +103,10 @@ public class Nec765 {
         this.currentCommand = currentCommand;
     }
 
+    public DriveStatus getDriveStatus(int drive) {
+        return driveStatuses[drive];
+    }
+
     public Optional<DskContainer> getDskContainer(int drive) {
         return Optional.ofNullable(attachedDskContainers[drive]);
     }
@@ -119,20 +128,20 @@ public class Nec765 {
                 currentCommand.setFdcController(this);
                 mainStatusRegister.setFdcBusy(true);
             }
-            currentCommand.addCommandData(value);
+            currentCommand.write(value);
         }
     }
 
     public int readDataRegister() {
+        int value = 0;
         if (currentCommand != null) {
             switch (currentPhase) {
                 case COMMAND:
-                    //What happens in this case
-                    return 0;
+                    //What happens in this case?
+                    break;
                 case EXECUTION:
-                    return currentCommand.execute();
                 case RESULT:
-                    return currentCommand.result();
+                    value = currentCommand.read();
             }
             if (currentCommand.isDone()) {
                 currentCommand = null;
@@ -140,7 +149,7 @@ public class Nec765 {
                 mainStatusRegister.setFdcBusy(false);
             }
         }
-        return 0;
+        return value;
     }
 
     public int readStatusRegister() {

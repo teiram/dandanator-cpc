@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 public class Nec765CommandFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(Nec765CommandFactory.class);
 
-    public static Nec765Command getCommand(int data) {
+    public Nec765Command getCommand(int data) {
         LOGGER.debug("Requesting command creation with data {}", String.format("0x%02x", data & 0xff));
         switch (data & 0x1f) {
             case 0x06:
@@ -30,16 +30,19 @@ public class Nec765CommandFactory {
                 return null;
             case 0xa0:
                 LOGGER.debug("Read Id command");
-                return null;
+                return new ReadIdCommand();
             case 0x11:
-            case 0x15:
+                LOGGER.debug("Scan equal command");
+                return new ScanEqualCommand();
             case 0x19:
+                LOGGER.debug("Scan Low or Equal command");
+                return new ScanLowOrEqualCommand();
             case 0x1d:
-                LOGGER.debug("Scan command");
-                return null;
+                LOGGER.debug("Scan High or Equal command");
+                return new ScanHighOrEqualCommand();
             case 0x07:
                 LOGGER.debug("Recalibrate command");
-                return null;
+                return new RecalibrateCommand();
             case 0x0f:
                 LOGGER.debug("Head reposition command");
                 return null;
@@ -53,8 +56,8 @@ public class Nec765CommandFactory {
                 LOGGER.debug("Specify Unit Data command");
                 return null;
             default:
-                LOGGER.debug("Invalid command issued");
-                return null;
+                LOGGER.debug("Invalid command issued with code {}", String.format("0x%02x", data));
+                return new InvalidCommand();
         }
     }
 }
