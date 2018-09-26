@@ -15,16 +15,16 @@ public class Nec765CommandFactory {
                 return new ReadDataCommand();
             case 0x05:
                 LOGGER.debug("Write Data command");
-                return null;
+                return new WriteDataCommand();
             case 0x0c:
                 LOGGER.debug("Read Deleted Data command");
-                return null;
+                return new ReadDataCommand();
             case 0x09:
                 LOGGER.debug("Write Deleted Data command");
-                return null;
+                return new WriteDataCommand();
             case 0x02:
                 LOGGER.debug("Read Track command");
-                return null;
+                return new ReadTrackCommand();
             case 0x0d:
                 LOGGER.debug("Format Track command");
                 return null;

@@ -5,11 +5,9 @@ public interface Nec765Command {
 
     void setFdcController(Nec765 controller);
 
-    void addCommandData(int data);
+    void write(int data);
 
-    int execute();
-
-    int result();
+    int read();
 
     boolean isDone();
 }

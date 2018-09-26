@@ -5,4 +5,6 @@ public class Nec765Constants {
     public static final int ICODE_ABNORMAL_TERMINATION = 1;
     public static final int ICODE_INVALID_COMMAND = 2;
     public static final int ICODE_ABNORMAL_TERMINATION_RDY = 3;
+
+    public static final int BASE_SECTOR_SIZE = 1 << 7;
 }

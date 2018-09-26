@@ -8,8 +8,13 @@ import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /*
-    - Read Data
+    - Read Track
     -   MT  MF  SK  0   0   1   1   0
     -   x   x   x   x   x   HD  US1 US0
     -   C. Cylinder number. Stands for the current /selected cylinder
@@ -41,33 +46,55 @@ import org.slf4j.LoggerFactory;
     - R
     - N
  */
-public class ReadDataCommand extends ReadWriteBaseCommand {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReadDataCommand.class);
+public class ReadTrackCommand extends ReadWriteBaseCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReadTrackCommand.class);
 
     private byte[] sectorData;
     private int sectorDataIndex = 0;
 
+    private void prepareTrackData(Track dskTrack, List<Integer> indexes) {
+        sectorData = new byte[indexes.size() * sectorBytes];
+        int position = 0;
+        for (int index : indexes) {
+            System.arraycopy(dskTrack.getSectorData(index), 0,
+                    sectorData, position * sectorBytes, sectorBytes);
+            position++;
+        }
+        LOGGER.debug("Prepared track data of {} bytes", sectorData.length);
+    }
+
     protected void preExecutionOperation(DskContainer dsk) {
         Track dskTrack = dsk.getTrack(track);
         if (dskTrack != null) {
-            //Search for sectorId
-            for (SectorInformationBlock sectorInfo : dskTrack.getInformation().getSectorInformationList()) {
-                if (sectorInfo.getSectorId() == firstSector) {
-                    sectorData = new byte[sectorBytes];
-                    System.arraycopy(
-                            dskTrack.getSectorData(sectorInfo.getPhysicalPosition()), 0,
-                            sectorData, 0, sectorBytes);
-                    //Fill status registers stored in DSK
-                    controller.getStatus1Register().setValue(sectorInfo.getFdcStatusRegister1());
-                    controller.getStatus2Register().setValue(sectorInfo.getFdcStatusRegister2());
-                    return;
+            //First sectorId must match the one provided
+            List<Integer> indexes = new ArrayList<>();
+            boolean matched = false;
+            SectorInformationBlock[] sectorInfoList = dskTrack.getInformation().getSectorInformationList();
+            if (sectorInfoList[0].getSectorId() == firstSector) {
+                indexes.add(0);
+                for (int i = 1; i < dskTrack.getInformation().getSectorCount(); i++) {
+                    SectorInformationBlock sectorInfo = dskTrack.getInformation().getSectorInformation(i);
+                    indexes.add(i);
+                    if (sectorInfo.getSectorId() == lastSector) {
+                        matched = true;
+                        break;
+                    }
                 }
+                if (matched) {
+                    prepareTrackData(dskTrack, indexes);
+                    return;
+                } else {
+                    LOGGER.debug("No sector matched the provided last sector id");
+                }
+            } else {
+                LOGGER.debug("First track sector id doesn't match the provided sector id");
             }
-            //Sector not found
-            controller.getStatus1Register().setNoData(true);
-            controller.getStatus0Register().setInterruptCode(Nec765Constants.ICODE_ABNORMAL_TERMINATION);
-            throw new IllegalStateException("No sector found");
+        } else {
+            LOGGER.debug("No track found with id {}", track);
         }
+        controller.getStatus1Register().setNoData(true);
+        controller.getStatus0Register().setInterruptCode(Nec765Constants.ICODE_ABNORMAL_TERMINATION);
+        throw new IllegalStateException("No sector found");
     }
 
     @Override

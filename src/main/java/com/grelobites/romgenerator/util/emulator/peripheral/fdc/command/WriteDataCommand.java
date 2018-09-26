@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /*
-    - Read Data
+    - Write Data
     -   MT  MF  SK  0   0   1   1   0
     -   x   x   x   x   x   HD  US1 US0
     -   C. Cylinder number. Stands for the current /selected cylinder
@@ -41,8 +41,8 @@ import org.slf4j.LoggerFactory;
     - R
     - N
  */
-public class ReadDataCommand extends ReadWriteBaseCommand {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReadDataCommand.class);
+public class WriteDataCommand extends ReadWriteBaseCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WriteDataCommand.class);
 
     private byte[] sectorData;
     private int sectorDataIndex = 0;
@@ -53,13 +53,7 @@ public class ReadDataCommand extends ReadWriteBaseCommand {
             //Search for sectorId
             for (SectorInformationBlock sectorInfo : dskTrack.getInformation().getSectorInformationList()) {
                 if (sectorInfo.getSectorId() == firstSector) {
-                    sectorData = new byte[sectorBytes];
-                    System.arraycopy(
-                            dskTrack.getSectorData(sectorInfo.getPhysicalPosition()), 0,
-                            sectorData, 0, sectorBytes);
-                    //Fill status registers stored in DSK
-                    controller.getStatus1Register().setValue(sectorInfo.getFdcStatusRegister1());
-                    controller.getStatus2Register().setValue(sectorInfo.getFdcStatusRegister2());
+                    sectorData = dskTrack.getSectorData(sectorInfo.getPhysicalPosition());
                     return;
                 }
             }
@@ -77,8 +71,17 @@ public class ReadDataCommand extends ReadWriteBaseCommand {
                 setCommandData(data);
                 break;
             case EXECUTION:
+                if (sectorDataIndex < sectorBytes) {
+                    sectorData[sectorDataIndex++] = (byte) (data & 0xff);
+                    if (sectorDataIndex == sectorBytes) {
+                        controller.setCurrentPhase(Nec765Phase.RESULT);
+                    }
+                } else {
+                    LOGGER.error("Trying to write with passed end sector and not in result phase");
+                }
+                break;
             case RESULT:
-                LOGGER.error("Writing data to ReadDataCommand in non-command phase");
+                LOGGER.error("Writing data to WriteDataCommand in result phase");
                 break;
         }
     }
@@ -88,17 +91,8 @@ public class ReadDataCommand extends ReadWriteBaseCommand {
         int value = 0;
         switch (controller.getCurrentPhase()) {
             case COMMAND:
-                LOGGER.error("Trying to read from Controller in Command phase");
-                break;
             case EXECUTION:
-                if (sectorDataIndex < sectorData.length) {
-                    value = sectorData[sectorDataIndex++];
-                    if (sectorDataIndex == sectorData.length) {
-                        controller.setCurrentPhase(Nec765Phase.RESULT);
-                    }
-                } else {
-                    throw new IllegalStateException("Data exhausted and still in execution phase");
-                }
+                LOGGER.error("Trying to read from Controller in non-result phase");
                 break;
             case RESULT:
                 value = getCommandResult();
