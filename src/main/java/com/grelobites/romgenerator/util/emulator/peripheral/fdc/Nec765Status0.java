@@ -1,5 +1,19 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
+/*
+    Interrupt state register. In non-DMA mode allows to identify interruption causes.
+    Bits 7, 6: Interrupt Code:
+     00- Normal Termination   (NT): Command succesfully executed.
+     01- Abnormal Termination (AT). Command initiated but not finished.
+     10- Invalid Command Issued (IC): An illegal command was issued.
+     11- Abnormal Termination. Thrown on changes of RDY line during command execution (i.e.: The floppy disk
+            is removed during an operation).
+    Bit 5 (SE): Seek end. Set when the seek operation is finished.
+    Bit 4 (EC): Equipment check. Set when the disk drive notifies an error or when no TRK0 signal after recalibration.
+    Bit 3 (NR): Set when the disk drive informs on this condition. Also on attempts to access the second head in single head drives.
+    Bit 2 (HD): Informs about the active head when the interruption happened.
+    Bits 1, 0 (US): Unit select. Active drive during interruption.
+ */
 public class Nec765Status0 extends StatusRegister {
     private static final int INTERRUPT_CODE_MASK     = 0xc0;
     private static final int SEEK_END_MASK           = 1 << 5;

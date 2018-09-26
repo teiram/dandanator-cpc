@@ -2,16 +2,6 @@ package com.grelobites.romgenerator.util.dsk;
 
 public class DskConstants {
 
-    public static final FileSystemParameters ROMSET_FS_PARAMETERS =
-            FileSystemParameters.newBuilder()
-                    .withBlockCount(232)
-                    .withBlockSize(2048)
-                    .withDirectoryEntries(128)
-                    .withSectorsByTrack(9)
-                    .withTrackCount(80)
-                    .withSectorSize(512)
-                    .build();
-
     public static final FileSystemParameters PLUS3_FS_PARAMETERS =
             FileSystemParameters.newBuilder()
                     .withBlockCount(175)

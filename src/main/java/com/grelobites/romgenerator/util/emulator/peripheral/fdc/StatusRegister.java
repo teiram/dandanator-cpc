@@ -17,6 +17,10 @@ public class StatusRegister {
         return value & REGISTER_MASK;
     }
 
+    public void setValue(int value) {
+        this.value = value & REGISTER_MASK;
+    }
+
     @Override
     public String toString() {
         return "StatusRegister{" +

@@ -1,5 +1,15 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
+/*
+    Can only be read using the Read drive State command. The following information is provided:
+    Bit 7 (FT): Fault (fallo). Follows the Fault line of some disk drives.
+    Bit 6 (WP): Write protected. Set when a protected disk is on the disk drive.
+    Bit 5 (RDY): Ready. Follows the RDY line of the disk drive.
+    Bit 4 (T0): Track 0. Follows the TRK0 line of the disk drive.
+    Bit 3 (TS): Two Side. Set if the disk drive has two heads.
+    Bit 2 (HD): Head Address. Follows the HEAD SELECT line of the FDC.
+    Bits 1, 0 (US): Unit Select. Match the FDC lines with the same name.
+ */
 public class Nec765Status3 extends StatusRegister {
     private static final int FDD_FAULT_MASK           = 1 << 7;
     private static final int FDD_WRITE_PROTECTED_MASK = 1 << 6;

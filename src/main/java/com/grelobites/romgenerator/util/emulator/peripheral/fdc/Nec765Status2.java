@@ -1,5 +1,19 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
+/*
+    Bit 7: Not used (zero).
+    Bit 6 (CM): Control Mark. Set when the FDC finds a deleted Data Address Mark during a read or scan command.
+    Bit 5 (DD): Data Error in Data Field. Set on CRC errors in the data field.
+    Bit 4 (WC): Wrong Cylinder. Set on mismatches between the cylinder number stored in the sector during
+        formatting and the required cylinder on a read operation.
+    Bit 3 (SH): Scan Equal Hit. Set after an scan command with an equal condition, if the comparison was
+        succesful in all its bytes.
+    Bit 2 (SN): Scan Not Satisfied. Set if after any scan command, no sector is found on the track that matches
+        the scan requirements.
+    Bit 1 (BC): Bad Cylinder). Similar to WC but set when the read cylinder number is 0xFF and also a mismatch.
+    Bit 0 (MD): Missing Address Mark in Data Field. Set when on a read operation no Data Address Mark is found
+        (not even a deleted one).
+ */
 public class Nec765Status2 extends StatusRegister {
     private static final int CONTROL_MARK_MASK      = 1 << 6;
     private static final int DATA_FIELD_ERROR_MASK  = 1 << 5;

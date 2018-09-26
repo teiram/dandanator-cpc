@@ -1,18 +1,23 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
+import com.grelobites.romgenerator.util.dsk.DskContainer;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.Nec765CommandFactory;
 
-public class Nec765 {
+import java.util.Optional;
 
-    private Nec765CommandFactory commandFactory;
-    private Nec765MainStatus mainStatusRegister;
-    private Nec765Status0 status0Register;
-    private Nec765Status1 status1Register;
-    private Nec765Status2 status2Register;
-    private Nec765Status3 status3Register;
+public class Nec765 {
+    private static final int NUM_DRIVES = 4;
+
+    private Nec765CommandFactory commandFactory = new Nec765CommandFactory();
+    private Nec765MainStatus mainStatusRegister = new Nec765MainStatus(0);
+    private Nec765Status0 status0Register = new Nec765Status0(0);
+    private Nec765Status1 status1Register = new Nec765Status1(0);
+    private Nec765Status2 status2Register = new Nec765Status2(0);
+    private Nec765Status3 status3Register = new Nec765Status3(0);
 
     private boolean motorOn;
 
+    private DskContainer[] attachedDskContainers = new DskContainer[NUM_DRIVES];
     private Nec765Phase currentPhase;
     private Nec765Command currentCommand;
 
@@ -69,6 +74,20 @@ public class Nec765 {
 
     public void setCurrentPhase(Nec765Phase currentPhase) {
         this.currentPhase = currentPhase;
+        switch (currentPhase) {
+            case COMMAND:
+                mainStatusRegister.setDataInput(true);
+                mainStatusRegister.setExecMode(false);
+                break;
+            case EXECUTION:
+                mainStatusRegister.setDataInput(false);
+                mainStatusRegister.setExecMode(true);
+                break;
+            case RESULT:
+                mainStatusRegister.setDataInput(false);
+                mainStatusRegister.setExecMode(false);
+                break;
+        }
     }
 
     public Nec765Command getCurrentCommand() {
@@ -79,24 +98,28 @@ public class Nec765 {
         this.currentCommand = currentCommand;
     }
 
+    public Optional<DskContainer> getDskContainer(int drive) {
+        return Optional.ofNullable(attachedDskContainers[drive]);
+    }
+
+    public void attachDskContainer(int drive, DskContainer container) {
+        if (drive < NUM_DRIVES) {
+            attachedDskContainers[drive] = container;
+        }
+    }
+
     public void writeControlRegister(int value) {
         motorOn = (value & 1) == 1;
     }
 
     public void writeDataRegister(int value) {
-        if (currentCommand != null) {
-            currentCommand.addCommandData(value);
-            if (currentCommand.isPrepared()) {
-                currentPhase = currentCommand.hasExecutionPhase() ? Nec765Phase.EXECUTION :
-                        Nec765Phase.RESULT;
-            }
-        } else {
-            try {
+        if (currentPhase == Nec765Phase.COMMAND) {
+            if (currentCommand == null) {
                 currentCommand = commandFactory.getCommand(value);
-            } catch (Exception e) {
-
-
+                currentCommand.setFdcController(this);
+                mainStatusRegister.setFdcBusy(true);
             }
+            currentCommand.addCommandData(value);
         }
     }
 
@@ -104,8 +127,8 @@ public class Nec765 {
         if (currentCommand != null) {
             switch (currentPhase) {
                 case COMMAND:
-                    //Error here (see how to provide the result in MSR)
-                    break;
+                    //What happens in this case
+                    return 0;
                 case EXECUTION:
                     return currentCommand.execute();
                 case RESULT:
@@ -113,6 +136,8 @@ public class Nec765 {
             }
             if (currentCommand.isDone()) {
                 currentCommand = null;
+                setCurrentPhase(Nec765Phase.COMMAND);
+                mainStatusRegister.setFdcBusy(false);
             }
         }
         return 0;

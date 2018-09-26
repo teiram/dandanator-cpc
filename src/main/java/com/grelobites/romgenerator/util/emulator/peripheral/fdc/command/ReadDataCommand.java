@@ -1,8 +1,16 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 
+import com.grelobites.romgenerator.util.dsk.DskContainer;
+import com.grelobites.romgenerator.util.dsk.SectorInformationBlock;
+import com.grelobites.romgenerator.util.dsk.Track;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Command;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Constants;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /*
     - Read Data
@@ -38,7 +46,7 @@ import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
     - N
  */
 public class ReadDataCommand extends Nec765CommandBase implements Nec765Command {
-    private static final int REQUIRED_COMMAND_WORDS = 9;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReadDataCommand.class);
     private Nec765 controller;
     private int currentCommandWord = 0;
     private int currentResultWord = 0;
@@ -46,9 +54,12 @@ public class ReadDataCommand extends Nec765CommandBase implements Nec765Command 
     private int head;
     private int firstSector;
     private int lastSector;
+    private int sectorSize;
     private int sectorBytes;
     private int gap3length;
     private boolean done = false;
+    private byte[] sectorData;
+    private int currentByte = 0;
 
     @Override
     public void setFdcController(Nec765 controller) {
@@ -58,6 +69,49 @@ public class ReadDataCommand extends Nec765CommandBase implements Nec765Command 
         } else {
             throw new IllegalStateException("Controller executing command");
         }
+    }
+
+    private void fetchSectorData(DskContainer dsk) {
+        Track dskTrack = dsk.getTrack(track);
+        if (dskTrack != null) {
+            //Search for sectorId
+            for (SectorInformationBlock sectorInfo : dskTrack.getInformation().getSectorInformationList()) {
+                if (sectorInfo.getSectorId() == firstSector) {
+                    sectorData = dskTrack.getSectorData(sectorInfo.getPhysicalPosition());
+                    //Fill status registers stored in DSK
+                    controller.getStatus1Register().setValue(sectorInfo.getFdcStatusRegister1());
+                    controller.getStatus2Register().setValue(sectorInfo.getFdcStatusRegister2());
+                    return;
+                }
+            }
+            //Sector not found
+            controller.getStatus1Register().setNoData(true);
+            controller.getStatus0Register().setInterruptCode(Nec765Constants.ICODE_ABNORMAL_TERMINATION);
+            throw new IllegalStateException("No sector found");
+        }
+    }
+
+    private void prepareExecution() {
+        LOGGER.debug("Read operation on unit {}, head {}, track {}, firstSector {}, lastSector {}, sectorBytes {}",
+                unit, head, track, firstSector, lastSector, sectorBytes);
+        Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
+        if (dskOpt.isPresent()) {
+            controller.getStatus0Register().setNotReady(false);
+            controller.getStatus0Register().setDiskUnit(unit);
+            controller.getStatus0Register().setHeadAddress(physicalHeadNumber);
+            try {
+                fetchSectorData(dskOpt.get());
+                controller.setCurrentPhase(Nec765Phase.EXECUTION);
+            } catch (Exception e) {
+                LOGGER.error("Fetching sector data");
+            }
+        } else {
+            //No disk is attached to the required unit
+            controller.getStatus0Register().setNotReady(true);
+            controller.getStatus0Register().setDiskUnit(unit);
+            controller.getStatus0Register().setHeadAddress(physicalHeadNumber);
+        }
+        controller.setCurrentPhase(Nec765Phase.RESULT);
     }
 
     @Override
@@ -79,7 +133,8 @@ public class ReadDataCommand extends Nec765CommandBase implements Nec765Command 
                 firstSector = data;
                 break;
             case 5:
-                sectorBytes = 128 << data;
+                sectorSize = data;
+                sectorBytes = 128 << sectorSize;
                 break;
             case 6:
                 lastSector = data;
@@ -89,6 +144,7 @@ public class ReadDataCommand extends Nec765CommandBase implements Nec765Command 
                 break;
             case 8:
                 sectorBytes = (sectorBytes == 0) ? 128 << data: sectorBytes;
+                prepareExecution();
                 break;
             default:
                 throw new IllegalStateException("Too many command bytes provided");
@@ -97,23 +153,17 @@ public class ReadDataCommand extends Nec765CommandBase implements Nec765Command 
     }
 
     @Override
-    public boolean isPrepared() {
-        return currentCommandWord == REQUIRED_COMMAND_WORDS;
-    }
-
-    @Override
-    public boolean hasExecutionPhase() {
-        return true;
-    }
-
-    @Override
-    public boolean isExecuted() {
-        return false;
-    }
-
-    @Override
     public int execute() {
-        return 0;
+        int value;
+        if (currentByte < sectorData.length) {
+            value = sectorData[currentByte++];
+            if (currentByte == sectorData.length) {
+                controller.setCurrentPhase(Nec765Phase.RESULT);
+            }
+            return value;
+        } else {
+            throw new IllegalStateException("Trying to execute in result phase");
+        }
     }
 
     @Override
@@ -139,7 +189,7 @@ public class ReadDataCommand extends Nec765CommandBase implements Nec765Command 
                 value = firstSector;
                 break;
             case 6:
-                value = 2;
+                value = sectorSize;
                 done = true;
                 break;
             default:

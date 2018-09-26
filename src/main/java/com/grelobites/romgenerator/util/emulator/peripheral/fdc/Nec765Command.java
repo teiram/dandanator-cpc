@@ -7,13 +7,7 @@ public interface Nec765Command {
 
     void addCommandData(int data);
 
-    boolean isPrepared();
-
-    boolean hasExecutionPhase();
-
     int execute();
-
-    boolean isExecuted();
 
     int result();
 
