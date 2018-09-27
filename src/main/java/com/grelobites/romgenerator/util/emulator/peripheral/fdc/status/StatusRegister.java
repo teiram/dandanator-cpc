@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
+package com.grelobites.romgenerator.util.emulator.peripheral.fdc.status;
 
 public class StatusRegister {
     protected static final int REGISTER_MASK = 0xff;

@@ -1,7 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Command;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

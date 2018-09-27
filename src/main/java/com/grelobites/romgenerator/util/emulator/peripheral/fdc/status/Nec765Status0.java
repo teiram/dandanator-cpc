@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
+package com.grelobites.romgenerator.util.emulator.peripheral.fdc.status;
 
 /*
     Interrupt state register. In non-DMA mode allows to identify interruption causes.

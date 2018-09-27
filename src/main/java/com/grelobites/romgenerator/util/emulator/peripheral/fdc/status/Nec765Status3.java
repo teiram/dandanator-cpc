@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
+package com.grelobites.romgenerator.util.emulator.peripheral.fdc.status;
 
 /*
     Can only be read using the Read drive State command. The following information is provided:

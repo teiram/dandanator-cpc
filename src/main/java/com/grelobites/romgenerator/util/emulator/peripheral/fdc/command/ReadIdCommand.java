@@ -3,8 +3,6 @@ package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 import com.grelobites.romgenerator.util.dsk.DskContainer;
 import com.grelobites.romgenerator.util.dsk.SectorInformationBlock;
 import com.grelobites.romgenerator.util.dsk.Track;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Command;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Constants;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,15 +39,17 @@ public class ReadIdCommand extends Nec765BaseCommand implements Nec765Command {
     private void prepareExecution() {
         LOGGER.debug("Read Id operation on unit {}, head {}",
                 unit, physicalHeadNumber);
+        controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
         if (dskOpt.isPresent()) {
             controller.getStatus0Register().setDiskUnit(unit);
             controller.getStatus0Register().setHeadAddress(physicalHeadNumber);
-            SectorInformationBlock lastSectorInfo = controller.getDriveStatus(unit).getLastSector();
+            SectorInformationBlock lastSectorInfo = controller.getDriveStatus(unit).getCurrentSector();
             if (lastSectorInfo != null) {
                 Track dskTrack = dskOpt.get().getTrack(sectorInfo.getTrack());
                 //Get the first sector, maybe this is enough
                 sectorInfo = dskTrack.getInformation().getSectorInformation(0);
+                controller.getDriveStatus(unit).setCurrentSector(sectorInfo);
                 controller.getStatus0Register().setNotReady(false);
             } else {
                 LOGGER.debug("No lastSector info on current disk unit");

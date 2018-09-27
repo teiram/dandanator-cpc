@@ -10,29 +10,33 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 
 /*
-    -== Recalibrate ==-
+    -== Head Reposition ==-
     COMMAND
-    - B0.     0   0   0   0   0   1   1   1
+    - B0.     0   0   0   0   1   1   1   1
     - B1.     x   x   x   x   x   HD  US1 US0
     ---------------------------------------------------------------------------
                                   |    -----
                                   |      |--  US1,US0. Drive Unit (0, 1, 2, 3)
                                   |---------  HD. Physical head number (0 or 1)
+
+    - B2. C. Cylinder number. Stands for the current /selected cylinder
+             (track) numbers 0 through 76 of the medium
     ---------------------------------------------------------------------------
     RESULT
     - No results
  */
-public class RecalibrateCommand implements Nec765Command {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RecalibrateCommand.class);
+public class HeadRepositionCommand implements Nec765Command {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HeadRepositionCommand.class);
     private Nec765 controller;
+    private int unit = 0;
     private int currentCommandWord = 0;
     private boolean done = false;
 
-    private void setTrackZero(int unit) {
+    private void repositionToTrack(int track) {
         controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
         if (dskOpt.isPresent()) {
-            SectorInformationBlock firstSector = dskOpt.get().getTrack(0)
+            SectorInformationBlock firstSector = dskOpt.get().getTrack(track)
                     .getInformation().getSectorInformation(0);
             controller.getDriveStatus(unit).setCurrentSector(firstSector);
         } else {
@@ -48,7 +52,10 @@ public class RecalibrateCommand implements Nec765Command {
                 //Nothing to get here
                 break;
             case 1:
-                setTrackZero((data & 0x03));
+                unit = data & 0x03;
+                break;
+            case 2:
+                repositionToTrack(data);
                 controller.setCurrentPhase(Nec765Phase.RESULT);
                 done = true;
                 break;
@@ -68,13 +75,13 @@ public class RecalibrateCommand implements Nec765Command {
                 setCommandData(data);
                 break;
             default:
-                LOGGER.debug("Unexpected data during Recalibrate command");
+                LOGGER.debug("Unexpected data during Head Reposition command");
         }
     }
 
     @Override
     public int read() {
-        LOGGER.error("Trying to read during Recalibrate command");
+        LOGGER.error("Trying to read during Head Reposition command");
        return 0;
     }
 

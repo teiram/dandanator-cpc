@@ -1,7 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 
 import com.grelobites.romgenerator.util.dsk.DskContainer;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Command;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Constants;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
 import org.slf4j.Logger;
@@ -11,8 +10,8 @@ import java.util.Optional;
 
 public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements Nec765Command {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReadWriteBaseCommand.class);
-    private int currentCommandWord = 0;
-    private int currentResultWord = 0;
+    protected int currentCommandWord = 0;
+    protected int currentResultWord = 0;
     protected int track;
     protected int head;
     protected int firstSector;
@@ -26,6 +25,7 @@ public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements 
     private void prepareExecution() {
         LOGGER.debug("Read/Write operation on unit {}, head {}, track {}, firstSector {}, lastSector {}, sectorBytes {}",
                 unit, head, track, firstSector, lastSector, sectorBytes);
+        controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
         if (dskOpt.isPresent()) {
             controller.getStatus0Register().setNotReady(false);

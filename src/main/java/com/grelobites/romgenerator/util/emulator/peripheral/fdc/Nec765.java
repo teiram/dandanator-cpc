@@ -1,7 +1,13 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
 import com.grelobites.romgenerator.util.dsk.DskContainer;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.Nec765CommandFactory;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.Nec765Command;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.DriveStatus;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765MainStatus;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status0;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status1;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status2;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status3;
 
 import java.util.Optional;
 
@@ -17,10 +23,10 @@ public class Nec765 {
 
     private boolean motorOn;
     private DriveStatus[] driveStatuses = new DriveStatus[NUM_DRIVES];
-
     private DskContainer[] attachedDskContainers = new DskContainer[NUM_DRIVES];
     private Nec765Phase currentPhase;
     private Nec765Command currentCommand;
+    private int lastSelectedUnit = 0;
 
     public Nec765() {
         this.currentPhase = Nec765Phase.COMMAND;
@@ -107,6 +113,14 @@ public class Nec765 {
         return driveStatuses[drive];
     }
 
+    public int getLastSelectedUnit() {
+        return lastSelectedUnit;
+    }
+
+    public void setLastSelectedUnit(int lastSelectedUnit) {
+        this.lastSelectedUnit = lastSelectedUnit;
+    }
+
     public Optional<DskContainer> getDskContainer(int drive) {
         return Optional.ofNullable(attachedDskContainers[drive]);
     }
@@ -116,6 +130,7 @@ public class Nec765 {
             attachedDskContainers[drive] = container;
         }
     }
+
 
     public void writeControlRegister(int value) {
         motorOn = (value & 1) == 1;

@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory;
              (track) numbers 0 through 76 of the medium
     - B3. H. Head Address. H stands for the logical head number (0 or 1)
              specified in ID field
-    - B5. R. Record. R stands for the sector number which will be read
+    - B4. R. Record. R stands for the sector number which will be read
              or written
-    - B6. N. Number. N stands for the number of data bvtes written
+    - B5. N. Number. N stands for the number of data bvtes written
              in a sector
-    - B7. EOT. End Of Track. Last sector number id.
-    - B8. GPL. Gap 3 length
-    - B9. DTL. When N is defined as 00. DTL stands for the data
+    - B6. EOT. End Of Track. Last sector number id.
+    - B7. GPL. Gap 3 length
+    - B8. DTL. When N is defined as 00. DTL stands for the data
             length which users are going to read out or write
             into the sector
     ---------------------------------------------------------------------------
@@ -74,6 +74,7 @@ public abstract class ScanBaseCommand extends ReadWriteBaseCommand {
         boolean inScanZone = false;
         for (SectorInformationBlock sectorInfo : targetTrack.getInformation()
                 .getSectorInformationList()) {
+            controller.getDriveStatus(unit).setCurrentSector(sectorInfo);
             matchingSector = sectorInfo;
             if (matchingSector.getSectorId() == firstSector) {
                 inScanZone = true;

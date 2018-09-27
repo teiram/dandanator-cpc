@@ -1,6 +1,20 @@
-package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
+package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Command;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.FormatTrackCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.HeadRepositionCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.InvalidCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.Nec765Command;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.ReadDataCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.ReadIdCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.ReadTrackCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.RecalibrateCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.ScanEqualCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.ScanHighOrEqualCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.ScanLowOrEqualCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.SenseDriveStatusCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.SenseInterruptStatusCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.SpecifyUnitDataCommand;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.WriteDataCommand;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +41,7 @@ public class Nec765CommandFactory {
                 return new ReadTrackCommand();
             case 0x0d:
                 LOGGER.debug("Format Track command");
-                return null;
+                return new FormatTrackCommand();
             case 0xa0:
                 LOGGER.debug("Read Id command");
                 return new ReadIdCommand();
@@ -45,16 +59,16 @@ public class Nec765CommandFactory {
                 return new RecalibrateCommand();
             case 0x0f:
                 LOGGER.debug("Head reposition command");
-                return null;
+                return new HeadRepositionCommand();
             case 0x08:
                 LOGGER.debug("Read Interrupt status register command");
-                return null;
+                return new SenseInterruptStatusCommand();
             case 0x04:
                 LOGGER.debug("Read drive status command");
-                return null;
+                return new SenseDriveStatusCommand();
             case 0x03:
                 LOGGER.debug("Specify Unit Data command");
-                return null;
+                return new SpecifyUnitDataCommand();
             default:
                 LOGGER.debug("Invalid command issued with code {}", String.format("0x%02x", data));
                 return new InvalidCommand();

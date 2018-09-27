@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
+package com.grelobites.romgenerator.util.emulator.peripheral.fdc.status;
 
 /*
     Bit 7: Not used (zero).

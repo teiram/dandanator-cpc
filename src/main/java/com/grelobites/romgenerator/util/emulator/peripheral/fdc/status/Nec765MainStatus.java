@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
+package com.grelobites.romgenerator.util.emulator.peripheral.fdc.status;
 
 /*
     Main FDC status register. Handles communication between microprocessor and FDC. Bit meaning:
