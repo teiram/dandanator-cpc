@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
+import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,25 @@ public class GateArray {
             gateArray.ramBankingRegister = null;
             gateArray.screenModeAndRomConfigurationRegister = 0;
             return this;
+        }
+
+        public Builder withCpc6128DefaultValues() {
+            gateArray.ramBankingRegister = 1;
+            gateArray.screenModeAndRomConfigurationRegister = 0;
+            return this;
+        }
+
+        public Builder withHardwareDefaultValues(HardwareMode hardwareMode) {
+            switch (hardwareMode) {
+                case HW_CPC464:
+                case HW_CPC464PLUS:
+                    return withCpc464DefaultValues();
+                case HW_CPC6128:
+                case HW_CPC6128PLUS:
+                    return withCpc6128DefaultValues();
+                default:
+                    return withCpc464DefaultValues();
+            }
         }
     }
 

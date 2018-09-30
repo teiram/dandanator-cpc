@@ -8,10 +8,13 @@ import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Sta
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status1;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status2;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 public class Nec765 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Nec765.class);
     private static final int NUM_DRIVES = 4;
 
     private Nec765CommandFactory commandFactory = new Nec765CommandFactory();
@@ -133,10 +136,12 @@ public class Nec765 {
 
 
     public void writeControlRegister(int value) {
+        LOGGER.debug("Nec765 Write Control Register {}", String.format("0x%02x", value & 0xff));
         motorOn = (value & 1) == 1;
     }
 
     public void writeDataRegister(int value) {
+        LOGGER.debug("Nec765 Write Data Register {}", String.format("0x%02x", value & 0xff));
         if (currentPhase == Nec765Phase.COMMAND) {
             if (currentCommand == null) {
                 currentCommand = commandFactory.getCommand(value);
@@ -164,10 +169,12 @@ public class Nec765 {
                 mainStatusRegister.setFdcBusy(false);
             }
         }
+        LOGGER.debug("Nec765 Read Data Register {}", String.format("0x%02x", value & 0xff));
         return value;
     }
 
     public int readStatusRegister() {
+        LOGGER.debug("Nec765 Read Status Register {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
         return mainStatusRegister.value();
     }
 }

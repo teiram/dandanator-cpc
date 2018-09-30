@@ -1,15 +1,13 @@
 package com.grelobites.romgenerator.util.gameloader;
 
-import com.grelobites.romgenerator.util.gameloader.loaders.CdtGameImageLoader;
-import com.grelobites.romgenerator.util.gameloader.loaders.MldGameImageLoader;
-import com.grelobites.romgenerator.util.gameloader.loaders.RomGameImageLoader;
-import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
+import com.grelobites.romgenerator.util.gameloader.loaders.*;
 
 public enum GameImageType {
     SNA(SNAGameImageLoader.class, "sna"),
     ROM(RomGameImageLoader.class, "rom"),
     MLD(MldGameImageLoader.class, "mld"),
-    CDT(CdtGameImageLoader.class, "cdt");
+    CDT(CdtGameImageLoader.class, "cdt"),
+    DSK(DskGameImageLoader.class, "dsk");
 
     private Class<? extends GameImageLoader> generator;
     private String[] supportedExtensions;

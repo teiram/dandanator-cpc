@@ -120,12 +120,30 @@ Line 	7 	6 	5 	4 	3 	2 	1 	0
     KEY_JOY1_DOWN   (9, 1 << 1),
     KEY_JOY1_UP     (9, 1);
 
-
-
-
-
-
-
+    private static KeyboardCode[][] ASCII_MAP = {
+            {null}, {null}, {null}, {null}, {null}, {null}, {null}, {null},
+            {null}, {null}, {null}, {null}, {null}, {null}, {null}, {null},
+            {null}, {null}, {null}, {null}, {null}, {null}, {null}, {null},
+            {null}, {null}, {null}, {null}, {null}, {null}, {null}, {null},
+            {KEY_SPACE}, {KEY_SHIFT, KEY_1}, {KEY_SHIFT, KEY_2}, {KEY_SHIFT, KEY_3}, {KEY_SHIFT, KEY_4},
+            {KEY_SHIFT, KEY_5}, {KEY_SHIFT, KEY_6}, {KEY_SHIFT, KEY_7}, {KEY_SHIFT, KEY_8}, {KEY_SHIFT, KEY_9},
+            {KEY_SHIFT, KEY_OPENBRACKET}, {KEY_SHIFT, KEY_CLOSEBRACKET}, {KEY_COMMA}, {KEY_DASH}, {KEY_DOT},
+            {KEY_SLASH},
+            {KEY_0}, {KEY_1}, {KEY_2}, {KEY_3}, {KEY_4}, {KEY_5}, {KEY_6}, {KEY_7}, {KEY_8}, {KEY_9},
+            {KEY_SHIFT, KEY_SEMICOLON}, {KEY_SEMICOLON}, {KEY_SHIFT, KEY_COMMA}, {KEY_SHIFT, KEY_DASH}, {KEY_SHIFT, KEY_DOT},
+            {KEY_SHIFT, KEY_SLASH}, {KEY_AT},
+            {KEY_SHIFT, KEY_A}, {KEY_SHIFT, KEY_B}, {KEY_SHIFT, KEY_C}, {KEY_SHIFT, KEY_D}, {KEY_SHIFT, KEY_E},
+            {KEY_SHIFT, KEY_F}, {KEY_SHIFT, KEY_G}, {KEY_SHIFT, KEY_H}, {KEY_SHIFT, KEY_I}, {KEY_SHIFT, KEY_J},
+            {KEY_SHIFT, KEY_K}, {KEY_SHIFT, KEY_L}, {KEY_SHIFT, KEY_M}, {KEY_SHIFT, KEY_N}, {KEY_SHIFT, KEY_O},
+            {KEY_SHIFT, KEY_P}, {KEY_SHIFT, KEY_Q}, {KEY_SHIFT, KEY_R}, {KEY_SHIFT, KEY_S}, {KEY_SHIFT, KEY_T},
+            {KEY_SHIFT, KEY_U}, {KEY_SHIFT, KEY_V}, {KEY_SHIFT, KEY_W}, {KEY_SHIFT, KEY_X}, {KEY_SHIFT, KEY_Y},
+            {KEY_SHIFT, KEY_Z},
+            {KEY_OPENBRACKET}, {KEY_BACKSLASH}, {KEY_CLOSEBRACKET}, {KEY_CIRCUNFLEX}, {KEY_SHIFT, KEY_0}, {KEY_SHIFT, KEY_BACKSLASH},
+            {KEY_A}, {KEY_B}, {KEY_C}, {KEY_D}, {KEY_E}, {KEY_F}, {KEY_G}, {KEY_H}, {KEY_I}, {KEY_J}, {KEY_K},
+            {KEY_L}, {KEY_M}, {KEY_N}, {KEY_O}, {KEY_P}, {KEY_Q}, {KEY_R}, {KEY_S}, {KEY_T}, {KEY_U}, {KEY_V},
+            {KEY_W}, {KEY_X}, {KEY_Y}, {KEY_Z},
+            {null}, {KEY_SHIFT, KEY_AT}, {null}, {null}
+    };
     private int line;
     private int mask;
     KeyboardCode(int line, int mask) {
@@ -141,5 +159,13 @@ Line 	7 	6 	5 	4 	3 	2 	1 	0
         return mask;
     }
 
+    public static KeyboardCode[] fromChar(char c) {
+        int charIntValue = (int) c;
+        if (c < 128) {
+            return ASCII_MAP[charIntValue];
+        } else {
+            throw new IllegalArgumentException("Unmapable character");
+        }
+    }
 
 }
