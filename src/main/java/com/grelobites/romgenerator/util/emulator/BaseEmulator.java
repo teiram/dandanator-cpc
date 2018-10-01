@@ -10,13 +10,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 public class BaseEmulator implements Z80operations {
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseEmulator.class);
-    private static final int TSTATES_PER_US = 4;
-    private static final int FRAME_TSTATES = 19968 * TSTATES_PER_US;
-    private static final int HSYNC_TSTATES = 64 * TSTATES_PER_US; // 64 microseconds
-    private static final int LINES_PER_INTERRUPT = 52;
+    protected static final int TSTATES_PER_US = 4;
+    protected static final int FRAME_TSTATES = 19968 * TSTATES_PER_US;
+    protected static final int HSYNC_TSTATES = 64 * TSTATES_PER_US; // 64 microseconds
+    protected static final int LINES_PER_INTERRUPT = 52;
     protected final LoaderResources loaderResources;
     protected final GateArray gateArray;
     protected final Z80 z80;
@@ -25,12 +26,14 @@ public class BaseEmulator implements Z80operations {
     protected final Ppi ppi;
     protected final CpcMemory memory;
     protected final HardwareMode hardwareMode;
-    protected int upperRomNumber = 0;
     protected boolean executionAborted = false;
 
     private void loadRoms() throws IOException {
-        memory.loadLowRom(loaderResources.lowRom());
-        memory.loadHighRom(loaderResources.highRom());
+        memory.loadLowRom(loaderResources.osRom());
+        memory.registerBasicRom(loaderResources.basicRom());
+        for (Map.Entry<Integer, byte[]> entry : loaderResources.highRoms().entrySet()) {
+            memory.registerHighRom(entry.getKey(), entry.getValue());
+        }
     }
 
     protected BaseEmulator(HardwareMode hardwareMode,
@@ -99,7 +102,7 @@ public class BaseEmulator implements Z80operations {
         crtc.setSelectedRegister(header.getCrtcSelectedRegisterIndex());
         crtc.setCrtcRegisterData(header.getCrtcRegisterData());
 
-        upperRomNumber = header.getCurrentRomSelection();
+        memory.setUpperRomNumber(header.getCurrentRomSelection());
 
         ppi.setPortACurrentValue(header.getPpiPortA());
         ppi.setPortBCurrentValue(header.getPpiPortB());
@@ -146,7 +149,7 @@ public class BaseEmulator implements Z80operations {
         header.setCrtcSelectedRegisterIndex(crtc.getSelectedRegister());
         header.setCrtcRegisterData(crtc.getCrtcRegisterData());
 
-        header.setCurrentRomSelection(upperRomNumber);
+        header.setCurrentRomSelection(memory.getUpperRomNumber());
 
         header.setPpiPortA(ppi.getPortACurrentValue());
         header.setPpiPortB(ppi.getPortBCurrentValue());
@@ -273,8 +276,8 @@ public class BaseEmulator implements Z80operations {
         } else if ((port & 0xF800) == 0xF800) {
             LOGGER.debug("Peripheral Soft Reset");
         } else if ((port & 0xFF00) == 0xDF00) {
-            //LOGGER.debug("Selection of upper ROM number {}", value);
-            upperRomNumber = value & 0xff;
+            LOGGER.debug("Selection of upper ROM number {}", value);
+            memory.setUpperRomNumber(value & 0xff);
         } else {
             LOGGER.debug("Unhandled I/O OUT Operation on port {}, value {}, Z80 Status: {}",
                     String.format("0x%04x", port),

@@ -7,20 +7,20 @@ import com.grelobites.romgenerator.util.gameloader.GameImageType;
 
 import java.io.IOException;
 
-public class LoaderResourcesBase implements LoaderResources {
+public abstract class LoaderResourcesBase implements LoaderResources {
     private static final int ROM_SIZE = 0x4000;
 
-    private String lowRomResource;
-    private String highRomResource;
+    private String osRomResource;
+    private String basicRomResource;
     private String snaLoaderResource;
-    private byte[] lowRom;
-    private byte[] highRom;
+    private byte[] osRom;
+    private byte[] basicRom;
     private SnapshotGame snaLoader;
 
-    public LoaderResourcesBase(String lowRomResource, String highRomResource,
+    public LoaderResourcesBase(String osRomResource, String basicRomResource,
                                String snaLoaderResource) {
-        this.lowRomResource = lowRomResource;
-        this.highRomResource = highRomResource;
+        this.osRomResource = osRomResource;
+        this.basicRomResource = basicRomResource;
         this.snaLoaderResource = snaLoaderResource;
     }
 
@@ -30,19 +30,19 @@ public class LoaderResourcesBase implements LoaderResources {
     }
 
     @Override
-    public byte[] lowRom() throws IOException {
-        if (lowRom == null) {
-            lowRom = loadRom(lowRomResource);
+    public byte[] osRom() throws IOException {
+        if (osRom == null) {
+            osRom = loadRom(osRomResource);
         }
-        return lowRom;
+        return osRom;
     }
 
     @Override
-    public byte[] highRom() throws IOException {
-        if (highRom == null) {
-            highRom = loadRom(highRomResource);
+    public byte[] basicRom() throws IOException {
+        if (basicRom == null) {
+            basicRom = loadRom(basicRomResource);
         }
-        return highRom;
+        return basicRom;
     }
 
     @Override

@@ -61,6 +61,7 @@ public class WriteDataCommand extends ReadWriteBaseCommand {
                 controller.getDriveStatus(unit).setCurrentSector(sectorInfo);
                 if (sectorInfo.getSectorId() == firstSector) {
                     sectorData = dskTrack.getSectorData(sectorInfo.getPhysicalPosition());
+                    controller.getMainStatusRegister().setDataReady(false);
                     return;
                 }
             }

@@ -91,6 +91,7 @@ public class ReadTrackCommand extends ReadWriteBaseCommand {
                 }
                 if (matched) {
                     prepareTrackData(dskTrack, indexes);
+                    controller.getMainStatusRegister().setDataReady(true);
                     return;
                 } else {
                     LOGGER.debug("No sector matched the provided last sector id");

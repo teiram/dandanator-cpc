@@ -34,7 +34,7 @@ public class Nec765 {
     public Nec765() {
         this.currentPhase = Nec765Phase.COMMAND;
         mainStatusRegister.setExecMode(false);
-        mainStatusRegister.setDataInput(true);
+        mainStatusRegister.setDataReady(false);
         mainStatusRegister.setRQM(true);
         motorOn = false;
         for (int i = 0; i < driveStatuses.length; i++) {
@@ -90,15 +90,14 @@ public class Nec765 {
         this.currentPhase = currentPhase;
         switch (currentPhase) {
             case COMMAND:
-                mainStatusRegister.setDataInput(true);
+                mainStatusRegister.setDataReady(false);
                 mainStatusRegister.setExecMode(false);
                 break;
             case EXECUTION:
-                mainStatusRegister.setDataInput(false);
                 mainStatusRegister.setExecMode(true);
                 break;
             case RESULT:
-                mainStatusRegister.setDataInput(false);
+                mainStatusRegister.setDataReady(true);
                 mainStatusRegister.setExecMode(false);
                 break;
         }

@@ -161,7 +161,7 @@ Line 	7 	6 	5 	4 	3 	2 	1 	0
 
     public static KeyboardCode[] fromChar(char c) {
         int charIntValue = (int) c;
-        if (c < 128) {
+        if (c < ASCII_MAP.length) {
             return ASCII_MAP[charIntValue];
         } else {
             throw new IllegalArgumentException("Unmapable character");

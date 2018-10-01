@@ -5,16 +5,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CpcMemory implements Memory {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpcMemory.class);
     private static final int BANK_SIZE = 0x4000;
     private static final int LOW_ROM = 0;
     private static final int HIGH_ROM = 3;
+    private byte[] basicRom;
+    private int upperRomNumber = 0;
     private GateArray gateArray;
     private byte[][] ramBanks;
     private byte[][] romBanks;
+    private Map<Integer, byte[]> highRoms;
 
     public CpcMemory(GateArray gateArray) {
         this.gateArray = gateArray;
@@ -24,7 +29,9 @@ public class CpcMemory implements Memory {
         }
         this.romBanks = new byte[4][];
         this.romBanks[LOW_ROM] = new byte[BANK_SIZE];
-        this.romBanks[HIGH_ROM] = new byte[BANK_SIZE];
+        this.basicRom = new byte[BANK_SIZE];
+        this.romBanks[HIGH_ROM] = basicRom;
+        this.highRoms = new HashMap<>();
     }
 
     private byte[] bankSlot(int address, boolean write) {
@@ -83,16 +90,38 @@ public class CpcMemory implements Memory {
         }
     }
 
+    private void loadRom(byte[] source, byte[] destination) {
+        System.arraycopy(source, 0, destination, 0, BANK_SIZE);
+    }
     private void loadRom(byte[] source, int romId) {
-        System.arraycopy(source, 0, romBanks[romId], 0, BANK_SIZE);
+        loadRom(source, romBanks[romId]);
     }
 
     public void loadLowRom(byte[] source) {
         loadRom(source, LOW_ROM);
     }
 
-    public void loadHighRom(byte[] source) {
-        loadRom(source, HIGH_ROM);
+    public void registerHighRom(int id, byte[] source) {
+        byte[] copy = new byte[BANK_SIZE];
+        loadRom(source, copy);
+        highRoms.put(id, copy);
+    }
+
+    public void registerBasicRom(byte[] source) {
+        loadRom(source, basicRom);
+    }
+
+    public void setUpperRomNumber(int upperRomNumber) {
+        this.upperRomNumber = upperRomNumber;
+        if (highRoms.containsKey(upperRomNumber)) {
+            romBanks[HIGH_ROM] = highRoms.get(upperRomNumber);
+        } else {
+            romBanks[HIGH_ROM] = basicRom;
+        }
+    }
+
+    public int getUpperRomNumber() {
+        return upperRomNumber;
     }
 
     public int getRamSize() {

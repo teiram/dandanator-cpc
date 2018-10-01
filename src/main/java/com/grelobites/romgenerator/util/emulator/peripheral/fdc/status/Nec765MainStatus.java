@@ -22,7 +22,7 @@ public class Nec765MainStatus extends StatusRegister {
     private static final int FDD3_BUSY_MASK     = 1 << 3;
     private static final int FDC_BUSY_MASK      = 1 << 4;
     private static final int EXEC_MODE_MASK     = 1 << 5;
-    private static final int DATA_INPUT_MASK    = 1 << 6;
+    private static final int DATA_READY_MASK = 1 << 6;
     private static final int RQM_MASK           = 1 << 7;
 
     public Nec765MainStatus(int value) {
@@ -77,12 +77,12 @@ public class Nec765MainStatus extends StatusRegister {
         setBitValue(b, EXEC_MODE_MASK);
     }
 
-    public boolean isDataInput() {
-        return (value & DATA_INPUT_MASK) != 0;
+    public boolean isDataReady() {
+        return (value & DATA_READY_MASK) != 0;
     }
 
-    public void setDataInput(boolean b) {
-        setBitValue(b, DATA_INPUT_MASK);
+    public void setDataReady(boolean b) {
+        setBitValue(b, DATA_READY_MASK);
     }
 
     public boolean isRQM() {

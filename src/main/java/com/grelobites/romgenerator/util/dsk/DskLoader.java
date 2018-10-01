@@ -23,8 +23,8 @@ import java.io.InputStream;
 
 public class DskLoader extends BaseEmulator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DskLoader.class);
-    private static final int DISK_ACCESS_TIMEOUT_TS = 5000;
     private static final int FRAMES_PER_SECOND = 50;
+    private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 3;
 
     private final Nec765 nec765;
     private SnapshotGame currentSnapshot;
@@ -72,14 +72,16 @@ public class DskLoader extends BaseEmulator {
             container.dumpRawData(bos);
             CpmFileSystem fileSystem = CpmFileSystem.fromByteArray(bos.toByteArray(), parameters);
             for (Archive archive: fileSystem.getArchiveList()) {
-                if (archive.getName().equals("DISC")) {
+
+                if (archive.getName().equalsIgnoreCase("DISC")) {
                     return "run \"disc";
                 } else if (archive.getExtension().equalsIgnoreCase("BAS")) {
-                    return "run \"" + archive.getName();
+                    return "run \"" + archive.getName().trim();
                 } else if (archive.getExtension().equalsIgnoreCase("BIN")) {
-                    return "run \"" + archive.getName();
+                    return "run \"" + archive.getName().trim();
                 }
             }
+
             //No candidate if we reach this point
             return null;
         }
@@ -90,15 +92,15 @@ public class DskLoader extends BaseEmulator {
         DskContainer container = DskContainer.fromInputStream(dskFile);
         String command = guessBootstrapCommand(container);
         if (command != null) {
-            LOGGER.debug("Guesses boootstrap command as {}", command);
+            LOGGER.debug("Guesses bootstrap command as {}", command);
             //Wait for the computer to initialize
-            for (int i = 0; i < 5 * FRAMES_PER_SECOND; i++) {
+            for (int i = 0; i < 2 * FRAMES_PER_SECOND; i++) {
                 compensation = executeFrame(compensation);
             }
+            nec765.attachDskContainer(0, container);
             //Run the guessed command
             enterCommand(command);
             //Attach the disk to the controller
-            nec765.attachDskContainer(0, container);
             while (!executionAborted) {
                 compensation = executeFrame(compensation);
                 if ((clock.getTstates() - lastDiskAccessTstates) > DISK_ACCESS_TIMEOUT_TS) {
