@@ -2,12 +2,7 @@ package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
 import com.grelobites.romgenerator.util.dsk.DskContainer;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.command.Nec765Command;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.DriveStatus;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765MainStatus;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status0;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status1;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status2;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.Nec765Status3;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.status.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +21,7 @@ public class Nec765 {
 
     private boolean motorOn;
     private DriveStatus[] driveStatuses = new DriveStatus[NUM_DRIVES];
+    private DriveParameters driveParameters = new DriveParameters();
     private DskContainer[] attachedDskContainers = new DskContainer[NUM_DRIVES];
     private Nec765Phase currentPhase;
     private Nec765Command currentCommand;
@@ -100,6 +96,7 @@ public class Nec765 {
     }
 
     public void clearCurrentCommand() {
+        LOGGER.debug("Clearing current Nec765 command {}", currentCommand);
         this.currentCommand = null;
         onCommandFinalization();
     }
@@ -114,6 +111,14 @@ public class Nec765 {
 
     public void setLastSelectedUnit(int lastSelectedUnit) {
         this.lastSelectedUnit = lastSelectedUnit;
+    }
+
+    public DriveParameters getDriveParameters() {
+        return driveParameters;
+    }
+
+    public void setDriveParameters(DriveParameters driveParameters) {
+        this.driveParameters = driveParameters;
     }
 
     public Optional<DskContainer> getDskContainer(int drive) {
@@ -156,16 +161,18 @@ public class Nec765 {
             }
         }
         LOGGER.debug("Nec765 Read Data Register {}", String.format("0x%02x", value & 0xff));
-        return value;
+        return value & 0xff;
     }
 
     public int readStatusRegister() {
         LOGGER.debug("Nec765 Read Status Register {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
+        /*
         try {
             Thread.sleep(250);
         } catch (InterruptedException e) {
 
         }
+        */
         return mainStatusRegister.value();
     }
 }

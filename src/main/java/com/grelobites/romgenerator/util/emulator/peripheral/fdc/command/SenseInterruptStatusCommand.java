@@ -23,6 +23,7 @@ public class SenseInterruptStatusCommand implements Nec765Command {
     private void setCommandData(int data) {
         //Only one byte and we don't need anything from it
         controller.setCurrentPhase(Nec765Phase.RESULT);
+        controller.getMainStatusRegister().setDataReady(true);
     }
 
     @Override
@@ -43,6 +44,7 @@ public class SenseInterruptStatusCommand implements Nec765Command {
 
     @Override
     public int read() {
+        LOGGER.debug("Read from SenseInterruptStatusCommand in phase {}", controller.getCurrentPhase());
         switch (controller.getCurrentPhase()) {
             case RESULT:
                 return getCommandResult();
@@ -55,8 +57,10 @@ public class SenseInterruptStatusCommand implements Nec765Command {
     protected int getCommandResult() {
         switch (currentResultWord++) {
             case 0:
+                LOGGER.debug("Returning status0 value");
                 return controller.getStatus0Register().value();
             case 1:
+                LOGGER.debug("Returning selected track");
                 controller.clearCurrentCommand();
                 return controller.getDriveStatus(controller.getLastSelectedUnit())
                         .getCurrentSector().getTrack();

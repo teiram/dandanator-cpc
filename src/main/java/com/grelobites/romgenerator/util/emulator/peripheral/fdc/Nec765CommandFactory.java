@@ -42,7 +42,7 @@ public class Nec765CommandFactory {
             case 0x0d:
                 LOGGER.debug("Nec765 Format Track command");
                 return new FormatTrackCommand();
-            case 0xa0:
+            case 0x0a:
                 LOGGER.debug("Nec765 Read Id command");
                 return new ReadIdCommand();
             case 0x11:
@@ -61,10 +61,10 @@ public class Nec765CommandFactory {
                 LOGGER.debug("Nec765 Head reposition command");
                 return new HeadRepositionCommand();
             case 0x08:
-                LOGGER.debug("Nec765 Read Interrupt status register command");
+                LOGGER.debug("Nec765 Sense Interrupt status register command");
                 return new SenseInterruptStatusCommand();
             case 0x04:
-                LOGGER.debug("Nec765 Read drive status command");
+                LOGGER.debug("Nec765 Sense drive status command");
                 return new SenseDriveStatusCommand();
             case 0x03:
                 LOGGER.debug("Nec765 Specify Unit Data command");

@@ -41,6 +41,7 @@ public class ReadIdCommand extends Nec765BaseCommand implements Nec765Command {
                 unit, physicalHeadNumber);
         controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
+        sectorInfo = controller.getDriveStatus(unit).getCurrentSector();
         if (dskOpt.isPresent()) {
             controller.getStatus0Register().setDiskUnit(unit);
             controller.getStatus0Register().setHeadAddress(physicalHeadNumber);
@@ -51,6 +52,7 @@ public class ReadIdCommand extends Nec765BaseCommand implements Nec765Command {
                 sectorInfo = dskTrack.getInformation().getSectorInformation(0);
                 controller.getDriveStatus(unit).setCurrentSector(sectorInfo);
                 controller.getStatus0Register().setNotReady(false);
+                controller.getMainStatusRegister().setDataReady(true);
             } else {
                 LOGGER.debug("No lastSector info on current disk unit");
                 controller.getStatus0Register().setNotReady(true);

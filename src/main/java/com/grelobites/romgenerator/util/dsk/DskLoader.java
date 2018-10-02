@@ -106,6 +106,7 @@ public class DskLoader extends BaseEmulator {
                 compensation = executeFrame(compensation);
             }
             nec765.attachDskContainer(0, container);
+            LOGGER.debug("---> CPC Initialized. Now to run loader");
             //Run the guessed command
             enterCommand(command);
             //Attach the disk to the controller

@@ -12,14 +12,8 @@ public class Nec765BaseCommand {
     protected int physicalHeadNumber;
 
     public void initialize(Nec765 controller) {
-        if (controller.getCurrentCommand() == null) {
-            this.controller = controller;
-            controller.setCurrentPhase(Nec765Phase.COMMAND);
-        } else {
-            throw new IllegalStateException("Controller executing command");
-        }
+        this.controller = controller;
     }
-
 
     protected void setPrimaryFlags(int data) {
         multitrack = (data & 0x80) != 0;
