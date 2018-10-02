@@ -109,7 +109,7 @@ public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements 
                 break;
             case 6:
                 value = sectorSize;
-                done = true;
+                controller.clearCurrentCommand();
                 break;
             default:
                 throw new IllegalStateException("Result status exhausted");

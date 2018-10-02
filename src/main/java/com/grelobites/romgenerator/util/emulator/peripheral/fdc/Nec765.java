@@ -31,11 +31,16 @@ public class Nec765 {
     private Nec765Command currentCommand;
     private int lastSelectedUnit = 0;
 
-    public Nec765() {
-        this.currentPhase = Nec765Phase.COMMAND;
+    private void onCommandFinalization() {
+        mainStatusRegister.setFdcBusy(false);
         mainStatusRegister.setExecMode(false);
         mainStatusRegister.setDataReady(false);
+        mainStatusRegister.setFddsBusy(0);
         mainStatusRegister.setRQM(true);
+        currentPhase = Nec765Phase.COMMAND;
+    }
+    public Nec765() {
+        onCommandFinalization();
         motorOn = false;
         for (int i = 0; i < driveStatuses.length; i++) {
             driveStatuses[i] = new DriveStatus();
@@ -96,6 +101,7 @@ public class Nec765 {
 
     public void clearCurrentCommand() {
         this.currentCommand = null;
+        onCommandFinalization();
     }
 
     public DriveStatus getDriveStatus(int drive) {
@@ -121,8 +127,8 @@ public class Nec765 {
     }
 
     public void writeControlRegister(int value) {
-        LOGGER.debug("Nec765 Write Control Register {}", String.format("0x%02x", value & 0xff));
         motorOn = (value & 1) == 1;
+        LOGGER.debug("Floppy Motors {}", motorOn ? "on" : "off");
     }
 
     public void writeDataRegister(int value) {
@@ -130,7 +136,7 @@ public class Nec765 {
         if (currentPhase == Nec765Phase.COMMAND) {
             if (currentCommand == null) {
                 currentCommand = commandFactory.getCommand(value);
-                currentCommand.setFdcController(this);
+                currentCommand.initialize(this);
                 mainStatusRegister.setFdcBusy(true);
             }
             currentCommand.write(value);
@@ -147,11 +153,6 @@ public class Nec765 {
                 case EXECUTION:
                 case RESULT:
                     value = currentCommand.read();
-            }
-            if (currentCommand.isDone()) {
-                currentCommand = null;
-                setCurrentPhase(Nec765Phase.COMMAND);
-                mainStatusRegister.setFdcBusy(false);
             }
         }
         LOGGER.debug("Nec765 Read Data Register {}", String.format("0x%02x", value & 0xff));

@@ -23,8 +23,6 @@ public class SenseDriveStatusCommand implements Nec765Command {
     private Nec765 controller;
     private int unit = 0;
     private int currentCommandWord = 0;
-    private int currentResultWord = 0;
-    private boolean done = false;
 
     private void setCommandData(int data) {
         switch (currentCommandWord++) {
@@ -35,14 +33,14 @@ public class SenseDriveStatusCommand implements Nec765Command {
                 unit = data & 0x03;
                 break;
             case 2:
-                controller.setCurrentPhase(Nec765Phase.RESULT);
+                controller.clearCurrentCommand();
                 break;
             default:
         }
     }
 
     @Override
-    public void setFdcController(Nec765 controller) {
+    public void initialize(Nec765 controller) {
         this.controller = controller;
     }
 
@@ -59,20 +57,17 @@ public class SenseDriveStatusCommand implements Nec765Command {
 
     @Override
     public int read() {
+        int value = 0;
         switch (controller.getCurrentPhase()) {
             case RESULT:
                 //Actually we should have a different status for each of the attached drives
                 //But let's assume everything is nice and sunny
-                done = true;
-                return controller.getStatus3Register().value();
+                value = controller.getStatus3Register().value();
+                controller.clearCurrentCommand();
             default:
                 LOGGER.error("Trying to read from SenseDriveStatus Command");
-                return 0;
         }
+        return value;
     }
 
-    @Override
-    public boolean isDone() {
-        return done;
-    }
 }

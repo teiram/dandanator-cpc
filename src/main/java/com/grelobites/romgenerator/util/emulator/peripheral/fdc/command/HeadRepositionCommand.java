@@ -56,15 +56,14 @@ public class HeadRepositionCommand implements Nec765Command {
                 break;
             case 2:
                 repositionToTrack(data);
-                controller.setCurrentPhase(Nec765Phase.RESULT);
-                done = true;
+                controller.clearCurrentCommand();
                 break;
             default:
         }
     }
 
     @Override
-    public void setFdcController(Nec765 controller) {
+    public void initialize(Nec765 controller) {
         this.controller = controller;
     }
 
@@ -85,8 +84,4 @@ public class HeadRepositionCommand implements Nec765Command {
        return 0;
     }
 
-    @Override
-    public boolean isDone() {
-        return done;
-    }
 }

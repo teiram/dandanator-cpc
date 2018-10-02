@@ -26,7 +26,6 @@ public class RecalibrateCommand implements Nec765Command {
     private static final Logger LOGGER = LoggerFactory.getLogger(RecalibrateCommand.class);
     private Nec765 controller;
     private int currentCommandWord = 0;
-    private boolean done = false;
 
     private void setTrackZero(int unit) {
         controller.setLastSelectedUnit(unit);
@@ -49,15 +48,14 @@ public class RecalibrateCommand implements Nec765Command {
                 break;
             case 1:
                 setTrackZero((data & 0x03));
-                controller.setCurrentPhase(Nec765Phase.RESULT);
-                done = true;
+                controller.clearCurrentCommand();
                 break;
             default:
         }
     }
 
     @Override
-    public void setFdcController(Nec765 controller) {
+    public void initialize(Nec765 controller) {
         this.controller = controller;
     }
 
@@ -78,8 +76,4 @@ public class RecalibrateCommand implements Nec765Command {
        return 0;
     }
 
-    @Override
-    public boolean isDone() {
-        return done;
-    }
 }

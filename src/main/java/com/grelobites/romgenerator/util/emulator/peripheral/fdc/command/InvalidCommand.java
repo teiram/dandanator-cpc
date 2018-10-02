@@ -10,7 +10,7 @@ public class InvalidCommand implements Nec765Command {
     private Nec765 controller;
 
     @Override
-    public void setFdcController(Nec765 controller) {
+    public void initialize(Nec765 controller) {
         this.controller = controller;
     }
 
@@ -18,6 +18,7 @@ public class InvalidCommand implements Nec765Command {
     public void write(int data) {
         LOGGER.debug("Issuing invalid command");
         controller.getStatus0Register().setInterruptCode(Nec765Constants.ICODE_INVALID_COMMAND);
+        controller.clearCurrentCommand();
     }
 
     @Override
@@ -25,8 +26,4 @@ public class InvalidCommand implements Nec765Command {
         return 0;
     }
 
-    @Override
-    public boolean isDone() {
-        return true;
-    }
 }

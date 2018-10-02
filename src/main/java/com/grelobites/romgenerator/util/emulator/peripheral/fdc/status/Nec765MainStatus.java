@@ -20,6 +20,7 @@ public class Nec765MainStatus extends StatusRegister {
     private static final int FDD1_BUSY_MASK     = 1 << 1;
     private static final int FDD2_BUSY_MASK     = 1 << 2;
     private static final int FDD3_BUSY_MASK     = 1 << 3;
+    private static final int FDDS_BUSY_MASK     = 0x0f;
     private static final int FDC_BUSY_MASK      = 1 << 4;
     private static final int EXEC_MODE_MASK     = 1 << 5;
     private static final int DATA_READY_MASK = 1 << 6;
@@ -29,12 +30,25 @@ public class Nec765MainStatus extends StatusRegister {
         super(value);
     }
 
+    public void setFddBusy(int unit) {
+        value |= 1 << unit;
+    }
+
+    public void setFddFree(int unit) {
+        value &= ~(1 << unit);
+    }
+
     public boolean isFdd0Busy() {
         return (value & FDD0_BUSY_MASK) != 0;
     }
 
     public void setFdd0Busy(boolean b) {
         setBitValue(b, FDD0_BUSY_MASK);
+    }
+
+    public void setFddsBusy(int mask) {
+        value &= ~FDDS_BUSY_MASK;
+        value |= (FDDS_BUSY_MASK & mask);
     }
 
     public boolean isFdd1Busy() {

@@ -19,7 +19,6 @@ public class SenseInterruptStatusCommand implements Nec765Command {
 
     private Nec765 controller;
     private int currentResultWord = 0;
-    boolean done = false;
 
     private void setCommandData(int data) {
         //Only one byte and we don't need anything from it
@@ -27,7 +26,7 @@ public class SenseInterruptStatusCommand implements Nec765Command {
     }
 
     @Override
-    public void setFdcController(Nec765 controller) {
+    public void initialize(Nec765 controller) {
         this.controller = controller;
     }
 
@@ -58,7 +57,7 @@ public class SenseInterruptStatusCommand implements Nec765Command {
             case 0:
                 return controller.getStatus0Register().value();
             case 1:
-                done = true;
+                controller.clearCurrentCommand();
                 return controller.getDriveStatus(controller.getLastSelectedUnit())
                         .getCurrentSector().getTrack();
             default:
@@ -66,8 +65,4 @@ public class SenseInterruptStatusCommand implements Nec765Command {
         }
     }
 
-    @Override
-    public boolean isDone() {
-        return done;
-    }
 }

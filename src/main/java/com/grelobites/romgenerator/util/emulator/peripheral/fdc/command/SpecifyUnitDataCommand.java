@@ -35,9 +35,6 @@ public class SpecifyUnitDataCommand implements Nec765Command {
     private int headUnloadTime;
     private boolean dma;
 
-    private boolean done = false;
-
-
     private void setCommandData(int data) {
         switch (currentCommandWord++) {
             case 0:
@@ -61,17 +58,14 @@ public class SpecifyUnitDataCommand implements Nec765Command {
                 driveStatus.setStepRateTime(stepRateTime);
                 driveStatus.setDma(dma);
                 LOGGER.debug("Set headLoadTime {}, dma {}", headLoadTime, dma);
-                controller.setCurrentPhase(Nec765Phase.RESULT);
-                done = true;
+                controller.clearCurrentCommand();
             default:
         }
     }
 
     @Override
-    public void setFdcController(Nec765 controller) {
+    public void initialize(Nec765 controller) {
         this.controller = controller;
-        controller.getMainStatusRegister().setFdcBusy(true);
-
     }
 
     @Override
@@ -81,7 +75,7 @@ public class SpecifyUnitDataCommand implements Nec765Command {
                 setCommandData(data);
                 break;
             default:
-                LOGGER.debug("Unexpected data during SpecifyUnitData command");
+                LOGGER.error("Unexpected data during SpecifyUnitData command");
         }
     }
 
@@ -91,8 +85,4 @@ public class SpecifyUnitDataCommand implements Nec765Command {
         return 0;
     }
 
-    @Override
-    public boolean isDone() {
-        return done;
-    }
 }

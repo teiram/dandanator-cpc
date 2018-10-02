@@ -130,7 +130,7 @@ public class ReadIdCommand extends Nec765BaseCommand implements Nec765Command {
                 break;
             case 6:
                 value = sectorInfo.getSectorSize();
-                done = true;
+                controller.clearCurrentCommand();
                 break;
             default:
                 throw new IllegalStateException("Result status exhausted");

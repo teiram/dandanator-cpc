@@ -5,11 +5,10 @@ import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 
 public interface Nec765Command {
 
-    void setFdcController(Nec765 controller);
+    void initialize(Nec765 controller);
 
     void write(int data);
 
     int read();
 
-    boolean isDone();
 }
