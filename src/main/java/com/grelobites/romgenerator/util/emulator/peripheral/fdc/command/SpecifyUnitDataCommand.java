@@ -15,9 +15,12 @@ import org.slf4j.LoggerFactory;
                                   |    -----
                                   |      |--  US1,US0. Drive Unit (0, 1, 2, 3)
                                   |---------  HD. Physical head number (0 or 1)
-
-    - B2. C. Cylinder number. Stands for the current /selected cylinder
-             (track) numbers 0 through 76 of the medium
+    - B2.    SR3 SR2 SR1 SR0  HU3 HU2 HU1 HU0
+    - B3.    HL6 HL5 HL4 HL3  HL2 HL1 HL0 DMA
+    -        SR - Step Rate Time
+    -        HU - Head Unload Time
+    -        HL - Head Load Time
+    -        DMA - 1 DMA, 0 NODMA
     ---------------------------------------------------------------------------
     RESULT
     - No results
@@ -42,10 +45,12 @@ public class SpecifyUnitDataCommand implements Nec765Command {
                 break;
             case 1:
                 unit = data & 0x03;
+                LOGGER.debug("Set unit as {}", unit);
                 break;
             case 2:
                 stepRateTime = (data & 0xf0) >>> 4;
                 headUnloadTime = (data & 0x0f);
+                LOGGER.debug("Set stepRateTime {}, headUnloadTime {}", stepRateTime, headUnloadTime);
                 break;
             case 3:
                 headLoadTime = (data & 0xfe) >>> 1;
@@ -55,6 +60,7 @@ public class SpecifyUnitDataCommand implements Nec765Command {
                 driveStatus.setHeadUnloadTime(headUnloadTime);
                 driveStatus.setStepRateTime(stepRateTime);
                 driveStatus.setDma(dma);
+                LOGGER.debug("Set headLoadTime {}, dma {}", headLoadTime, dma);
                 controller.setCurrentPhase(Nec765Phase.RESULT);
                 done = true;
             default:
@@ -64,6 +70,8 @@ public class SpecifyUnitDataCommand implements Nec765Command {
     @Override
     public void setFdcController(Nec765 controller) {
         this.controller = controller;
+        controller.getMainStatusRegister().setFdcBusy(true);
+
     }
 
     @Override

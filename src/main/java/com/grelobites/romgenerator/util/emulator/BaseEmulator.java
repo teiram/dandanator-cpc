@@ -276,7 +276,7 @@ public class BaseEmulator implements Z80operations {
         } else if ((port & 0xF800) == 0xF800) {
             LOGGER.debug("Peripheral Soft Reset");
         } else if ((port & 0xFF00) == 0xDF00) {
-            LOGGER.debug("Selection of upper ROM number {}", value);
+            LOGGER.debug("Upper ROM {} selected", value & 0xff);
             memory.setUpperRomNumber(value & 0xff);
         } else {
             LOGGER.debug("Unhandled I/O OUT Operation on port {}, value {}, Z80 Status: {}",

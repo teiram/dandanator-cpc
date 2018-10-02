@@ -35,13 +35,19 @@ public class DskLoader extends BaseEmulator {
         nec765 = new Nec765();
     }
 
+    private void showExecutionContext() {
+        LOGGER.debug("In execution with PC {}", String.format("0x%04x", z80.getRegPC() & 0xffff));
+    }
+
     @Override
     public void outPort(int port, int value) {
-        if ((port & 0xFA7E) == 0xFA7E) {
+        if ((port & 0xFFFF) == 0xFA7E) {
             lastDiskAccessTstates = clock.getTstates();
+            showExecutionContext();
             nec765.writeControlRegister(value);
-        } else if ((port & 0xFB7F) == 0xFB7F) {
+        } else if ((port & 0xFFFF) == 0xFB7F) {
             lastDiskAccessTstates = clock.getTstates();
+            showExecutionContext();
             nec765.writeDataRegister(value);
         } else {
             super.outPort(port, value);
@@ -50,11 +56,13 @@ public class DskLoader extends BaseEmulator {
 
     @Override
     public int inPort(int port) {
-        if ((port & 0xFB7F) == 0xFB7F) {
+        if ((port & 0xFFFF) == 0xFB7F) {
             lastDiskAccessTstates = clock.getTstates();
+            showExecutionContext();
             return nec765.readDataRegister();
-        } else if ((port & 0xFB7E) == 0xFB7E) {
+        } else if ((port & 0xFFFF) == 0xFB7E) {
             lastDiskAccessTstates = clock.getTstates();
+            showExecutionContext();
             return nec765.readStatusRegister();
         } else {
             return super.inPort(port);

@@ -33,7 +33,7 @@ public class Nec765MainStatus extends StatusRegister {
         return (value & FDD0_BUSY_MASK) != 0;
     }
 
-    private void setFdd0Busy(boolean b) {
+    public void setFdd0Busy(boolean b) {
         setBitValue(b, FDD0_BUSY_MASK);
     }
 

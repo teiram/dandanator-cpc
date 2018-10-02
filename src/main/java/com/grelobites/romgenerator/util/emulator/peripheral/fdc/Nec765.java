@@ -88,27 +88,14 @@ public class Nec765 {
 
     public void setCurrentPhase(Nec765Phase currentPhase) {
         this.currentPhase = currentPhase;
-        switch (currentPhase) {
-            case COMMAND:
-                mainStatusRegister.setDataReady(false);
-                mainStatusRegister.setExecMode(false);
-                break;
-            case EXECUTION:
-                mainStatusRegister.setExecMode(true);
-                break;
-            case RESULT:
-                mainStatusRegister.setDataReady(true);
-                mainStatusRegister.setExecMode(false);
-                break;
-        }
     }
 
     public Nec765Command getCurrentCommand() {
         return currentCommand;
     }
 
-    public void setCurrentCommand(Nec765Command currentCommand) {
-        this.currentCommand = currentCommand;
+    public void clearCurrentCommand() {
+        this.currentCommand = null;
     }
 
     public DriveStatus getDriveStatus(int drive) {
@@ -132,7 +119,6 @@ public class Nec765 {
             attachedDskContainers[drive] = container;
         }
     }
-
 
     public void writeControlRegister(int value) {
         LOGGER.debug("Nec765 Write Control Register {}", String.format("0x%02x", value & 0xff));
@@ -174,6 +160,11 @@ public class Nec765 {
 
     public int readStatusRegister() {
         LOGGER.debug("Nec765 Read Status Register {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
+        try {
+            Thread.sleep(250);
+        } catch (InterruptedException e) {
+
+        }
         return mainStatusRegister.value();
     }
 }
