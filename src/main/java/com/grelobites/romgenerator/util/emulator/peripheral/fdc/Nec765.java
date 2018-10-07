@@ -160,12 +160,12 @@ public class Nec765 {
                     value = currentCommand.read();
             }
         }
-        LOGGER.debug("Nec765 Read Data Register {}", String.format("0x%02x", value & 0xff));
+        LOGGER.debug("Nec765 Read Data Register: {}", String.format("0x%02x", value & 0xff));
         return value & 0xff;
     }
 
     public int readStatusRegister() {
-        LOGGER.debug("Nec765 Read Status Register {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
+        LOGGER.debug("Nec765 Read Status Register: {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
         /*
         try {
             Thread.sleep(250);

@@ -36,7 +36,7 @@ public class DskLoader extends BaseEmulator {
     }
 
     private void showExecutionContext() {
-        LOGGER.debug("In execution with PC {}", String.format("0x%04x", z80.getRegPC() & 0xffff));
+        //LOGGER.debug("In execution with PC {}", String.format("0x%04x", z80.getRegPC() & 0xffff));
     }
 
     @Override
