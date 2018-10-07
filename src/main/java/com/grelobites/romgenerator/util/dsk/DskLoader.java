@@ -24,7 +24,7 @@ import java.io.InputStream;
 public class DskLoader extends BaseEmulator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DskLoader.class);
     private static final int FRAMES_PER_SECOND = 50;
-    private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 3;
+    private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 4;
 
     private final Nec765 nec765;
     private SnapshotGame currentSnapshot;
