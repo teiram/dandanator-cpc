@@ -92,6 +92,8 @@ public class ReadTrackCommand extends ReadWriteBaseCommand {
                 if (matched) {
                     prepareTrackData(dskTrack, indexes);
                     controller.getMainStatusRegister().setDataReady(true);
+                    controller.getMainStatusRegister().setExecMode(true);
+                    controller.setCurrentPhase(Nec765Phase.EXECUTION);
                     return;
                 } else {
                     LOGGER.debug("No sector matched the provided last sector id");
@@ -131,6 +133,7 @@ public class ReadTrackCommand extends ReadWriteBaseCommand {
                 if (sectorDataIndex < sectorData.length) {
                     value = sectorData[sectorDataIndex++];
                     if (sectorDataIndex == sectorData.length) {
+                        controller.getMainStatusRegister().setExecMode(false);
                         controller.setCurrentPhase(Nec765Phase.RESULT);
                     }
                 } else {

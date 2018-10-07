@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.dsk.DskContainer;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Constants;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
@@ -24,7 +25,7 @@ public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements 
 
     private void prepareExecution() {
         LOGGER.debug("Read/Write operation on unit {}, head {}, track {}, firstSector {}, lastSector {}, sectorBytes {}",
-                unit, head, track, firstSector, lastSector, sectorBytes);
+                unit, head, track, Util.asByteHexString(firstSector), Util.asByteHexString(lastSector), sectorBytes);
         controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
         if (dskOpt.isPresent()) {
@@ -33,6 +34,7 @@ public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements 
             controller.getStatus0Register().setHeadAddress(physicalHeadNumber);
             try {
                 preExecutionOperation(dskOpt.get());
+                controller.getMainStatusRegister().setExecMode(true);
                 controller.setCurrentPhase(Nec765Phase.EXECUTION);
             } catch (Exception e) {
                 LOGGER.error("In preExecutionOperation", e);

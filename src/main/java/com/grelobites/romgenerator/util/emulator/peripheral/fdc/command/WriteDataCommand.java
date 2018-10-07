@@ -62,6 +62,7 @@ public class WriteDataCommand extends ReadWriteBaseCommand {
                 if (sectorInfo.getSectorId() == firstSector) {
                     sectorData = dskTrack.getSectorData(sectorInfo.getPhysicalPosition());
                     controller.getMainStatusRegister().setDataReady(false);
+                    controller.getMainStatusRegister().setExecMode(true);
                     return;
                 }
             }
@@ -82,6 +83,7 @@ public class WriteDataCommand extends ReadWriteBaseCommand {
                 if (sectorDataIndex < sectorBytes) {
                     sectorData[sectorDataIndex++] = (byte) (data & 0xff);
                     if (sectorDataIndex == sectorBytes) {
+                        controller.getMainStatusRegister().setExecMode(false);
                         controller.setCurrentPhase(Nec765Phase.RESULT);
                     }
                 } else {

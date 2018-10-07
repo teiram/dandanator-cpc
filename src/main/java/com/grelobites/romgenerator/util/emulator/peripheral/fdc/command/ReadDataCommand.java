@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.dsk.DskContainer;
 import com.grelobites.romgenerator.util.dsk.SectorInformationBlock;
 import com.grelobites.romgenerator.util.dsk.Track;
@@ -64,6 +65,7 @@ public class ReadDataCommand extends ReadWriteBaseCommand {
                     System.arraycopy(
                             dskTrack.getSectorData(sectorInfo.getPhysicalPosition()), 0,
                             sectorData, 0, sectorBytes);
+                    LOGGER.debug("Required sector is {}", Util.dumpAsHexString(sectorData));
                     controller.getMainStatusRegister().setDataReady(true);
                     //Fill status registers stored in DSK
                     controller.getStatus1Register().setValue(sectorInfo.getFdcStatusRegister1());
@@ -102,6 +104,8 @@ public class ReadDataCommand extends ReadWriteBaseCommand {
                 if (sectorDataIndex < sectorData.length) {
                     value = sectorData[sectorDataIndex++];
                     if (sectorDataIndex == sectorData.length) {
+                        LOGGER.debug("All sector data read. Entering result phase");
+                        controller.getMainStatusRegister().setExecMode(false);
                         controller.setCurrentPhase(Nec765Phase.RESULT);
                     }
                 } else {

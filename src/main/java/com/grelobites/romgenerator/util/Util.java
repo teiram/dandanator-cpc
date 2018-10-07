@@ -177,6 +177,10 @@ public class Util {
         return sb.toString();
     }
 
+    public static String asByteHexString(int value) {
+        return String.format("0x%02x", value & 0xff);
+    }
+
     public static String toHexString(Integer value) {
         if (value != null) {
             return String.format("0x%04x", value);
