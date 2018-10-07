@@ -178,13 +178,15 @@ public class BaseEmulator implements Z80operations {
             ppi.pressKey(key);
         }
         long compensation = 0;
-        for (int i = 0; i < frames - 1; i++) {
+        for (int i = 0; i < frames; i++) {
             compensation = executeFrame(compensation);
         }
         for (KeyboardCode key : keys) {
             ppi.releaseKey(key);
         }
-        executeFrame(compensation);
+        for (int i = 0; i < frames; i++) {
+            compensation = executeFrame(compensation);
+        }
     }
 
     protected void enterCommand(String command) {
