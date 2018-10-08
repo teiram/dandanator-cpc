@@ -1,8 +1,8 @@
 package com.grelobites.romgenerator.util.emulator.peripheral.fdc;
 
 public class Nec765Statistics {
-    private long issuedCommands;
-    private long bytesRead;
+    private long issuedCommands = 0;
+    private long bytesRead = 0;
 
     public void incIssuedCommands() {
         issuedCommands++;

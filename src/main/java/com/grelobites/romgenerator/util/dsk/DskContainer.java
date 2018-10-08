@@ -36,9 +36,9 @@ public class DskContainer {
 
     public void dumpRawData(OutputStream os) throws IOException {
         for (Track track : tracks) {
-            LOGGER.debug("Dumping information for track " + track.getInformation());
+            LOGGER.trace("Dumping information for track " + track.getInformation());
             for (int i : track.orderedSectorList()) {
-                LOGGER.debug("Dumping data for sector " + track.getInformation().getSectorInformation(i));
+                LOGGER.trace("Dumping data for sector " + track.getInformation().getSectorInformation(i));
                 os.write(track.getSectorData(i));
             }
         }

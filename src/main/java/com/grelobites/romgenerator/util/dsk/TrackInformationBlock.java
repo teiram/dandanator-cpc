@@ -24,7 +24,7 @@ public class TrackInformationBlock {
 
     public static TrackInformationBlock fromInputStream(InputStream data) throws IOException {
         TrackInformationBlock block = fromByteArray(Util.fromInputStream(data, 0x100));
-        LOGGER.debug("Track information is " + block);
+        LOGGER.trace("Track information is " + block);
 
         return block;
     }
