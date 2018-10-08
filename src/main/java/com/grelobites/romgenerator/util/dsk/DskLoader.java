@@ -2,18 +2,12 @@ package com.grelobites.romgenerator.util.dsk;
 
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
-import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.BaseEmulator;
-import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayChangeListener;
-import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayFunction;
-import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.filesystem.Archive;
+import com.grelobites.romgenerator.util.filesystem.ArchiveFlags;
 import com.grelobites.romgenerator.util.filesystem.CpmFileSystem;
-import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
-import com.grelobites.romgenerator.util.tape.TapeFinishedException;
-import com.grelobites.romgenerator.util.tape.TapeLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +21,6 @@ public class DskLoader extends BaseEmulator {
     private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 4;
 
     private final Nec765 nec765;
-    private SnapshotGame currentSnapshot;
     private long lastDiskAccessTstates = 0;
     public DskLoader(HardwareMode hardwareMode,
                      LoaderResources loaderResources) {
@@ -35,19 +28,13 @@ public class DskLoader extends BaseEmulator {
         nec765 = new Nec765();
     }
 
-    private void showExecutionContext() {
-        //LOGGER.debug("In execution with PC {}", String.format("0x%04x", z80.getRegPC() & 0xffff));
-    }
-
     @Override
     public void outPort(int port, int value) {
         if ((port & 0xFFFF) == 0xFA7E) {
             lastDiskAccessTstates = clock.getTstates();
-            showExecutionContext();
             nec765.writeControlRegister(value);
         } else if ((port & 0xFFFF) == 0xFB7F) {
             lastDiskAccessTstates = clock.getTstates();
-            showExecutionContext();
             nec765.writeDataRegister(value);
         } else {
             super.outPort(port, value);
@@ -58,11 +45,9 @@ public class DskLoader extends BaseEmulator {
     public int inPort(int port) {
         if ((port & 0xFFFF) == 0xFB7F) {
             lastDiskAccessTstates = clock.getTstates();
-            showExecutionContext();
             return nec765.readDataRegister();
         } else if ((port & 0xFFFF) == 0xFB7E) {
             lastDiskAccessTstates = clock.getTstates();
-            showExecutionContext();
             return nec765.readStatusRegister();
         } else {
             return super.inPort(port);
@@ -80,13 +65,14 @@ public class DskLoader extends BaseEmulator {
             container.dumpRawData(bos);
             CpmFileSystem fileSystem = CpmFileSystem.fromByteArray(bos.toByteArray(), parameters);
             for (Archive archive: fileSystem.getArchiveList()) {
-
-                if (archive.getName().equalsIgnoreCase("DISC")) {
-                    return "run \"disc";
-                } else if (archive.getExtension().equalsIgnoreCase("BAS")) {
-                    return "run \"" + archive.getName().trim();
-                } else if (archive.getExtension().equalsIgnoreCase("BIN")) {
-                    return "run \"" + archive.getName().trim();
+                if (!archive.getFlags().contains(ArchiveFlags.SYSTEM)) {
+                    if (archive.getName().equalsIgnoreCase("DISC")) {
+                        return "run \"disc";
+                    } else if (archive.getExtension().equalsIgnoreCase("BAS")) {
+                        return "run \"" + archive.getName().trim();
+                    } else if (archive.getExtension().equalsIgnoreCase("BIN")) {
+                        return "run \"" + archive.getName().trim();
+                    }
                 }
             }
 
@@ -100,26 +86,26 @@ public class DskLoader extends BaseEmulator {
         DskContainer container = DskContainer.fromInputStream(dskFile);
         String command = guessBootstrapCommand(container);
         if (command != null) {
-            LOGGER.debug("Guesses bootstrap command as {}", command);
+            LOGGER.info("Guesses bootstrap command as {}", command);
             //Wait for the computer to initialize
             for (int i = 0; i < 2 * FRAMES_PER_SECOND; i++) {
                 compensation = executeFrame(compensation);
             }
             nec765.attachDskContainer(0, container);
-            LOGGER.debug("---> CPC Initialized. Now to run loader");
+            LOGGER.debug("CPC Initialized. Now to run loader");
             //Run the guessed command
             enterCommand(command);
             //Attach the disk to the controller
             while (!executionAborted) {
                 compensation = executeFrame(compensation);
                 if ((clock.getTstates() - lastDiskAccessTstates) > DISK_ACCESS_TIMEOUT_TS) {
-                    LOGGER.debug("Execution aborted due to disk access inactivity");
+                    LOGGER.info("Execution aborted due to disk access inactivity with FDC statistics {}",
+                            nec765.getStatistics());
                     executionAborted = true;
                 }
             }
         }
-        currentSnapshot = getSnapshotGame();
-        return currentSnapshot;
+        return getSnapshotGame();
     }
 
 }

@@ -58,7 +58,7 @@ public class ReadIdCommand extends Nec765BaseCommand implements Nec765Command {
                 controller.getStatus0Register().setNotReady(true);
             }
         } else {
-            LOGGER.debug("No disk is attached to the required unit");
+            LOGGER.info("No disk is attached to the required unit");
             //No disk is attached to the required unit
             controller.getStatus0Register().setNotReady(true);
             controller.getStatus0Register().setDiskUnit(unit);

@@ -136,10 +136,10 @@ public class CpmFileSystem {
                 for (CpmDirectoryEntry extent : fileExtents) {
                     int records = extent.getRecordCount();
                     int lastRecordBytes = extent.getByteCount() == 0 ? 128 : extent.getByteCount();
-                    LOGGER.debug("Processing extent " + extent);
+                    LOGGER.trace("Processing extent " + extent);
                     for (int block : extent.getAllocatedBlocks()) {
                         if (block > 0) {
-                            LOGGER.debug("Fetching data for block " + block);
+                            LOGGER.trace("Fetching data for block " + block);
                             try {
                                 int from = block * parameters.getBlockSize();
                                 int to = from;
@@ -148,7 +148,7 @@ public class CpmFileSystem {
                                 } else {
                                     to += parameters.getBlockSize();
                                 }
-                                LOGGER.debug("Calculated data range from " + from + " to " + to
+                                LOGGER.trace("Calculated data range from " + from + " to " + to
                                     + ", size: " + (to - from) + " bytes");
                                 bos.write(Arrays.copyOfRange(data, from + offset, to + offset));
                                 records -= (to - from) >> CpmConstants.RECORD_SHIFT;

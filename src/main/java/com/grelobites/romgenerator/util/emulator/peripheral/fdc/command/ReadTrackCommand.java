@@ -102,7 +102,7 @@ public class ReadTrackCommand extends ReadWriteBaseCommand {
                 LOGGER.debug("First track sector id doesn't match the provided sector id");
             }
         } else {
-            LOGGER.debug("No track found with id {}", track);
+            LOGGER.info("No track found with id {}", track);
         }
         controller.getStatus1Register().setNoData(true);
         controller.getStatus0Register().setInterruptCode(Nec765Constants.ICODE_ABNORMAL_TERMINATION);
@@ -132,6 +132,7 @@ public class ReadTrackCommand extends ReadWriteBaseCommand {
             case EXECUTION:
                 if (sectorDataIndex < sectorData.length) {
                     value = sectorData[sectorDataIndex++];
+                    controller.getStatistics().incBytesRead();
                     if (sectorDataIndex == sectorData.length) {
                         controller.getMainStatusRegister().setExecMode(false);
                         controller.setCurrentPhase(Nec765Phase.RESULT);

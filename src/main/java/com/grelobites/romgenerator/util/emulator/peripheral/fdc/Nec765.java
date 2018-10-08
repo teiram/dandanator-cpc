@@ -19,6 +19,7 @@ public class Nec765 {
     private Nec765Status2 status2Register = new Nec765Status2(0);
     private Nec765Status3 status3Register = new Nec765Status3(0);
 
+    private Nec765Statistics statistics = new Nec765Statistics();
     private boolean motorOn;
     private DriveStatus[] driveStatuses = new DriveStatus[NUM_DRIVES];
     private DriveParameters driveParameters = new DriveParameters();
@@ -95,6 +96,10 @@ public class Nec765 {
         return currentCommand;
     }
 
+    public Nec765Statistics getStatistics() {
+        return statistics;
+    }
+
     public void clearCurrentCommand() {
         LOGGER.debug("Clearing current Nec765 command {}", currentCommand);
         this.currentCommand = null;
@@ -137,12 +142,13 @@ public class Nec765 {
     }
 
     public void writeDataRegister(int value) {
-        LOGGER.debug("Nec765 Write Data Register {}", String.format("0x%02x", value & 0xff));
+        LOGGER.trace("Nec765 Write Data Register {}", String.format("0x%02x", value & 0xff));
         if (currentPhase == Nec765Phase.COMMAND) {
             if (currentCommand == null) {
                 currentCommand = commandFactory.getCommand(value);
                 currentCommand.initialize(this);
                 mainStatusRegister.setFdcBusy(true);
+                statistics.incIssuedCommands();
             }
             currentCommand.write(value);
         }
@@ -160,19 +166,12 @@ public class Nec765 {
                     value = currentCommand.read();
             }
         }
-        LOGGER.debug("Nec765 Read Data Register: {}", String.format("0x%02x", value & 0xff));
+        LOGGER.trace("Nec765 Read Data Register: {}", String.format("0x%02x", value & 0xff));
         return value & 0xff;
     }
 
     public int readStatusRegister() {
-        LOGGER.debug("Nec765 Read Status Register: {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
-        /*
-        try {
-            Thread.sleep(250);
-        } catch (InterruptedException e) {
-
-        }
-        */
+        LOGGER.trace("Nec765 Read Status Register: {}", String.format("0x%02x", mainStatusRegister.value() & 0xff));
         return mainStatusRegister.value();
     }
 }

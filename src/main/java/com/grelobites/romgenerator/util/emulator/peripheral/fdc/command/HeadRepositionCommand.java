@@ -40,7 +40,7 @@ public class HeadRepositionCommand implements Nec765Command {
                     .getInformation().getSectorInformation(0);
             controller.getDriveStatus(unit).setCurrentSector(firstSector);
         } else {
-            LOGGER.debug("No disk is attached to the required unit");
+            LOGGER.info("No disk is attached to the required unit");
             controller.getStatus0Register().setNotReady(true);
             controller.getStatus0Register().setDiskUnit(unit);
         }
@@ -74,7 +74,7 @@ public class HeadRepositionCommand implements Nec765Command {
                 setCommandData(data);
                 break;
             default:
-                LOGGER.debug("Unexpected data during Head Reposition command");
+                LOGGER.info("Unexpected data during Head Reposition command");
         }
     }
 

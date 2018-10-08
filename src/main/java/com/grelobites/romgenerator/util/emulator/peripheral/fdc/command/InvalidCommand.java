@@ -16,7 +16,7 @@ public class InvalidCommand implements Nec765Command {
 
     @Override
     public void write(int data) {
-        LOGGER.debug("Issuing invalid command");
+        LOGGER.info("Issuing invalid command");
         controller.getStatus0Register().setInterruptCode(Nec765Constants.ICODE_INVALID_COMMAND);
         controller.clearCurrentCommand();
     }

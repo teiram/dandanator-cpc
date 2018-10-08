@@ -41,7 +41,7 @@ public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements 
                 controller.setCurrentPhase(Nec765Phase.RESULT);
             }
         } else {
-            LOGGER.debug("No disk is attached to the required unit");
+            LOGGER.info("No disk is attached to the addressed unit");
             //No disk is attached to the required unit
             controller.getStatus0Register().setNotReady(true);
             controller.getStatus0Register().setDiskUnit(unit);

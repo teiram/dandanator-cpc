@@ -38,7 +38,7 @@ public class SpecifyUnitDataCommand implements Nec765Command {
             case 1:
                 stepRateTime = (data & 0xf0) >>> 4;
                 headUnloadTime = (data & 0x0f);
-                LOGGER.debug("Set stepRateTime {}, headUnloadTime {}", stepRateTime, headUnloadTime);
+                LOGGER.trace("Set stepRateTime {}, headUnloadTime {}", stepRateTime, headUnloadTime);
                 break;
             case 2:
                 headLoadTime = (data & 0xfe) >>> 1;
@@ -48,7 +48,7 @@ public class SpecifyUnitDataCommand implements Nec765Command {
                 driveParameters.setHeadUnloadTime(headUnloadTime);
                 driveParameters.setStepRateTime(stepRateTime);
                 driveParameters.setDma(dma);
-                LOGGER.debug("Set headLoadTime {}, dma {}", headLoadTime, dma);
+                LOGGER.trace("Set headLoadTime {}, dma {}", headLoadTime, dma);
                 controller.clearCurrentCommand();
             default:
         }
