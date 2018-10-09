@@ -148,7 +148,7 @@ public class DskLoader extends BaseEmulator {
                     LOGGER.info("Execution timeout due to disk access inactivity with FDC statistics {}",
                             nec765.getStatistics());
                     if (nec765.getStatistics().getBytesRead() < DISK_READ_THRESHOLD) {
-                        LOGGER.info("Trying to force loading with keyboard input");
+                        LOGGER.info("Trying to force load resume with keyboard input");
                         enterCommand("1");
                     } else {
                         executionAborted = true;
