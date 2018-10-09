@@ -23,13 +23,18 @@ public class DskContainer {
         DiskInformationBlock diskInformationBlock = DiskInformationBlock.fromInputStream(data);
         LOGGER.debug("Disk Information block: " + diskInformationBlock);
         Track[] tracks = new Track[diskInformationBlock.getTrackCount()];
-        for (int i = 0; i < diskInformationBlock.getTrackCount(); i++) {
-            TrackInformationBlock trackInformationBlock = TrackInformationBlock.fromInputStream(data);
-            Track track = new Track(trackInformationBlock);
-            for (int j = 0; j < trackInformationBlock.getSectorCount(); j++) {
-                track.setSectorData(j, Util.fromInputStream(data, trackInformationBlock.getSectorSize()));
+        int i = 0;
+        for (i = 0; i < diskInformationBlock.getTrackCount(); i++) {
+            try {
+                TrackInformationBlock trackInformationBlock = TrackInformationBlock.fromInputStream(data);
+                Track track = new Track(trackInformationBlock);
+                for (int j = 0; j < trackInformationBlock.getSectorCount(); j++) {
+                    track.setSectorData(j, Util.fromInputStream(data, trackInformationBlock.getSectorSize()));
+                }
+                tracks[trackInformationBlock.getTrackNumber()] = track;
+            } catch (Exception e) {
+                LOGGER.warn("Unable to read track from Dsk container", e);
             }
-            tracks[i] = track;
         }
         return new DskContainer(diskInformationBlock, tracks);
     }
