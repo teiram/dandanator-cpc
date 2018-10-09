@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.util.emulator.peripheral.fdc.command;
 
 import com.grelobites.romgenerator.util.dsk.DskContainer;
 import com.grelobites.romgenerator.util.dsk.SectorInformationBlock;
+import com.grelobites.romgenerator.util.dsk.Track;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765Phase;
 import org.slf4j.Logger;
@@ -30,15 +31,16 @@ public class HeadRepositionCommand implements Nec765Command {
     private Nec765 controller;
     private int unit = 0;
     private int currentCommandWord = 0;
-    private boolean done = false;
 
     private void repositionToTrack(int track) {
         controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
         if (dskOpt.isPresent()) {
-            SectorInformationBlock firstSector = dskOpt.get().getTrack(track)
-                    .getInformation().getSectorInformation(0);
-            controller.getDriveStatus(unit).setCurrentSector(firstSector);
+            Track targetTrack = dskOpt.get().getTrack(track);
+            if (targetTrack != null) {
+                controller.getDriveStatus(unit).setCurrentSector(targetTrack.getInformation()
+                    .getSectorInformation(0));
+            }
         } else {
             LOGGER.info("No disk is attached to the required unit");
             controller.getStatus0Register().setNotReady(true);
