@@ -25,6 +25,8 @@ public class DskLoader extends BaseEmulator {
     private static final int FRAMES_PER_SECOND = 50;
     private static final int DISK_READ_THRESHOLD = 16384;
     private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 4;
+    private static final String CPM_BOOTSTRAP_COMMAND = "|cpm";
+    private static final String RUN_COMMAND_TEMPLATE = "run \"%s";
 
     private final Nec765 nec765;
     private long lastDiskAccessTstates = 0;
@@ -61,6 +63,9 @@ public class DskLoader extends BaseEmulator {
     }
 
     private static List<Archive> getBasicLoaders(CpmFileSystem fileSystem) {
+        //Non system-flagged files with BAS extension
+        //System-flagged files are hidden to the CAT AMSDOS command
+        //and therefore they are not intended to be directly executed by the user
         List<Archive> candidates = fileSystem.getArchiveList().stream()
                 .filter(archive -> !archive.getFlags().contains(ArchiveFlags.SYSTEM))
                 .filter(archive -> archive.getExtension().equalsIgnoreCase("BAS"))
@@ -70,26 +75,28 @@ public class DskLoader extends BaseEmulator {
     }
 
     private static List<Archive> getBinLoaders(CpmFileSystem fileSystem) {
+        //Non System-flagged files with BIN or empty extension
+        //and with a valid AMSDOS header (meaning that it may declare
+        //a load and execution address)
         List<Archive> candidates = fileSystem.getArchiveList().stream()
                 .filter(archive -> !archive.getFlags().contains(ArchiveFlags.SYSTEM))
                 .filter(archive -> archive.getExtension().equalsIgnoreCase("BIN") ||
                 archive.getExtension().equals("   "))
                 .filter(archive -> AmsdosHeader.fromArchive(archive).isPresent())
                 .collect(Collectors.toList());
-        //Check if we have an AMSDOS header
         LOGGER.debug("Candidate bin loaders are {}", candidates);
         return candidates;
     }
 
     private static String getRunCommandForArchive(Archive archive) {
-        return "run \"" + archive.getName();
+        return String.format(RUN_COMMAND_TEMPLATE, archive.getName().trim());
     }
 
     private static String guessBootstrapCommand(DskContainer container) throws IOException {
         FileSystemParameters parameters = DskUtil.guessFileSystemParameters(container);
         if (parameters.getReservedTracks() > 0) {
             //Probaby system disk that can be loaded with |cpm?
-            return "|cpm";
+            return CPM_BOOTSTRAP_COMMAND;
         } else {
             //Try to get filenames from filesystem
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -98,6 +105,8 @@ public class DskLoader extends BaseEmulator {
             List<Archive> basicCandidates = getBasicLoaders(fileSystem);
             if (basicCandidates.size() > 1) {
                 LOGGER.warn("Got more than one basic loader {}", basicCandidates);
+                //TODO: Probably we should try to use all the basic candidates
+                // And decide which captured snapshot looks better (more data loaded from disk)
                 return getRunCommandForArchive(basicCandidates.stream().sorted(Comparator.comparingInt(c ->
                         c.getName().trim().length())).findFirst().get());
             } else if (basicCandidates.size() > 0) {
@@ -106,6 +115,8 @@ public class DskLoader extends BaseEmulator {
             List<Archive> binCandidates = getBinLoaders(fileSystem);
             if (binCandidates.size() > 1) {
                 LOGGER.warn("Got more than one bin loader {}", binCandidates);
+                //In this case we use the shortest name, since normally we have things like:
+                // ADVENTUR.BIN ADVENTUR01.BIN, ADVENTUR02.BIN,...
                 return getRunCommandForArchive(binCandidates.stream().sorted(Comparator.comparingInt(c ->
                         c.getName().trim().length())).findFirst().get());
             } else if (binCandidates.size() > 0) {
