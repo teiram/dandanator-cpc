@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 
 public class WavOutputStream {
 
-    private static final int CPC_CLOCK = 4000000;
+    private static final int SPECTRUM_CLOCK = 3500000;
     private static final int WAV_HEADER_LENGTH = 44;
 
     private byte[] getWavHeader(int wavDataLength) {
@@ -37,11 +37,11 @@ public class WavOutputStream {
     private ByteArrayOutputStream wavStream = new ByteArrayOutputStream();
     private final OutputStream out;
     private WavFormat format;
+    private int cpuClock = SPECTRUM_CLOCK;
 
     private long tStatesToSamples(long tstates) {
         long upper = tstates * format.getSampleRate();
-        //return upper / CPC_CLOCK + (upper % CPC_CLOCK == 0 ? 0 : 1);
-        return (upper + (CPC_CLOCK / 2)) / CPC_CLOCK;
+        return (upper + (cpuClock / 2)) / cpuClock;
     }
 
     private int getLowValue() {
@@ -73,6 +73,11 @@ public class WavOutputStream {
     public WavOutputStream(OutputStream out, WavFormat format) {
         this.out = out;
         this.format = format;
+    }
+
+    public WavOutputStream(OutputStream out, WavFormat format, int cpuClock) {
+        this(out, format);
+        this.cpuClock = cpuClock;
     }
 
     public void flush() throws IOException {

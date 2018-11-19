@@ -13,6 +13,14 @@ public class WavFormat {
     private int highValue = DEFAULT_HIGH_VALUE;
     private boolean reversePhase = false;
 
+    public static final WavFormat DEFAULT_FORMAT = builder()
+            .withChannelType(ChannelType.STEREOINV)
+            .withHighValue(DEFAULT_HIGH_VALUE)
+            .withLowValue(DEFAULT_LOW_VALUE)
+            .withReversePhase(false)
+            .withSampleRate(SRATE_48000)
+            .build();
+
     public static class Builder {
         private WavFormat outputFormat = new WavFormat();
 
