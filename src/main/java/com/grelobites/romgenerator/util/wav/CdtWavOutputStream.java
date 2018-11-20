@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.InflaterInputStream;
@@ -310,6 +311,7 @@ public class CdtWavOutputStream {
         int loopStart = 0;
 
         final int[] blockOffsets = calculateBlockOffsets(tapeBuffer);
+        LOGGER.debug("Block offsets are " + Arrays.toString(blockOffsets));
         int currentBlockIndex = 0;
 
         while (currentBlockIndex < blockOffsets.length) {
