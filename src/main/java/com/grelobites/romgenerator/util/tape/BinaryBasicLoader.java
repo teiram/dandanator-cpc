@@ -6,7 +6,6 @@ public class BinaryBasicLoader {
     private static final int DATAS_PER_LINE = 10;
     private static final int LINE_STEP = 10;
     private Binary binary;
-    private int currentLine;
 
     private String arrayElements(byte[] data, int start, int length) {
         StringBuilder result = new StringBuilder();
@@ -24,7 +23,7 @@ public class BinaryBasicLoader {
     }
 
     public void dump(PrintStream stream) {
-        currentLine = LINE_STEP;
+        int currentLine = LINE_STEP;
         stream.println(String.format("%d FOR N=&%04X TO &%04X: READ A$", currentLine,
                 binary.getLoadAddress(),
                 binary.getLoadAddress() + binary.getData().length - 1));
