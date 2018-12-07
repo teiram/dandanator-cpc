@@ -41,7 +41,7 @@ public class WavOutputStream {
 
     private long tStatesToSamples(long tstates) {
         long upper = tstates * format.getSampleRate();
-        return (upper + (cpuClock / 2)) / cpuClock;
+        return (upper + cpuClock - 1) / cpuClock;
     }
 
     private int getLowValue() {
