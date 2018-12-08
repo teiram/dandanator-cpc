@@ -154,15 +154,27 @@
 }
 
 .button-play {
-    -fx-background-image: url("/player/playback-start.png");
+    -fx-background-image: url("/eewriter/playback-start.png");
     -fx-background-size: 18px;
     -fx-background-position: center;
     -fx-background-repeat: no-repeat;
 }
 
 .button-stop {
-    -fx-background-image: url("/player/playback-stop.png");
+    -fx-background-image: url("/eewriter/playback-stop.png");
     -fx-background-size: 18px;
     -fx-background-position: center;
     -fx-background-repeat: no-repeat;
+}
+
+
+.text-area {
+    -fx-font-family: monospaced;
+    -fx-font-size: 15;
+    -fx-text-fill: #ffff00;
+    -fx-display-caret:true;
+}
+
+.text-area .content {
+    -fx-background-color: #000080;
 }

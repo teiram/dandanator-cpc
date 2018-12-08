@@ -160,7 +160,7 @@ public class CdtWavOutputStreamTests {
     @Test
     public void cdtToWavTest() throws Exception {
         InputStream cdt = CdtWavOutputStreamTests.class.getResourceAsStream("/cdt/lala.cdt");
-        OutputStream output = new FileOutputStream(new File("C:\\Users\\mteira\\Desktop\\lala.wav"));
+        OutputStream output = new FileOutputStream(new File("/home/mteira/Escritorio/lala.wav"));
         CdtWavOutputStream converter = new CdtWavOutputStream(WavFormat.DEFAULT_FORMAT, cdt, output);
         converter.flush();
     }

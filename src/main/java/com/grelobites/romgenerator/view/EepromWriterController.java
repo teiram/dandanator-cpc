@@ -5,10 +5,12 @@ import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
+import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.eewriter.DataProducer;
 import com.grelobites.romgenerator.util.eewriter.SerialDataConsumer;
 import com.grelobites.romgenerator.util.eewriter.SerialDataProducer;
+import com.grelobites.romgenerator.util.player.SampledAudioDataPlayer;
 import javafx.animation.FadeTransition;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -20,9 +22,16 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +43,8 @@ import java.io.IOException;
 public class EepromWriterController {
     private static final Logger LOGGER = LoggerFactory.getLogger(EepromWriterController.class);
 
+    private static final String PLAY_BUTTON_STYLE = "button-play";
+    private static final String STOP_BUTTON_STYLE = "button-stop";
     private static final int ROMSET_SIZE = Constants.SLOT_SIZE * 32;
 
     private static final String UNDEFINED_STRING = "--";
@@ -55,9 +66,17 @@ public class EepromWriterController {
     @FXML
     private Circle rxLed;
 
+    @FXML
+    private Button rescueLoaderPlayButton;
+
+    @FXML
+    private Button rescueLoaderShowButton;
+
     private ApplicationContext applicationContext;
 
     private BooleanProperty playing;
+
+    private BooleanProperty rescuePlaying;
 
     private byte[] romsetByteArray;
 
@@ -68,6 +87,12 @@ public class EepromWriterController {
     private ObjectProperty<DataProducer> currentDataProducer;
 
     private SerialDataConsumer serialDataConsumer;
+
+    private ObjectProperty<SampledAudioDataPlayer> rescuePlayer;
+
+    private Stage codeViewerStage;
+    private ScrollPane codeViewerPane;
+    private CodeViewerController codeViewerController;
 
     public void onPageLeave() {
         LOGGER.debug("Executing PlayerController onPageLeave");
@@ -140,9 +165,16 @@ public class EepromWriterController {
     public EepromWriterController(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         playing = new SimpleBooleanProperty(false);
+        rescuePlaying = new SimpleBooleanProperty(false);
         currentBlock = new SimpleIntegerProperty(-1);
         nextBlockRequested = new SimpleBooleanProperty();
         currentDataProducer = new SimpleObjectProperty<>();
+        rescuePlayer = new SimpleObjectProperty<>();
+        try {
+            rescuePlayer.set(new SampledAudioDataPlayer());
+        } catch (Exception e) {
+            LOGGER.error("Initializing rescue Player", e);
+        }
     }
 
 
@@ -287,6 +319,69 @@ public class EepromWriterController {
         }
     }
 
+    private void onRescuePlayerStart() {
+        blockProgress.progressProperty().bind(rescuePlayer.get().progressProperty());
+        rescuePlaying.set(true);
+        rescueLoaderPlayButton.getStyleClass().removeAll(PLAY_BUTTON_STYLE);
+        rescueLoaderPlayButton.getStyleClass().add(STOP_BUTTON_STYLE);
+    }
+
+    private void onRescuePlayerStop() {
+        blockProgress.progressProperty().unbind();
+        blockProgress.progressProperty().set(0);
+        rescueLoaderPlayButton.getStyleClass().removeAll(STOP_BUTTON_STYLE);
+        rescueLoaderPlayButton.getStyleClass().add(PLAY_BUTTON_STYLE);
+        rescuePlaying.set(false);
+    }
+
+    private void playRescueLoader() {
+        rescuePlayer.get().onFinalization(() -> onRescuePlayerStop());
+        onRescuePlayerStart();
+        rescuePlayer.get().send();
+    }
+
+    private void stopRescueLoader() {
+        rescuePlayer.get().stop();
+        onRescuePlayerStop();
+    }
+
+    private CodeViewerController getCodeViewerController() {
+        if (codeViewerController == null) {
+            codeViewerController = new CodeViewerController();
+        }
+        return codeViewerController;
+    }
+
+    private ScrollPane getCodeViewerPane() {
+        try {
+            if (codeViewerPane == null) {
+                FXMLLoader loader = new FXMLLoader();
+                loader.setLocation(MainAppController.class.getResource("codeViewer.fxml"));
+                loader.setController(getCodeViewerController());
+                loader.setResources(LocaleUtil.getBundle());
+                codeViewerPane = loader.load();
+            }
+            return codeViewerPane;
+        } catch (Exception e) {
+            LOGGER.error("Creating CodeViewerPane", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Stage getCodeViewerStage() {
+        if (codeViewerStage == null) {
+            codeViewerStage = new Stage();
+            Scene codeViewerScene = new Scene(getCodeViewerPane());
+            codeViewerScene.getStylesheets().add(Constants.getThemeResourceUrl());
+            codeViewerStage.setScene(codeViewerScene);
+            codeViewerStage.setTitle("");
+            codeViewerStage.initModality(Modality.APPLICATION_MODAL);
+            codeViewerStage.initOwner(blockProgress.getScene().getWindow());
+            codeViewerStage.setResizable(true);
+        }
+        return codeViewerStage;
+    }
+
     @FXML
     void initialize() throws IOException {
         txLed.setVisible(false);
@@ -337,6 +432,21 @@ public class EepromWriterController {
             if (newValue != null) {
                 initializeSerialConsumer(newValue);
             }
+        });
+
+        rescueLoaderPlayButton.disableProperty().bind(playing.or(rescuePlayer.isNull()));
+        rescueLoaderShowButton.disableProperty().bind(playing);
+
+        rescueLoaderPlayButton.setOnAction(c -> {
+            if (rescuePlaying.get()) {
+                stopRescueLoader();
+            } else {
+                playRescueLoader();
+            }
+        });
+
+        rescueLoaderShowButton.setOnAction(c -> {
+            getCodeViewerStage().show();
         });
     }
 

@@ -32,6 +32,10 @@ public class Constants {
     private static final String ICONS_RESOURCE = "icons.bin";
     private static final String THEME_RESOURCE = "view/theme.css";
 
+    public static final int RESCUE_LOADER_ADDRESS = 0x2000;
+    public static final String RESCUE_LOADER_NAME = "Rescue Loader";
+    private static final String RESCUE_LOADER_RESOURCE = "eewriter/rescue_loader.bin";
+
     public static final byte[] ZEROED_SLOT = new byte[SLOT_SIZE];
 
     public static final byte B_01 = 1;
@@ -44,6 +48,7 @@ public class Constants {
     private static byte[] SINCLAIR_SCREEN;
     private static byte[] DEFAULT_CHARSET;
     private static byte[] ICONS;
+    private static byte[] RESCUE_LOADER;
 
     private static String THEME_RESOURCE_URL;
 
@@ -99,6 +104,15 @@ public class Constants {
                     CHARSET_SIZE);
         }
         return DEFAULT_CHARSET;
+    }
+
+    public static byte[] getRescueLoader() throws IOException {
+        if (RESCUE_LOADER == null) {
+            RESCUE_LOADER = Util.fromInputStream(
+                    DandanatorCpcConstants.class.getClassLoader()
+                            .getResourceAsStream(RESCUE_LOADER_RESOURCE));
+        }
+        return RESCUE_LOADER;
     }
 
     public static byte[] getIcons() throws IOException {
