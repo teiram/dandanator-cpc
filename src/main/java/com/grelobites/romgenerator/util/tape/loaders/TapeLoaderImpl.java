@@ -91,7 +91,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         LOGGER.info("Motor is on!");
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
-        int frameCounter = 0;
+        //int frameCounter = 0;
         boolean stopOnTapeStalled = false;
         gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {
@@ -105,9 +105,11 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
                         stopOnTapeStalled = true;
                     }
                 }
+                /*
                 if (++frameCounter % 1000 == 0) {
                     saveGameAsSna(getSnapshotGame(), sequence.getAndIncrement());
                 }
+                */
             }
             tapePlayer.stop();
         } catch (TapeFinishedException tfe) {
