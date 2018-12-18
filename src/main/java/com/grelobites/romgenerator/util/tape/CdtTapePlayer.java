@@ -391,7 +391,10 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     mask >>>= 1;
                     if (currentBlockLength == 1 && bitsLastByte < 8) {
                         if (mask == (0x80 >>> bitsLastByte)) {
+                            LOGGER.debug("Reached end of block partial last byte with bits {} and mask {}",
+                                    bitsLastByte, String.format("0x%02x", mask));
                             state = State.LAST_PULSE;
+                            currentBlockLength = 0;
                             currentTapePosition++;
                             break;
                         }
@@ -416,6 +419,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     }
                     state = State.PAUSE;
                     clockTimeout.setTimeout(4000);
+                    LOGGER.debug("Running last pulse timeout on {}", this);
                     break;
                 case PAUSE:
                     casseteInput = invertedOutput;
@@ -493,7 +497,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     break;
                 case PAUSE_STOP:
                     if (endBlockPause == 0) {
-                        state = State.STOP;
+                        state = State.TZX_HEADER;
                         repeat = true;
                     } else {
                         casseteInput = invertedOutput;
@@ -701,12 +705,13 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     currentBlockIndex++;
                     break;
                 case CdtBlockId.SILENCE:
-                    LOGGER.debug("Pause or Stop the Tape block");
                     endBlockPause = readInt(tapeBuffer, currentTapePosition + 1, 2)
                             * MILLISECOND_TSTATES;
                     currentTapePosition += 3;
                     state = State.PAUSE_STOP;
                     currentBlockIndex++;
+                    LOGGER.debug("Pause or Stop the Tape block. EndBlockPause {} ms",
+                            endBlockPause / MILLISECOND_TSTATES);
                     repeat = false;
                     break;
                 case CdtBlockId.GROUP_START:
@@ -803,8 +808,11 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     repeat = false;
                     currentBlockIndex++;
             }
+            if (repeat) {
+                currentBlock = currentBlockIndex;
+            }
         }
-        LOGGER.debug("found at position {}, block {}, tstates {}", currentTapePosition, currentBlock,
+        LOGGER.debug("block {} data starting at position {}, tstates {}", currentBlock, currentTapePosition,
                 clock.getTstates());
         notifyBlockChangeListeners(currentBlock);
     }
@@ -815,9 +823,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
             if (currentBlockIndex > blockOffsets.size()) {
                 throw new IllegalStateException("Trying to play with blocks exhausted");
             }
-            LOGGER.debug("On tape play position: {}/{}, block: {}/{}",
-                    currentTapePosition, tapeBuffer.length,
-                    currentBlockIndex, blockOffsets.size());
+            LOGGER.debug("On tape play: {}", this);
             state = State.START;
             currentTapePosition = blockOffsets.get(currentBlockIndex);
             clock.addClockTimeout(clockTimeout);
@@ -828,13 +834,10 @@ public class CdtTapePlayer implements ClockTimeoutListener {
 
     public void pause() {
         if (playing) {
-            LOGGER.debug("On tape pause position: {}/{}, block: {}/{}, state: {}, timeout remaining: {}",
-                    currentTapePosition, tapeBuffer.length,
-                    currentBlockIndex, blockOffsets.size(),
-                    state, clockTimeout.remaining());
+            LOGGER.debug("On tape pause: {}", this);
             clock.removeClockTimeout(clockTimeout);
             //Compensate for the pause/resume sequence? Lala needs something like this to work
-            //But breaks some other like 1942
+            //But breaks some others like 1942
             //clockTimeout.append(5000000);
             playing = false;
         }
@@ -842,10 +845,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
 
     public void resume() {
         if (!playing) {
-            LOGGER.debug("On tape resume position: {}/{}, block: {}/{}, state: {}, timeout remaining: {}",
-                    currentTapePosition, tapeBuffer.length,
-                    currentBlockIndex, blockOffsets.size(),
-                    state, clockTimeout.remaining());
+            LOGGER.debug("On tape resume: {}", this);
             clock.addClockTimeout(clockTimeout);
             playing = true;
         }
@@ -853,10 +853,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
 
     public void stop() {
         if (playing) {
-            LOGGER.debug("On tape stop pos: {}/{}, header: {}/{}, state: {}, Remaining: {}",
-                    currentTapePosition, tapeBuffer.length,
-                    currentBlockIndex, blockOffsets.size(),
-                    state, clockTimeout.remaining());
+            LOGGER.debug("On tape stop: {}", this);
             state = State.STOP;
             clock.removeClockTimeout(clockTimeout);
             playing = false;
@@ -912,8 +909,11 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                 ", currentBlockIndex=" + currentBlockIndex +
                 ", currentTapePosition=" + currentTapePosition +
                 ", currentBlockLength=" + currentBlockLength +
-                ", blockOffsets= " + blockOffsets +
-                ", tapeBuffer.length=" + (tapeBuffer != null ? tapeBuffer.length : "nil") +
+                ", currentMask=" + String.format("0x%02x", mask) +
+                ", blockOffsets=" + blockOffsets +
+                ", blocks=" + (blockOffsets != null ? blockOffsets.size() : "undefined") +
+                ", tapeBuffer.length=" + (tapeBuffer != null ? tapeBuffer.length : "null") +
+                ", clockTimeout=" + (clockTimeout != null ? clockTimeout : "null") +
                 ", eot=" + eot +
                 '}';
     }

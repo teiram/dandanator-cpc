@@ -6,7 +6,9 @@ import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.BaseEmulator;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayChangeListener;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayFunction;
+import com.grelobites.romgenerator.util.emulator.peripheral.MotorStateChangeListener;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
+import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
@@ -14,8 +16,10 @@ import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
@@ -28,9 +32,18 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     public TapeLoaderImpl(HardwareMode hardwareMode,
                           LoaderResources loaderResources) {
         super(hardwareMode, loaderResources);
-        tapePlayer = new CdtTapePlayer(clock, ppi, true);
+        tapePlayer = new CdtTapePlayer(clock, ppi, false);
     }
 
+    private static void saveGameAsSna(SnapshotGame game, int sequence) {
+        final String name = String.format("test%d.sna", sequence);
+        try (FileOutputStream fos = new FileOutputStream(name)) {
+            LOGGER.debug("Saving current snapshot to {}", name);
+            new SNAGameImageLoader().save(game, fos);
+        } catch (IOException ioe) {
+            LOGGER.error("Saving game to file", ioe);
+        }
+    }
     @Override
     public Game loadTape(InputStream tapeFile) throws IOException {
         long compensation = 0;
@@ -56,9 +69,10 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         while (!ppi.isMotorOn()) {
             compensation = executeFrame(compensation);
         }
-        ppi.addMotorStateChangeListener((c) -> {
+        final AtomicInteger sequence = new AtomicInteger();
+        final MotorStateChangeListener motorStateChangeListener = (c) -> {
             if (!c) {
-                LOGGER.debug("Stopping tape from listener with status {}", tapePlayer.getStatus());
+                LOGGER.debug("Stopping tape from listener with status {}", tapePlayer);
                 currentSnapshot = getSnapshotGame();
                 tapeLastSavePosition = tapePlayer.getCurrentTapePosition();
                 tapePlayer.pause();
@@ -67,15 +81,17 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
                     executionAborted = true;
                 }
             } else {
-                LOGGER.debug("Restarting tape from listener with status {} ", tapePlayer.getStatus());
+                LOGGER.debug("Restarting tape from listener with status {} ", tapePlayer);
                 tapePlayer.resume();
                 framesWithoutTapeMovement = 0;
             }
-        });
+        };
+        ppi.addMotorStateChangeListener(motorStateChangeListener);
 
         LOGGER.info("Motor is on!");
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
+        int frameCounter = 0;
         boolean stopOnTapeStalled = false;
         gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {
@@ -89,6 +105,9 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
                         stopOnTapeStalled = true;
                     }
                 }
+                if (++frameCounter % 1000 == 0) {
+                    saveGameAsSna(getSnapshotGame(), sequence.getAndIncrement());
+                }
             }
             tapePlayer.stop();
         } catch (TapeFinishedException tfe) {
@@ -97,10 +116,16 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         }
 
         gateArray.removeChangeListener(paletteGateArrayChangeListener);
+        ppi.removeMotorStateChangeListener(motorStateChangeListener);
         LOGGER.info("Tape finished at {}, tapeLastSavePosition was {}",
                 tapePlayer.getCurrentTapePosition(), tapeLastSavePosition);
 
-
+        /*
+        executionAborted = false;
+        for (int i = 0; i < 1000; i++) {
+            compensation = executeFrame(compensation);
+        }
+        */
         /*
         long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
 
@@ -123,7 +148,8 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     }
 
     private boolean isTapeNearEndPosition() {
-        return tapePlayer.getTapeLength() - tapePlayer.getCurrentTapePosition() < 2;
+        //return tapePlayer.getTapeLength() - tapePlayer.getCurrentTapePosition() < 2;
+        return false;
     }
 
     @Override
@@ -149,9 +175,11 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         long limit = clock.getTstates() + tStates;
         while (clock.getTstates() < limit && !executionAborted) {
             z80.execute();
+            /*
             if (tapePlayer.getCurrentTapePosition() == tapePlayer.getTapeLength()) {
                 executionAborted = true;
             }
+            */
         }
         return clock.getTstates() - limit;
     }

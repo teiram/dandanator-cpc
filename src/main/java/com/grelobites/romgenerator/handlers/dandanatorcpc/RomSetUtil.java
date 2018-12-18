@@ -87,13 +87,13 @@ public class RomSetUtil {
 
     public static boolean isValidGameName(String name) {
         return name != null &&
-                name.length() < DandanatorCpcConstants.GAMENAME_EFFECTIVE_SIZE &&
+                name.length() <= DandanatorCpcConstants.GAMENAME_EFFECTIVE_SIZE &&
                 isPrintableAscii(name);
     }
 
     public static boolean isValidPokeName(String name) {
         return name != null &&
-                name.length() < DandanatorCpcConstants.POKE_EFFECTIVE_NAME_SIZE &&
+                name.length() <= DandanatorCpcConstants.POKE_EFFECTIVE_NAME_SIZE &&
                 isPrintableAscii(name);
     }
 

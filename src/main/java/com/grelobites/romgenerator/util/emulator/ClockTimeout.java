@@ -24,4 +24,11 @@ public class ClockTimeout {
     public void setTimeout(long remaining) {
         this.remaining = remaining > 10 ? remaining : 10;
     }
+
+    @Override
+    public String toString() {
+        return "ClockTimeout{" +
+                "remaining=" + remaining +
+                '}';
+    }
 }

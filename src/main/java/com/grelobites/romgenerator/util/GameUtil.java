@@ -28,10 +28,8 @@ public class GameUtil {
 
     public static Optional<Game> createGameFromFile(File file) {
         LOGGER.debug("createGameFromFile " + file);
-        try {
-            if (file.canRead() && file.isFile()) {
-                InputStream is = new FileInputStream(file);
-
+        if (file.canRead() && file.isFile()) {
+            try (InputStream is = new FileInputStream(file)) {
                 GameImageLoader loader = Util.getFileExtension(file.getName())
                         .map(GameImageLoaderFactory::getLoader)
                         .orElseGet(GameImageLoaderFactory::getDefaultLoader);
@@ -39,9 +37,11 @@ public class GameUtil {
                 Game game = loader.load(is);
                 game.setName(getGameName(file));
                 return Optional.of(game);
+            } catch (Exception e) {
+                LOGGER.error("Creating game from file " + file, e);
             }
-        } catch (Exception e) {
-            LOGGER.error("Creating game from file " + file, e);
+        } else {
+            LOGGER.warn("The provided item is not a file or not readable {}", file);
         }
         return Optional.empty();
     }

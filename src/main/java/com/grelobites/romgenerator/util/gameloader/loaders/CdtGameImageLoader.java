@@ -4,10 +4,12 @@ import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
+import com.grelobites.romgenerator.util.sna.SnaUtil;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoader;
 import com.grelobites.romgenerator.util.tape.TapeLoaderFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,6 +21,11 @@ public class CdtGameImageLoader implements GameImageLoader {
                 HardwareMode.valueOf(Configuration.getInstance().getTapeLoaderTarget()));
         SnapshotGame game = (SnapshotGame) tapeLoader.loadTape(is);
         game.setHoldScreen(true);
+        /*
+        try (FileOutputStream fos = new FileOutputStream("fooooo.sna")) {
+            SnaUtil.toSnaImageV1(game, fos);
+        }
+        */
         return game;
     }
 

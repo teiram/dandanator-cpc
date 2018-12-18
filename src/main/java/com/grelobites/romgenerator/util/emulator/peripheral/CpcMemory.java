@@ -35,12 +35,17 @@ public class CpcMemory implements Memory {
     }
 
     private byte[] bankSlot(int address, boolean write) {
-        int bankSlot = gateArray.getMemoryBankSlot(address);
-        byte[][] target = !write && (
-                (bankSlot == LOW_ROM && gateArray.isLowRomEnabled()) ||
-                        (bankSlot == HIGH_ROM && gateArray.isHighRomEnabled())) ?
-                romBanks : ramBanks;
-        return target[bankSlot];
+        try {
+            int bankSlot = gateArray.getMemoryBankSlot(address);
+            byte[][] target = !write && (
+                    (bankSlot == LOW_ROM && gateArray.isLowRomEnabled()) ||
+                            (bankSlot == HIGH_ROM && gateArray.isHighRomEnabled())) ?
+                    romBanks : ramBanks;
+            return target[bankSlot];
+        } catch (Exception e) {
+            LOGGER.error("Getting bank slot for address {}, write {}", String.format("0x%04X", address), write);
+            throw e;
+        }
     }
 
     private int bankAddress(int address) {
@@ -67,14 +72,14 @@ public class CpcMemory implements Memory {
     @Override
     public int peek16(int address) {
         int lsb = peek8(address);
-        int msb = peek8(address + 1);
+        int msb = peek8((address + 1) & 0xffff);
         return (msb << 8) | lsb;
     }
 
     @Override
     public void poke16(int address, int word) {
         poke8(address, word);
-        poke8(address + 1, word >>> 8);
+        poke8((address + 1) & 0xffff, word >>> 8);
     }
 
     public void loadRamBank(byte[] source, int slot) {
