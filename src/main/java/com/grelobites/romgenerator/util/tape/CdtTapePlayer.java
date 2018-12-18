@@ -83,8 +83,9 @@ public class CdtTapePlayer implements ClockTimeoutListener {
 
     //Adjust duration in 3.5Mhz clock pulses to 4Mhz clock pulses
     private static int adjustDuration(int duration) {
-        LOGGER.debug("adjustDuration {} -> {}", duration, ((40 * duration + 18) / 35));
-        return ((duration + 18) * 40) / 35;
+        int adjustedDuration = (40 * (duration + 0)) / 35;
+        LOGGER.debug("adjustDuration {} -> {}", duration, adjustedDuration);
+        return adjustedDuration;
     }
 
     public CdtTapePlayer(Clock clock, Ppi ppi) {
@@ -415,11 +416,11 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     if (endBlockPause == 0) {
                         state = State.TZX_HEADER;
                         repeat = true;
-                        break;
+                    } else {
+                        state = State.PAUSE;
+                        clockTimeout.setTimeout(MILLISECOND_TSTATES);
+                        LOGGER.debug("Running last pulse timeout on {}", this);
                     }
-                    state = State.PAUSE;
-                    clockTimeout.setTimeout(4000);
-                    LOGGER.debug("Running last pulse timeout on {}", this);
                     break;
                 case PAUSE:
                     casseteInput = invertedOutput;
@@ -604,7 +605,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     }
                     */
                     endBlockPause *= MILLISECOND_TSTATES;
-                    LOGGER.debug("Standard Speed block [endBlockPause={}ms, leaderPulses={}, currentBlockLength={}, tapePosition={}]",
+                    LOGGER.debug("Standard Speed block [endBlockPause={} ms, leaderPulses={}, currentBlockLength={}, tapePosition={}]",
                             endBlockPause / MILLISECOND_TSTATES, leaderPulses, currentBlockLength, currentTapePosition);
                     repeat = false;
                     break;
@@ -623,7 +624,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     currentBlockIndex++;
                     endBlockPause *= MILLISECOND_TSTATES;
                     LOGGER.debug("Turbo Speed block[leaderLength={}, sync1Length={}, sync2Length={}, zeroLength={}, " +
-                            "oneLength={}, leaderPulses={}, bitsLastByte={}, endBlockPause={}ms, currentBlockLength={}, " +
+                            "oneLength={}, leaderPulses={}, bitsLastByte={}, endBlockPause={} ms, currentBlockLength={}, " +
                             "tapePosition={}]",
                         leaderLength, sync1Length, sync2Length,
                         zeroLength, oneLength, leaderPulses, bitsLastByte, endBlockPause / MILLISECOND_TSTATES,
@@ -649,7 +650,6 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     repeat = false;
                     break;
                 case CdtBlockId.PURE_DATA_BLOCK:
-                    LOGGER.debug("Pure Data block");
                     zeroLength =    adjustDuration(readInt(tapeBuffer, currentTapePosition + 1, 2));
                     oneLength =     adjustDuration(readInt(tapeBuffer, currentTapePosition + 3, 2));
                     bitsLastByte = tapeBuffer[currentTapePosition + 5] & 0xff;
@@ -660,7 +660,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     state = State.NEWBYTE_NOCHANGE;
                     currentBlockIndex++;
                     repeat = false;
-                    LOGGER.debug("Pure data block [zeroLength={}, oneLength={}, bitsLastByte={}, endBlockPause={}ms, currentBlockLength={}]",
+                    LOGGER.debug("Pure data block [zeroLength={}, oneLength={}, bitsLastByte={}, endBlockPause={} ms, currentBlockLength={}]",
                             zeroLength,
                             oneLength,
                             bitsLastByte,
