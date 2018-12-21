@@ -434,6 +434,7 @@ public class EepromWriterController {
             }
         });
 
+        /*
         rescueLoaderPlayButton.disableProperty().bind(playing.or(rescuePlayer.isNull()));
         rescueLoaderShowButton.disableProperty().bind(playing);
 
@@ -448,6 +449,9 @@ public class EepromWriterController {
         rescueLoaderShowButton.setOnAction(c -> {
             getCodeViewerStage().show();
         });
+        */
+        rescueLoaderPlayButton.setDisable(true);
+        rescueLoaderShowButton.setDisable(true);
     }
 
 }
