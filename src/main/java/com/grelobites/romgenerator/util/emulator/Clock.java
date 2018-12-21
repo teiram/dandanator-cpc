@@ -46,7 +46,7 @@ public class Clock {
                     clockTimeout.getListener().timeout(states);
 
                     if (clockTimeout.remaining > 0 && error < 0) {
-                        //Timeout rearmed: Substract error from the last remaining
+                        //Timeout rearmed in listener: Substract error from the remaining to compensate
                         clockTimeout.remaining += error;
                     }
                 }

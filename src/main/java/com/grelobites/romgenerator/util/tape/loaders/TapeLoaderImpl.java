@@ -91,7 +91,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         LOGGER.info("Motor is on!");
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
-        //int frameCounter = 0;
+        int frameCounter = 0;
         boolean stopOnTapeStalled = false;
         gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {

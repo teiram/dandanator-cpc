@@ -83,7 +83,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
 
     //Adjust duration in 3.5Mhz clock pulses to 4Mhz clock pulses
     private static int adjustDuration(int duration) {
-        int adjustedDuration = (40 * (duration + 0)) / 35;
+        int adjustedDuration = (40 * duration) / 35;
         LOGGER.debug("adjustDuration {} -> {}", duration, adjustedDuration);
         return adjustedDuration;
     }
@@ -392,8 +392,6 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     mask >>>= 1;
                     if (currentBlockLength == 1 && bitsLastByte < 8) {
                         if (mask == (0x80 >>> bitsLastByte)) {
-                            LOGGER.debug("Reached end of block partial last byte with bits {} and mask {}",
-                                    bitsLastByte, String.format("0x%02x", mask));
                             state = State.LAST_PULSE;
                             currentBlockLength = 0;
                             currentTapePosition++;
@@ -412,18 +410,17 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     }
                     break;
                 case LAST_PULSE:
-                    casseteInput = !casseteInput;
                     if (endBlockPause == 0) {
                         state = State.TZX_HEADER;
                         repeat = true;
                     } else {
+                        casseteInput = !casseteInput;
                         state = State.PAUSE;
                         clockTimeout.setTimeout(MILLISECOND_TSTATES);
-                        LOGGER.debug("Running last pulse timeout on {}", this);
                     }
                     break;
                 case PAUSE:
-                    casseteInput = invertedOutput;
+                    //casseteInput = invertedOutput;
                     state = State.TZX_HEADER;
                     clockTimeout.setTimeout(endBlockPause);
                     break;
@@ -451,7 +448,8 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     casseteInput = !casseteInput;
                 case PULSE_SEQUENCE_NOCHANGE:
                     if (leaderPulses-- > 0) {
-                        clockTimeout.setTimeout(adjustDuration(readInt(tapeBuffer, currentTapePosition, 2)));
+                        leaderLength = adjustDuration(readInt(tapeBuffer, currentTapePosition, 2));
+                        clockTimeout.setTimeout(leaderLength);
                         currentTapePosition += 2;
                         state = State.PULSE_SEQUENCE;
                         break;

@@ -227,7 +227,7 @@ public class BaseEmulator implements Z80operations {
 
     @Override
     public int inPort(int port) {
-        clock.addTstates(4); // 4 clocks for read byte from bus (right?)
+        clock.addTstates(4); // 4 clocks to read byte from bus
         if ((port & 0xFF00) == 0xBE00) {
             //LOGGER.debug("CRTC Read Status");
             return crtc.onReadStatusRegisterOperation();
@@ -252,7 +252,7 @@ public class BaseEmulator implements Z80operations {
 
     @Override
     public void outPort(int port, int value) {
-        clock.addTstates(4); // 4 clocks for writing byte to bus (right?)
+        clock.addTstates(4); // 4 clocks to write byte to bus
         if ((port & 0xFF00) == 0x7F00) {
             //LOGGER.debug("GateArray I/O Port {}, Value {}",
             //      String.format("%04x", port), String.format("%02x", value));
