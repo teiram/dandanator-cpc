@@ -32,15 +32,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ApplicationContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationContext.class);
     private static final String APPLICATION_TITLE = "ROM Generator";
+    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(0);
+
     Stage applicationStage;
     private Pane romSetHandlerInfoPane;
     private final ObservableList<Game> gameList;
@@ -71,6 +77,9 @@ public class ApplicationContext {
         t.setName("RomGenerator executor service");
         return t;
     });
+
+    private final Map<Integer, Future<OperationResult>> runningTasks =
+            new ConcurrentHashMap<>();
 
     public ApplicationContext() {
         this.gameList = FXCollections.observableArrayList(Game::getObservable);
@@ -157,7 +166,10 @@ public class ApplicationContext {
 
     public Future<OperationResult> addBackgroundTask(Callable<OperationResult> task) {
         Platform.runLater(() -> backgroundTaskCount.set(backgroundTaskCount.get() + 1));
-        return executorService.submit(new BackgroundTask(task, backgroundTaskCount));
+        BackgroundTask wrapper = new BackgroundTask(task, backgroundTaskCount);
+        Future<OperationResult> future = executorService.submit(wrapper);
+        runningTasks.put(wrapper.getId(), future);
+        return future;
     }
 
     public ReadOnlyObjectProperty<Game> selectedGameProperty() {
@@ -255,18 +267,37 @@ public class ApplicationContext {
         }
     }
 
+    public void shutdownBackgroundTasks() {
+        LOGGER.info("Shutting down background tasks!!");
+        for (Future<OperationResult> future : runningTasks.values()) {
+            LOGGER.debug("Shutting down future {}", future);
+            if (!future.cancel(true)) {
+                LOGGER.debug("Unable to cancel future");
+            }
+            LOGGER.debug("After cancelling, done is {}", future.isDone());
+        }
+        LOGGER.info("All running background tasks shut down");
+    }
+
     class BackgroundTask implements Callable<OperationResult> {
         private IntegerProperty backgroundTaskCount;
         private Callable<OperationResult> task;
+        private Integer id;
 
         public BackgroundTask(Callable<OperationResult> task, IntegerProperty backgroundTaskCount) {
             this.backgroundTaskCount = backgroundTaskCount;
             this.task = task;
+            this.id = ID_GENERATOR.getAndIncrement();
+        }
+
+        public Integer getId() {
+            return id;
         }
 
         @Override
         public OperationResult call() throws Exception {
             final OperationResult result = task.call();
+            runningTasks.remove(id);
             Platform.runLater(() -> {
                 backgroundTaskCount.set(backgroundTaskCount.get() - 1);
                 if (result.isError()) {

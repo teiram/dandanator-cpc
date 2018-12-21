@@ -20,6 +20,7 @@ import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
@@ -28,6 +29,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
 import javafx.util.StringConverter;
@@ -193,6 +196,15 @@ public class MainAppController {
 
         operationInProgressIndicator.visibleProperty().bind(
                 applicationContext.backgroundTaskCountProperty().greaterThan(0));
+
+        operationInProgressIndicator.setOnMouseClicked(e -> {
+                if (e.getButton().equals(MouseButton.PRIMARY)) {
+                    if (e.getClickCount() == 2) {
+                        LOGGER.info("Required background tasks termination");
+                        applicationContext.shutdownBackgroundTasks();
+                    }
+                }
+        });
 
         onGameSelection(null, null);
 

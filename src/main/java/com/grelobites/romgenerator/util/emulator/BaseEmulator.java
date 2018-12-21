@@ -244,8 +244,7 @@ public class BaseEmulator implements Z80operations {
         } else {
             LOGGER.debug("Unhandled I/O IN Operation on port {}. Z80 Status: {}",
                     String.format("0x%04x", port),
-                    z80.getZ80State(),
-                    new Throwable());
+                    z80.getZ80State());
         }
         return 0;
     }
@@ -284,8 +283,7 @@ public class BaseEmulator implements Z80operations {
             LOGGER.debug("Unhandled I/O OUT Operation on port {}, value {}, Z80 Status: {}",
                     String.format("0x%04x", port),
                     String.format("0x%02x", value),
-                    z80.getZ80State(),
-                    new Throwable());
+                    z80.getZ80State());
         }
     }
 
@@ -363,6 +361,11 @@ public class BaseEmulator implements Z80operations {
         long limit = clock.getTstates() + tStates;
         while (clock.getTstates() < limit && !executionAborted) {
             z80.execute();
+            //Check if our thread gets interrupted
+            if (Thread.interrupted()) {
+                LOGGER.warn("Thread running emulation was interrupted");
+                executionAborted = true;
+            }
         }
         return clock.getTstates() - limit;
     }
