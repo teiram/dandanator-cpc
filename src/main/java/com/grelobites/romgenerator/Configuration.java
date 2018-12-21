@@ -59,6 +59,8 @@ public class Configuration {
                         isCharSetExternallyProvided(newValue)));
         this.charSetFactory = new CharSetFactory();
         this.tapeLoaderTarget = new SimpleStringProperty(DEFAULT_TAPELOADER_TARGET);
+        tapeLoaderTarget.addListener((observable, oldValue, newValue) -> persistConfigurationValue(
+                TAPELOADERTARGET_PROPERTY, newValue));
     }
 
     public static Configuration getInstance() {
@@ -225,6 +227,8 @@ public class Configuration {
 
     private static Configuration setFromPreferences(Configuration configuration) {
         Preferences p = getApplicationPreferences();
+        configuration.tapeLoaderTarget.set(p.get(TAPELOADERTARGET_PROPERTY,
+                DEFAULT_TAPELOADER_TARGET));
         return configuration;
     }
 
