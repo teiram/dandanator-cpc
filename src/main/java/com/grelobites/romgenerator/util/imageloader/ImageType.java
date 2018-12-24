@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.util.imageloader;
 
 import com.grelobites.romgenerator.util.imageloader.loaders.MultipaintImageLoader;
 import com.grelobites.romgenerator.util.imageloader.loaders.RawImageLoader;
+import com.grelobites.romgenerator.util.imageloader.loaders.RgasImageLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +11,8 @@ import java.util.Optional;
 
 public enum ImageType {
     RAW(RawImageLoader.class),
-    MULTIPAINT(MultipaintImageLoader.class);
+    MULTIPAINT(MultipaintImageLoader.class),
+    RGAS(RgasImageLoader.class);
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageType.class);
 
