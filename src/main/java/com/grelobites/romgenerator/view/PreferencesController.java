@@ -7,6 +7,7 @@ import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.FontViewer;
 import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.LocaleUtil;
+import com.grelobites.romgenerator.util.imageloader.ImageType;
 import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -84,7 +85,7 @@ public class PreferencesController {
     }
 
     private void updateBackgroundImage(File backgroundImageFile) throws IOException {
-        if (isReadableFile(backgroundImageFile) && backgroundImageFile.length() == Constants.CPC_SCREEN_WITH_PALETTE_SIZE) {
+        if (ImageType.imageLoader(backgroundImageFile).isPresent()) {
             Configuration.getInstance().setBackgroundImagePath(backgroundImageFile.getAbsolutePath());
             recreateBackgroundImage();
         } else {

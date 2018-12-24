@@ -31,6 +31,9 @@ Firmware Number 	Hardware Number 	Colour Name 	R % 	G % 	B % 	Hexadecimal 	RGB v
 26 					4Bh 				Bright White 	100 	100 	100 	#FFFFFF 		255/255/255
 */
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public enum CpcColor {
 	BLACK(0xFF000000, 0x54),
 	BLUE(0xFF000080, 0x44),
@@ -59,6 +62,8 @@ public enum CpcColor {
 	BRIGHTYELLOW(0xFFFFFF00, 0x4A),
 	PASTELYELLOW(0xFFFFFF80, 0x43),
 	BRIGHTWHITE(0xFFFFFFFF, 0x4B);
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(CpcColor.class);
 
 	private static int HARDWARE_MASK = 0x1F;
 
@@ -105,5 +110,15 @@ public enum CpcColor {
 
 	public static int hardIndexed(int paletteIndex) {
 	    return HARD_INDEXED[paletteIndex & HARDWARE_MASK].argb();
+    }
+
+    public static int snaValue(int firmIndex) {
+	    if (firmIndex < FIRM_INDEXED.length) {
+            return FIRM_INDEXED[firmIndex].hardwareId & HARDWARE_MASK;
+        } else {
+	        LOGGER.warn("Invalid firmware color provided {}. Return black as fallback",
+                    String.format("0x%02x", firmIndex));
+	        return BLACK.hardwareId & HARDWARE_MASK;
+        }
     }
 }

@@ -3,6 +3,8 @@ package com.grelobites.romgenerator;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.CharSetFactory;
 import com.grelobites.romgenerator.util.RamGameCompressor;
+import com.grelobites.romgenerator.util.imageloader.ImageLoader;
+import com.grelobites.romgenerator.util.imageloader.ImageType;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -11,9 +13,11 @@ import javafx.beans.property.StringProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.prefs.Preferences;
 
 public class Configuration {
@@ -117,7 +121,13 @@ public class Configuration {
         if (backgroundImage == null) {
             if (validConfigurationValue(backgroundImagePath.get())) {
                 try {
-                    backgroundImage = Files.readAllBytes(Paths.get(backgroundImagePath.get()));
+                    File imageFile = new File(backgroundImagePath.get());
+                    Optional<ImageLoader> loader = ImageType.imageLoader(imageFile);
+                    if (loader.isPresent()) {
+                        backgroundImage = loader.get().asByteArray(imageFile);
+                    } else {
+                        backgroundImage = Constants.getDefaultMenuScreen();
+                    }
                 } catch (Exception e) {
                     LOGGER.error("Unable to load Background Image from  " + backgroundImagePath.get(), e);
                     backgroundImage = Constants.getDefaultMenuScreen();
