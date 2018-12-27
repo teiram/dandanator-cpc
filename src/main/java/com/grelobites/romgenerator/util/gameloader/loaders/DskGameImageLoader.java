@@ -1,14 +1,11 @@
 package com.grelobites.romgenerator.util.gameloader.loaders;
 
-import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.dsk.DskLoader;
 import com.grelobites.romgenerator.util.emulator.resources.Cpc6128LoaderResources;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoader;
-import com.grelobites.romgenerator.util.tape.TapeLoader;
-import com.grelobites.romgenerator.util.tape.TapeLoaderFactory;
 
 import java.io.IOException;
 import java.io.InputStream;

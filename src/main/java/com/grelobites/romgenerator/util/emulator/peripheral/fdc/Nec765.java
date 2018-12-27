@@ -12,18 +12,18 @@ public class Nec765 {
     private static final Logger LOGGER = LoggerFactory.getLogger(Nec765.class);
     private static final int NUM_DRIVES = 4;
 
-    private Nec765CommandFactory commandFactory = new Nec765CommandFactory();
-    private Nec765MainStatus mainStatusRegister = new Nec765MainStatus(0);
-    private Nec765Status0 status0Register = new Nec765Status0(0);
-    private Nec765Status1 status1Register = new Nec765Status1(0);
-    private Nec765Status2 status2Register = new Nec765Status2(0);
-    private Nec765Status3 status3Register = new Nec765Status3(0);
+    private final Nec765CommandFactory commandFactory = new Nec765CommandFactory();
+    private final Nec765MainStatus mainStatusRegister = new Nec765MainStatus(0);
+    private final Nec765Status0 status0Register = new Nec765Status0(0);
+    private final Nec765Status1 status1Register = new Nec765Status1(0);
+    private final Nec765Status2 status2Register = new Nec765Status2(0);
+    private final Nec765Status3 status3Register = new Nec765Status3(0);
 
     private Nec765Statistics statistics = new Nec765Statistics();
     private boolean motorOn;
-    private DriveStatus[] driveStatuses = new DriveStatus[NUM_DRIVES];
-    private DriveParameters driveParameters = new DriveParameters();
-    private DskContainer[] attachedDskContainers = new DskContainer[NUM_DRIVES];
+    private final DriveStatus[] driveStatuses = new DriveStatus[NUM_DRIVES];
+    private final DriveParameters driveParameters = new DriveParameters();
+    private final DskContainer[] attachedDskContainers = new DskContainer[NUM_DRIVES];
     private Nec765Phase currentPhase;
     private Nec765Command currentCommand;
     private int lastSelectedUnit = 0;
@@ -36,6 +36,7 @@ public class Nec765 {
         mainStatusRegister.setRQM(true);
         currentPhase = Nec765Phase.COMMAND;
     }
+
     public Nec765() {
         onCommandFinalization();
         motorOn = false;
@@ -48,40 +49,20 @@ public class Nec765 {
         return mainStatusRegister;
     }
 
-    public void setMainStatusRegister(Nec765MainStatus mainStatusRegister) {
-        this.mainStatusRegister = mainStatusRegister;
-    }
-
     public Nec765Status0 getStatus0Register() {
         return status0Register;
-    }
-
-    public void setStatus0Register(Nec765Status0 status0Register) {
-        this.status0Register = status0Register;
     }
 
     public Nec765Status1 getStatus1Register() {
         return status1Register;
     }
 
-    public void setStatus1Register(Nec765Status1 status1Register) {
-        this.status1Register = status1Register;
-    }
-
     public Nec765Status2 getStatus2Register() {
         return status2Register;
     }
 
-    public void setStatus2Register(Nec765Status2 status2Register) {
-        this.status2Register = status2Register;
-    }
-
     public Nec765Status3 getStatus3Register() {
         return status3Register;
-    }
-
-    public void setStatus3Register(Nec765Status3 status3Register) {
-        this.status3Register = status3Register;
     }
 
     public Nec765Phase getCurrentPhase() {
@@ -122,10 +103,6 @@ public class Nec765 {
         return driveParameters;
     }
 
-    public void setDriveParameters(DriveParameters driveParameters) {
-        this.driveParameters = driveParameters;
-    }
-
     public Optional<DskContainer> getDskContainer(int drive) {
         return Optional.ofNullable(attachedDskContainers[drive]);
     }
@@ -159,7 +136,7 @@ public class Nec765 {
         if (currentCommand != null) {
             switch (currentPhase) {
                 case COMMAND:
-                    //What happens in this case?
+                    LOGGER.warn("Trying to read data in command phase"); //What happens in this case?
                     break;
                 case EXECUTION:
                 case RESULT:

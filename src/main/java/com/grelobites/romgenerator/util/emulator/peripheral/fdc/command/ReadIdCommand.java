@@ -50,6 +50,7 @@ public class ReadIdCommand extends Nec765BaseCommand implements Nec765Command {
                 Track dskTrack = dskOpt.get().getTrack(sectorInfo.getTrack());
                 //Get the first sector, maybe this is enough
                 sectorInfo = dskTrack.getInformation().getSectorInformation(0);
+                LOGGER.debug("Setting sector information to {}", sectorInfo);
                 controller.getDriveStatus(unit).setCurrentSector(sectorInfo);
                 controller.getStatus0Register().setNotReady(false);
                 controller.getMainStatusRegister().setDataReady(true);

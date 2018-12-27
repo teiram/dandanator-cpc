@@ -33,6 +33,7 @@ public class HeadRepositionCommand implements Nec765Command {
     private int currentCommandWord = 0;
 
     private void repositionToTrack(int track) {
+        LOGGER.debug("Repositioning to track {}", track);
         controller.setLastSelectedUnit(unit);
         Optional<DskContainer> dskOpt = controller.getDskContainer(unit);
         if (dskOpt.isPresent()) {
@@ -40,6 +41,7 @@ public class HeadRepositionCommand implements Nec765Command {
             if (targetTrack != null) {
                 controller.getDriveStatus(unit).setCurrentSector(targetTrack.getInformation()
                     .getSectorInformation(0));
+                controller.getStatus0Register().setSeekEnd(true);
             }
         } else {
             LOGGER.info("No disk is attached to the required unit");

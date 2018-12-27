@@ -65,7 +65,7 @@ public class ReadDataCommand extends ReadWriteBaseCommand {
                     System.arraycopy(
                             dskTrack.getSectorData(sectorInfo.getPhysicalPosition()), 0,
                             sectorData, 0, sectorBytes);
-                    LOGGER.trace("Required sector is {}", Util.dumpAsHexString(sectorData));
+                    LOGGER.debug("Required sector is {}", Util.dumpAsHexString(sectorData));
                     controller.getMainStatusRegister().setDataReady(true);
                     //Fill status registers stored in DSK
                     controller.getStatus1Register().setValue(sectorInfo.getFdcStatusRegister1());

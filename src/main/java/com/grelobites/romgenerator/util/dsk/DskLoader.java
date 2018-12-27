@@ -24,7 +24,7 @@ public class DskLoader extends BaseEmulator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DskLoader.class);
     private static final int FRAMES_PER_SECOND = 50;
     private static final int DISK_READ_THRESHOLD = 16384;
-    private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 4;
+    private static final int DISK_ACCESS_TIMEOUT_TS = FRAME_TSTATES * FRAMES_PER_SECOND * 10;
     private static final String CPM_BOOTSTRAP_COMMAND = "|cpm";
     private static final String RUN_COMMAND_TEMPLATE = "run \"%s";
 
@@ -95,7 +95,7 @@ public class DskLoader extends BaseEmulator {
     private static String guessBootstrapCommand(DskContainer container) throws IOException {
         FileSystemParameters parameters = DskUtil.guessFileSystemParameters(container);
         if (parameters.getReservedTracks() > 0) {
-            //Probaby system disk that can be loaded with |cpm?
+            //Probably a system disk that can be loaded with |cpm?
             return CPM_BOOTSTRAP_COMMAND;
         } else {
             //Try to get filenames from filesystem
@@ -132,7 +132,7 @@ public class DskLoader extends BaseEmulator {
         DskContainer container = DskContainer.fromInputStream(dskFile);
         String command = guessBootstrapCommand(container);
         if (command != null) {
-            LOGGER.info("Guesses bootstrap command as {}", command);
+            LOGGER.info("Guesses bootstrap command as: {}", command);
             //Wait for the computer to initialize
             for (int i = 0; i < 2 * FRAMES_PER_SECOND; i++) {
                 compensation = executeFrame(compensation);

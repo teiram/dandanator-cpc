@@ -39,6 +39,7 @@ public abstract class ReadWriteBaseCommand extends Nec765BaseCommand implements 
             } catch (Exception e) {
                 LOGGER.error("In preExecutionOperation", e);
                 controller.setCurrentPhase(Nec765Phase.RESULT);
+                controller.getMainStatusRegister().setFdcBusy(false);
             }
         } else {
             LOGGER.info("No disk is attached to the addressed unit");

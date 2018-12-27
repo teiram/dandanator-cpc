@@ -57,6 +57,7 @@ public class SenseInterruptStatusCommand implements Nec765Command {
     protected int getCommandResult() {
         switch (currentResultWord++) {
             case 0:
+                LOGGER.debug("Returning SR0 {}", String.format("0x%02x", controller.getStatus0Register().value()));
                 return controller.getStatus0Register().value();
             case 1:
                 controller.clearCurrentCommand();

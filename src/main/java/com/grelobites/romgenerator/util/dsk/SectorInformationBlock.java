@@ -70,7 +70,7 @@ public class SectorInformationBlock {
         return "SectorInformationBlock{" +
                 "track=" + track +
                 ", side=" + side +
-                ", sectorId=0x" + Integer.toHexString(sectorId) +
+                ", sectorId=0x" + String.format("%02x", sectorId) +
                 ", sectorSize=" + sectorSize +
                 ", fdcStatusRegister1=" + fdcStatusRegister1 +
                 ", fdcStatusRegister2=" + fdcStatusRegister2 +
