@@ -28,7 +28,7 @@ public class Configuration {
     private static final String CHARSETPATH_PROPERTY = "charSetPath";
     private static final String TAPELOADERTARGET_PROPERTY = "tapeLoaderTarget";
     public static final String INTERNAL_CHARSET_PREFIX= "internal://";
-    private static final String DEFAULT_MODE = RomSetHandlerType.DDNTR_V1.name();
+    private static final String DEFAULT_MODE = RomSetHandlerType.DDNTR_V2.name();
     private static final String DEFAULT_TAPELOADER_TARGET = HardwareMode.HW_CPC464.name();
 
     byte[] charSet;
@@ -42,6 +42,8 @@ public class Configuration {
     private RamGameCompressor ramGameCompressor;
     private StringProperty tapeLoaderTarget;
     private BooleanProperty compressSnaDumps;
+    private BooleanProperty includeExtraRom;
+    private BooleanProperty enforceFollowRom;
 
     private static Configuration INSTANCE;
 
@@ -59,6 +61,8 @@ public class Configuration {
         this.charSetPathExternallyProvided = new SimpleBooleanProperty();
         this.mode = new SimpleStringProperty(DEFAULT_MODE);
         this.compressSnaDumps = new SimpleBooleanProperty(true);
+        this.enforceFollowRom = new SimpleBooleanProperty(false);
+        this.includeExtraRom = new SimpleBooleanProperty(true);
         this.charSetPath.addListener((observable, oldValue, newValue) ->
                 charSetPathExternallyProvided.set(
                         isCharSetExternallyProvided(newValue)));
@@ -230,6 +234,30 @@ public class Configuration {
     public void setTapeLoaderTarget(String tapeLoaderTarget) {
         this.tapeLoaderTarget.set(tapeLoaderTarget);
         persistConfigurationValue(TAPELOADERTARGET_PROPERTY, tapeLoaderTarget);
+    }
+
+    public boolean isIncludeExtraRom() {
+        return includeExtraRom.get();
+    }
+
+    public BooleanProperty includeExtraRomProperty() {
+        return includeExtraRom;
+    }
+
+    public void setIncludeExtraRom(boolean includeExtraRom) {
+        this.includeExtraRom.set(includeExtraRom);
+    }
+
+    public boolean isEnforceFollowRom() {
+        return enforceFollowRom.get();
+    }
+
+    public BooleanProperty enforceFollowRomProperty() {
+        return enforceFollowRom;
+    }
+
+    public void setEnforceFollowRom(boolean enforceFollowRom) {
+        this.enforceFollowRom.set(enforceFollowRom);
     }
 
     public static Preferences getApplicationPreferences() {

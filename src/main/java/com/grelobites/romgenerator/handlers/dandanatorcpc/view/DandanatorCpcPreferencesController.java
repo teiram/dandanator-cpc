@@ -57,15 +57,6 @@ public class DandanatorCpcPreferencesController {
     private Button resetExtraRomButton;
 
     @FXML
-    private Label dandanatorCpcRomPath;
-
-    @FXML
-    private Button changeDandanatorCpcRomButton;
-
-    @FXML
-    private Button resetDandanatorCpcRomButton;
-
-    @FXML
     private CheckBox autoboot;
 
     private static String getRomFileName(String name) {
@@ -83,20 +74,6 @@ public class DandanatorCpcPreferencesController {
             extraRomMessage.setText(getRomFileName(extraRomFile.getName()));
         } else {
             throw new IllegalArgumentException("Invalid ROM File provided");
-        }
-
-    }
-
-    private boolean isDandanatorRomValid(File dandanatorRomFile) {
-        return dandanatorRomFile.canRead() && dandanatorRomFile.isFile()
-                && dandanatorRomFile.length() == DandanatorCpcConstants.BASEROM_SIZE;
-    }
-
-    private void updateDandanatorRom(File dandanatorRom) {
-        if (isDandanatorRomValid(dandanatorRom)) {
-            DandanatorCpcConfiguration.getInstance().setDandanatorRomPath(dandanatorRom.getAbsolutePath());
-        } else {
-            throw new IllegalArgumentException("Invalid ROM file provided");
         }
     }
 
@@ -224,14 +201,6 @@ public class DandanatorCpcPreferencesController {
                 () -> {
                     extraRomMessage.setText(DandanatorCpcConstants.DEFAULT_EXTRAROMKEY_MESSAGE);
                 });
-
-        setupFileBasedParameter(changeDandanatorCpcRomButton,
-                LocaleUtil.i18n("selectDandanatorRomMessage"),
-                dandanatorCpcRomPath,
-                DandanatorCpcConfiguration.getInstance().dandanatorRomPathProperty(),
-                resetDandanatorCpcRomButton,
-                this::updateDandanatorRom,
-                null);
 
         autoboot.selectedProperty().bindBidirectional(
                 DandanatorCpcConfiguration.getInstance().autobootProperty());

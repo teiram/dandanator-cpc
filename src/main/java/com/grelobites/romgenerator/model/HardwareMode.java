@@ -5,9 +5,9 @@ public enum HardwareMode {
     HW_CPC664("CPC664", 1, true),
     HW_CPC6128("CPC6128", 2, true),
     HW_UNKNOWN("Unknown", 3, false),
-    HW_CPC6128PLUS("CPC6128+", 4, true),
-    HW_CPC464PLUS("CPC464+", 5, true),
-    HW_GX4000("GX4000", 6, true);
+    HW_CPC6128PLUS("CPC6128+", 4, false),
+    HW_CPC464PLUS("CPC464+", 5, false),
+    HW_GX4000("GX4000", 6, false);
 
     private int snaValue;
     private String displayName;

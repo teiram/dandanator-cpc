@@ -1,9 +1,9 @@
 package com.grelobites.romgenerator.util.romsethandler;
 
-import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.DandanatorCpcV1RomSetHandler;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.v2.DandanatorCpcV2RomSetHandler;
 
 public enum RomSetHandlerType {
-    DDNTR_V1(DandanatorCpcV1RomSetHandler.class, "Dandanator Cpc V1", true);
+    DDNTR_V2(DandanatorCpcV2RomSetHandler.class, "Dandanator Cpc V2", true);
 
     private Class<? extends RomSetHandler> handler;
     private String displayName;

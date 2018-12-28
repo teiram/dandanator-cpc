@@ -14,7 +14,7 @@ public class DandanatorCpcConstants {
     public static final int SLOT_COUNT = 10;
     public static final int MAX_GAMES = 20;
     public static final int EEPROM_SLOTS = 32;
-    public static final int GAME_SLOTS = EEPROM_SLOTS - 2; //Total ROM Size is 32 slots (minus 1 slot (code) and last (test rom))
+    public static final int GAME_SLOTS = EEPROM_SLOTS - 1;
     public static final int POKE_HEADER_SIZE = 3 * SLOT_COUNT;
     public static final int GAMENAME_SIZE = 41;
     public static final int GAMENAME_EFFECTIVE_SIZE = GAMENAME_SIZE - 5;
@@ -34,6 +34,10 @@ public class DandanatorCpcConstants {
     public static final int SELECT_POKE_MESSAGE_MAXLENGTH = 41;
     private static final String DANDANATOR_ROM_RESOURCE = "dandanator-cpc/dandanator-mini.rom";
     private static final String EXTRA_ROM_RESOURCE = "dandanator-cpc/test.rom";
+    private static final String CPC464_FIRMWARE_RESOURCE = "rom/464/OS_464.ROM";
+    private static final String CPC6128_FIRMWARE_RESOURCE = "rom/6128/OS_6128.ROM";
+
+
 
     public static final int POKE_TARGET_ADDRESS = 7925;
     public static final int GAME_CHUNK_SIZE = 32;
@@ -41,13 +45,14 @@ public class DandanatorCpcConstants {
     public static final int VERSION_SIZE = 8;
     public static final int FILLER_BYTE = 0xFF;
     public static final int EXTENDED_CHARSET_SIZE = 896;
-    public static final int BASEROM_SIZE = 3584;
 
     public static final int PACKED_SCREEN_SIZE = 16384;
     public static final int PALETTE_SIZE = 17;
 
     private static byte[] DANDANATOR_ROM;
     private static byte[] EXTRA_ROM;
+    private static byte[] CPC464_FIRMWARE;
+    private static byte[] CPC6128_FIRMWARE;
 
     private static PreferencesProvider providerRegister = new PreferencesProvider("Dandanator CPC",
             "/com/grelobites/romgenerator/handlers/dandanatorcpc/view/dandanatorcpcpreferences.fxml",
@@ -57,8 +62,7 @@ public class DandanatorCpcConstants {
         if (DANDANATOR_ROM == null) {
             DANDANATOR_ROM = Util.fromInputStream(
                     DandanatorCpcConstants.class.getClassLoader()
-                            .getResourceAsStream(DANDANATOR_ROM_RESOURCE),
-                    BASEROM_SIZE);
+                            .getResourceAsStream(DANDANATOR_ROM_RESOURCE));
         }
         return DANDANATOR_ROM;
     }
@@ -72,5 +76,26 @@ public class DandanatorCpcConstants {
         }
         return EXTRA_ROM;
     }
+
+    public static byte[] getCpc464Firmware() throws IOException {
+        if (CPC464_FIRMWARE == null) {
+            CPC464_FIRMWARE = Util.fromInputStream(
+                    DandanatorCpcConstants.class.getClassLoader()
+                            .getResourceAsStream(CPC464_FIRMWARE_RESOURCE),
+                    Constants.SLOT_SIZE);
+        }
+        return CPC464_FIRMWARE;
+    }
+
+    public static byte[] getCpc6128Firmware() throws IOException {
+        if (CPC6128_FIRMWARE == null) {
+            CPC6128_FIRMWARE = Util.fromInputStream(
+                    DandanatorCpcConstants.class.getClassLoader()
+                            .getResourceAsStream(CPC6128_FIRMWARE_RESOURCE),
+                    Constants.SLOT_SIZE);
+        }
+        return CPC6128_FIRMWARE;
+    }
+
 
 }

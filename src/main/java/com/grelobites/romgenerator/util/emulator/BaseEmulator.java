@@ -170,6 +170,7 @@ public class BaseEmulator implements Z80operations {
                 GameType.RAM64 : GameType.RAM128,
                 memory.toByteArrayList());
         game.setGameHeader(getGameHeader());
+        game.setHardwareMode(hardwareMode);
         return game;
     }
 

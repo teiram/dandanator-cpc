@@ -1,29 +1,14 @@
-package com.grelobites.romgenerator.handlers.dandanatorcpc.v1;
+package com.grelobites.romgenerator.handlers.dandanatorcpc.v2;
 
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.EepromWriterConfiguration;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcRamGameCompressor;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcRomSetHandlerSupport;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.ExtendedCharSet;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.*;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.GameHeaderV1Serializer;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.view.DandanatorCpcFrameController;
-import com.grelobites.romgenerator.model.Game;
-import com.grelobites.romgenerator.model.GameHeaderOffsets;
-import com.grelobites.romgenerator.model.GameType;
-import com.grelobites.romgenerator.model.MLDGame;
-import com.grelobites.romgenerator.model.SnapshotGame;
-import com.grelobites.romgenerator.util.CpcColor;
-import com.grelobites.romgenerator.util.CpcGradient;
-import com.grelobites.romgenerator.util.CpcScreen;
-import com.grelobites.romgenerator.util.LocaleUtil;
-import com.grelobites.romgenerator.util.OperationResult;
-import com.grelobites.romgenerator.util.RamGameCompressor;
-import com.grelobites.romgenerator.util.Util;
-import com.grelobites.romgenerator.util.Z80Opcode;
+import com.grelobites.romgenerator.model.*;
+import com.grelobites.romgenerator.util.*;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandler;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
@@ -43,17 +28,13 @@ import javafx.scene.layout.Pane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupport implements RomSetHandler {
+public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupport implements RomSetHandler {
     private static class Offsets {
         public int forwardOffset;
         public int backwardsOffset;
@@ -70,7 +51,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DandanatorCpcV1RomSetHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DandanatorCpcV2RomSetHandler.class);
 
     private static final byte[] EMPTY_CBLOCK = new byte[5];
     private static final int MAX_MENU_PAGES = 3;
@@ -108,7 +89,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         getApplicationContext().setRomUsageDetail(generateRomUsageDetail());
     }
 
-    public DandanatorCpcV1RomSetHandler() throws IOException {
+    public DandanatorCpcV2RomSetHandler() throws IOException {
         menuImages = new CpcScreen[MAX_MENU_PAGES];
         initializeMenuImages(menuImages);
         currentRomUsage = new SimpleDoubleProperty();
@@ -153,7 +134,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private static byte[] getPaddedGameHeader(Game game) throws IOException {
-        byte[] paddedHeader = new byte[V1Constants.GAME_HEADER_SIZE];
+        byte[] paddedHeader = new byte[V2Constants.GAME_HEADER_SIZE];
         Arrays.fill(paddedHeader, Constants.B_00);
         if (game instanceof SnapshotGame) {
             SnapshotGame snapshotGame = (SnapshotGame) game;
@@ -169,7 +150,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         if (game instanceof SnapshotGame) {
             SnapshotGame snapshotGame = (SnapshotGame) game;
 
-            int baseAddress = V1Constants.GAME_STRUCT_OFFSET + V1Constants.GAME_STRUCT_SIZE * index;
+            int baseAddress = V2Constants.GAME_STRUCT_OFFSET + V2Constants.GAME_STRUCT_SIZE * index;
             os.write(Z80Opcode.LD_IX_NN(baseAddress + GameHeaderOffsets.IX_OFFSET));
             os.write(Z80Opcode.LD_HL_NN(baseAddress + GameHeaderOffsets.HL_OFFSET));
             boolean interruptDisable = snapshotGame.getGameHeader()
@@ -178,7 +159,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write(interruptDisable ? Z80Opcode.DI : Z80Opcode.EI);
             os.write(Z80Opcode.RET);
         } else {
-            os.write(new byte[V1Constants.GAME_LAUNCHCODE_SIZE]);
+            os.write(new byte[V2Constants.GAME_LAUNCHCODE_SIZE]);
         }
     }
 
@@ -254,15 +235,27 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         return chunk;
     }
 
+    private int getGameType(Game game) {
+        int value = game.getType().typeId();
+        if (game instanceof SnapshotGame) {
+            SnapshotGame snapshotGame = (SnapshotGame) game;
+            if (snapshotGame.getHardwareMode().supported()) {
+                value |= (1 << 7) | ((snapshotGame.getHardwareMode().snaValue() & 3) << 4);
+            }
+        }
+        LOGGER.debug("Gametype calculated for {} is {}", game, String.format("0x%02x", value));
+        return value;
+    }
+
     private void dumpGameHeader(OutputStream os, int index, Game game,
                                Offsets offsets) throws IOException {
         os.write(getPaddedGameHeader(game));
-        os.write(game.getType().typeId());
+        os.write(getGameType(game));
         os.write(getGameChunk(game));
         os.write(isGameCompressed(game) ? Constants.B_01 : Constants.B_00);
         os.write(isGameScreenHold(game) ? Constants.B_01 : Constants.B_00);
         os.write(0);
-        os.write(0); //Upper and lower active roms (TODO)
+        os.write(0); //Upper and lower active roms. Unused in V2
         dumpGameLaunchCode(os, game, index);
         dumpGameCBlocks(os, game, offsets);
         dumpGameName(os, game, index);
@@ -279,7 +272,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             LOGGER.debug("Dumped gamestruct for " + game.getName() + ". Offset: " + os.size());
             index++;
         }
-        Util.fillWithValue(os, (byte) 0, V1Constants.GAME_STRUCT_SIZE * (DandanatorCpcConstants.MAX_GAMES - index));
+        Util.fillWithValue(os, (byte) 0, V2Constants.GAME_STRUCT_SIZE * (DandanatorCpcConstants.MAX_GAMES - index));
         LOGGER.debug("Filled to end of gamestruct. Offset: " + os.size());
     }
 
@@ -404,7 +397,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             List<Game> games = getApplicationContext().getGameList();
-            os.write(dmConfiguration.getDandanatorRom(), 0, DandanatorCpcConstants.BASEROM_SIZE);
+            os.write(dmConfiguration.getDandanatorRom(), 0, V2Constants.BASEROM_SIZE);
             LOGGER.debug("Dumped base ROM. Offset: " + os.size());
 
             os.write((byte) games.size());
@@ -438,7 +431,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write(compressedCharSet);
 
             //loader if enough room
-            int freeSpace = V1Constants.VERSION_OFFSET - os.size();
+            int freeSpace = V2Constants.VERSION_OFFSET - os.size();
             byte[] eepromLoaderCode = getEepromLoaderCode();
             byte[] eepromLoaderScreen = getEepromLoaderScreen();
             int requiredEepromLoaderSpace = eepromLoaderCode.length + eepromLoaderScreen.length;
@@ -463,10 +456,25 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             cBlocksTable.write(asLittleEndianWord(0));
             cBlocksTable.write(asLittleEndianWord(0));
 
-            Util.fillWithValue(os, (byte) 0, V1Constants.VERSION_OFFSET - os.size());
+            Util.fillWithValue(os, (byte) 0, V2Constants.EXTRA_ROM_PRESENT_OFFSET - os.size());
             LOGGER.debug("Dumped grey zone. Offset: {}", os.size());
 
-            os.write(asNullTerminatedByteArray(getVersionInfo(), V1Constants.VERSION_SIZE));
+            os.write((configuration.isIncludeExtraRom() ? Constants.B_01 : Constants.B_00));
+            os.write((configuration.isEnforceFollowRom() ? Constants.B_01: Constants.B_00));
+            if (configuration.isEnforceFollowRom()) {
+                int baseSlot = 24;
+                if (configuration.isIncludeExtraRom()) {
+                    baseSlot -= 8;
+                }
+                os.write((byte) baseSlot);  //464 ROM Slot
+                baseSlot += 8;
+                os.write((byte) baseSlot);  //6128 ROM Slot
+            } else {
+                os.write(Constants.B_FF);
+                os.write(Constants.B_FF);
+            }
+
+            os.write(asNullTerminatedByteArray(getVersionInfo(), V2Constants.VERSION_SIZE));
             LOGGER.debug("Dumped version info. Offset: {}", os.size());
 
             os.write(cBlocksTable.toByteArray());
@@ -503,9 +511,9 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 }
             }
 
-            //Uncompressed data goes at the end minus the extra ROM size
-            //and grows backwards
-            int uncompressedOffset = Constants.SLOT_SIZE * (DandanatorCpcConstants.GAME_SLOTS + 1)
+            //Uncompressed data goes at the end minus the required space for extra ROM and/or
+            //machine firmwares and grows backwards
+            int uncompressedOffset = Constants.SLOT_SIZE * (DandanatorCpcConstants.EEPROM_SLOTS - getReservedSlots(configuration))
                     - uncompressedStream.size();
             int gapSize = uncompressedOffset - os.size();
             LOGGER.debug("Gap to uncompressed zone: " + gapSize);
@@ -514,8 +522,16 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write(uncompressedStream.toByteArray());
             LOGGER.debug("Dumped uncompressed game data. Offset: " + os.size());
 
-            os.write(dmConfiguration.getExtraRom());
-            LOGGER.debug("Dumped custom rom. Offset: " + os.size());
+            if (configuration.isEnforceFollowRom()) {
+                os.write(DandanatorCpcConstants.getCpc464Firmware());
+                LOGGER.debug("Dumped 464 firmware. Offset {}", os.size());
+                os.write(DandanatorCpcConstants.getCpc6128Firmware());
+                LOGGER.debug("Dumped 6128 firmware. Offset {}", os.size());
+            }
+            if (configuration.isIncludeExtraRom()) {
+                os.write(dmConfiguration.getExtraRom());
+                LOGGER.debug("Dumped custom rom. Offset: {}", os.size());
+            }
 
             os.flush();
             LOGGER.debug("All parts dumped and flushed. Offset: " + os.size());
@@ -524,6 +540,12 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         } catch (Exception e) {
             LOGGER.error("Creating RomSet", e);
         }
+    }
+
+    private int getReservedSlots(Configuration configuration) {
+        int value = configuration.isIncludeExtraRom() ? 1 : 0;
+        value += configuration.isEnforceFollowRom() ? 2 : 0;
+        return value;
     }
 
     private static int getGameSize(Game game) throws IOException {
@@ -548,6 +570,7 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     protected double calculateRomUsage() {
         int size = 0;
+        Configuration configuration = Configuration.getInstance();
         for (Game game : getApplicationContext().getGameList()) {
             try {
                 size += getGameSize(game);
@@ -555,8 +578,10 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 LOGGER.warn("Calculating game size usage", e);
             }
         }
-        LOGGER.debug("Used size: " + size + ", total size: "
-                + DandanatorCpcConstants.GAME_SLOTS * Constants.SLOT_SIZE);
+        size += getReservedSlots(configuration) * Constants.SLOT_SIZE;
+
+        LOGGER.debug("Used size: {} , total size: {}", size,
+                DandanatorCpcConstants.GAME_SLOTS * Constants.SLOT_SIZE);
         currentRomUsage.set(((double) size /
                 (DandanatorCpcConstants.GAME_SLOTS * Constants.SLOT_SIZE)));
         return currentRomUsage.get();
@@ -564,11 +589,11 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     @Override
     public RomSetHandlerType type() {
-        return RomSetHandlerType.DDNTR_V1;
+        return RomSetHandlerType.DDNTR_V2;
     }
 
     protected String generateRomUsageDetail() {
-        return String.format(LocaleUtil.i18n("romUsageV5Detail"),
+        return String.format(LocaleUtil.i18n("romUsageDetail"),
                 getApplicationContext().getGameList().size(),
                 DandanatorCpcConstants.MAX_GAMES,
                 calculateRomUsage() * 100);
@@ -646,7 +671,8 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private void updateMenuPage(List<Game> gameList, int pageIndex, int numPages) throws IOException {
-        DandanatorCpcConfiguration configuration = DandanatorCpcConfiguration.getInstance();
+        DandanatorCpcConfiguration dConfiguration = DandanatorCpcConfiguration.getInstance();
+        Configuration configuration = Configuration.getInstance();
         CpcScreen page = menuImages[pageIndex];
         updateBackgroundImage(page);
         page.setCharSet(new ExtendedCharSet(Configuration.getInstance().getCharSet()).getCharSet());
@@ -668,9 +694,11 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
 
         page.setPen(CpcColor.BRIGHTYELLOW);
-        page.printLine(String.format("P. %s", configuration.getTogglePokesMessage()), 21, 0);
-        page.setPen(CpcColor.BRIGHTRED);
-        page.printLine(String.format("R. %s", configuration.getExtraRomMessage()), 23, 0);
+        page.printLine(String.format("P. %s", dConfiguration.getTogglePokesMessage()), 21, 0);
+        if (configuration.isIncludeExtraRom()) {
+            page.setPen(CpcColor.BRIGHTRED);
+            page.printLine(String.format("R. %s", dConfiguration.getExtraRomMessage()), 23, 0);
+        }
     }
 
     protected MenuItem getExportPokesMenuItem() {
@@ -812,6 +840,9 @@ public class DandanatorCpcV1RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
         applicationContext.getGameList().addListener(updateImageListener);
         applicationContext.getGameList().addListener(updateRomUsageListener);
+        Configuration.getInstance().includeExtraRomProperty().addListener(updateRomUsageListener);
+        Configuration.getInstance().includeExtraRomProperty().addListener(updateImageListener);
+        Configuration.getInstance().enforceFollowRomProperty().addListener(updateRomUsageListener);
 
         applicationContext.getExtraMenu().getItems().addAll(
                 getExportPokesMenuItem(), getImportPokesMenuItem(),

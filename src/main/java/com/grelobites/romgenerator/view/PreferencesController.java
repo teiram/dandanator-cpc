@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.FontViewer;
@@ -10,10 +11,8 @@ import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.imageloader.ImageType;
 import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.fxml.FXML;
+import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.stage.FileChooser;
@@ -59,6 +58,12 @@ public class PreferencesController {
 
     @FXML
     private ToggleGroup tapeLoaderToggleGroup;
+
+    @FXML
+    private CheckBox includeExtraRom;
+
+    @FXML
+    private CheckBox enforceFollowRomEnable;
 
     private void initializeImages() throws IOException {
         backgroundImage = ImageUtil.scrLoader(
@@ -250,5 +255,10 @@ public class PreferencesController {
         charSetSetup();
 
         tapeTargetModeSetup();
+
+        includeExtraRom.selectedProperty().bindBidirectional(
+                Configuration.getInstance().includeExtraRomProperty());
+        enforceFollowRomEnable.selectedProperty().bindBidirectional(
+                Configuration.getInstance().enforceFollowRomProperty());
     }
 }

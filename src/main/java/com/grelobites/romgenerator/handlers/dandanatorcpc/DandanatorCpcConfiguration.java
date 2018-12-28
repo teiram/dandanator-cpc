@@ -2,6 +2,7 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc;
 
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.compress.Compressor;
 import com.grelobites.romgenerator.util.compress.CompressorFactory;
 import javafx.beans.property.BooleanProperty;
@@ -25,7 +26,6 @@ public class DandanatorCpcConfiguration {
     private static final String EXTRAROMMESSAGE_PROPERTY = "extraRomMessage";
     private static final String LAUNCHGAMEMESSAGE_PROPERTY = "launchGameMessage";
     private static final String SELECTPOKESMESSAGE_PROPERTY = "selectPokesMessage";
-    private static final String DANDANATORPICFIRMWAREPATH_PROPERTY = "dandanatorPicFirmwarePath";
 
     private StringProperty dandanatorRomPath;
     private StringProperty extraRomPath;
