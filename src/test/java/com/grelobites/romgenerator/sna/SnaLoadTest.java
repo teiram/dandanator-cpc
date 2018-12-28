@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.com.grelobites.romgenerator.sna;
+package com.grelobites.romgenerator.sna;
 
 
 import com.grelobites.romgenerator.util.sna.SnaFactory;
@@ -14,7 +14,7 @@ public class SnaLoadTest {
     @Test
     public void testLoadSna() throws IOException {
         SnaImage image =  SnaFactory.fromInputStream(
-                SnaLoadTest.class.getResourceAsStream("/antiriad.sna"));
+                SnaLoadTest.class.getResourceAsStream("/sna/antiriad.sna"));
 
         LOGGER.debug("Image is {}", image);
     }

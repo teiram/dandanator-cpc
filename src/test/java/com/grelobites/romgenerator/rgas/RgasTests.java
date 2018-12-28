@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.com.grelobites.romgenerator.util.rgas;
+package com.grelobites.romgenerator.rgas;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grelobites.romgenerator.util.imageloader.loaders.rgas.RgasFile;
