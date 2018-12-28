@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.com.grelobites.romgenerator.util.emulator.tapeloader;
+package com.grelobites.romgenerator.tapeloader;
 
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;

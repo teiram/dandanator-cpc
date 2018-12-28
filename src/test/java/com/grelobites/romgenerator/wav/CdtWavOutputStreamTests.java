@@ -1,4 +1,4 @@
-package com.grelobites.romgenerator.com.grelobites.romgenerator.util.wav;
+package com.grelobites.romgenerator.wav;
 
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.tape.Binary;
@@ -158,12 +158,21 @@ public class CdtWavOutputStreamTests {
     };
 
     @Test
-    public void cdtToWavTest() throws Exception {
+    public void lalaToWavTest() throws Exception {
         InputStream cdt = CdtWavOutputStreamTests.class.getResourceAsStream("/cdt/lala.cdt");
-        OutputStream output = new FileOutputStream(new File("/home/mteira/Escritorio/lala.wav"));
+        OutputStream output = new FileOutputStream(new File("output/lala.wav"));
         CdtWavOutputStream converter = new CdtWavOutputStream(WavFormat.DEFAULT_FORMAT, cdt, output);
         converter.flush();
     }
+
+    @Test
+    public void puzznicToWavTest() throws Exception {
+        InputStream cdt = CdtWavOutputStreamTests.class.getResourceAsStream("/cdt/puzznic.cdt");
+        OutputStream output = new FileOutputStream(new File("output/puzznic.wav"));
+        CdtWavOutputStream converter = new CdtWavOutputStream(WavFormat.DEFAULT_FORMAT, cdt, output);
+        converter.flush();
+    }
+
 
     // Bit-order MSB first (left to right).
     private static int slowCrc16MsbFirst(byte[] data, int initialValue, int poly) {
