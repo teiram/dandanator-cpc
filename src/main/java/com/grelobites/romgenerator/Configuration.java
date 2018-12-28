@@ -58,7 +58,7 @@ public class Configuration {
         this.charSetPath = new SimpleStringProperty();
         this.charSetPathExternallyProvided = new SimpleBooleanProperty();
         this.mode = new SimpleStringProperty(DEFAULT_MODE);
-        this.compressSnaDumps = new SimpleBooleanProperty(false);
+        this.compressSnaDumps = new SimpleBooleanProperty(true);
         this.charSetPath.addListener((observable, oldValue, newValue) ->
                 charSetPathExternallyProvided.set(
                         isCharSetExternallyProvided(newValue)));
