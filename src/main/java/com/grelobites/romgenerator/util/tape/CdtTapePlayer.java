@@ -420,7 +420,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     }
                     break;
                 case PAUSE:
-                    //casseteInput = invertedOutput;
+                    casseteInput = invertedOutput;
                     state = State.TZX_HEADER;
                     clockTimeout.setTimeout(endBlockPause);
                     break;
