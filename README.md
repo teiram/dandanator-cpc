@@ -5,19 +5,19 @@ An Amstrad CPC peripheral that allows for an easy and fast way to load snapshots
 This tool provides a way to create ROMSet compilations with our games of choose. Currently it supports games in SNA format.
 Support for games in DSK and CDT format is also provided but still in beta stage.
 
-##Requisites
+## Requisites
 Git, Maven and java8 are needed
 
 ##Cloning the repository
 	git clone https://github.com/teiram/dandanator-cpc.git
 
-##Building
+## Building
 Java8 and Maven are needed. Just execute:
 
 	cd dandanator-cpc
 	mvn install
 
-##Executing
+## Executing
 
 An executable jar with all the dependencies bundled in will be generated in the following location:
 
