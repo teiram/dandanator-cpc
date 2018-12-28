@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
     private static final int MAX_FRAMES_WITHOUT_TAPE_MOVEMENT = 5000;
+    private static final int CPU_HZ = 4000000;
     private final CdtTapePlayer tapePlayer;
     private SnapshotGame currentSnapshot;
     private int tapeLastSavePosition = 0;
@@ -43,6 +44,11 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         } catch (IOException ioe) {
             LOGGER.error("Saving game to file", ioe);
         }
+    }
+
+    private boolean validExitZone() {
+        return memory.isAddressInRam(z80.getRegPC()) &&
+                !(z80.getRegPC() >= 0xB900 && z80.getRegPC() <= 0xBE42);
     }
     @Override
     public Game loadTape(InputStream tapeFile) throws IOException {
@@ -128,9 +134,10 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
             compensation = executeFrame(compensation);
         }
         */
-        /*
+
         long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
 
+        /*
         while (!memory.isAddressInRam(z80.getRegPC())) {
             z80.execute();
             if (clock.getTstates() > deadline) {
@@ -138,13 +145,20 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
             }
         }
         */
+        while (!validExitZone()) {
+            z80.execute();
+            if (clock.getTstates() > deadline) {
+                LOGGER.warn("Unable to exit banned zone [0xB900-0xBE42] before deadline");
+                break;
+            }
+        }
 
-        if (tapePlayer.getCurrentTapePosition() > tapeLastSavePosition) {
+        //if (tapePlayer.getCurrentTapePosition() > tapeLastSavePosition) {
             LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
                     String.format("0x%04x", z80.getRegPC()),
                     memory.isAddressInRam(z80.getRegPC()));
             currentSnapshot = getSnapshotGame();
-        }
+        //}
 
         return currentSnapshot;
     }
