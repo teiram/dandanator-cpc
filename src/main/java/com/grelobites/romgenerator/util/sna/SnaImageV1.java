@@ -341,6 +341,10 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
         this.memory = memory;
     }
 
+    public void setMemoryDumpSize(int memoryDumpSize) {
+        this.memoryDumpSize = memoryDumpSize;
+    }
+
     public void populate(ByteBuffer buffer) throws IOException {
         buffer.position(17);
 

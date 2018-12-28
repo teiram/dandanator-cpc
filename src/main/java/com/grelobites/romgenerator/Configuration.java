@@ -41,6 +41,7 @@ public class Configuration {
     private CharSetFactory charSetFactory;
     private RamGameCompressor ramGameCompressor;
     private StringProperty tapeLoaderTarget;
+    private BooleanProperty compressSnaDumps;
 
     private static Configuration INSTANCE;
 
@@ -57,7 +58,7 @@ public class Configuration {
         this.charSetPath = new SimpleStringProperty();
         this.charSetPathExternallyProvided = new SimpleBooleanProperty();
         this.mode = new SimpleStringProperty(DEFAULT_MODE);
-
+        this.compressSnaDumps = new SimpleBooleanProperty(false);
         this.charSetPath.addListener((observable, oldValue, newValue) ->
                 charSetPathExternallyProvided.set(
                         isCharSetExternallyProvided(newValue)));
@@ -189,6 +190,18 @@ public class Configuration {
 
     public boolean getCharSetPathExternallyProvided() {
         return charSetPathExternallyProvided.get();
+    }
+
+    public boolean isCompressSnaDumps() {
+        return compressSnaDumps.get();
+    }
+
+    public BooleanProperty compressSnaDumpsProperty() {
+        return compressSnaDumps;
+    }
+
+    public void setCompressSnaDumps(boolean compressSnaDumps) {
+        this.compressSnaDumps.set(compressSnaDumps);
     }
 
     public void setCharSetPath(String charSetPath) {

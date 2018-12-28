@@ -1,5 +1,7 @@
 package com.grelobites.romgenerator.util.sna;
 
+import com.grelobites.romgenerator.Configuration;
+import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.Util;
@@ -48,7 +50,17 @@ public class SnaFactory {
             cs.write(game.getSlot(i));
         }
         cs.flush();
-        return new SnaChunk(SnaChunk.CHUNK_MEM0, os.toByteArray());
+        return new SnaChunk(chunkName, os.toByteArray());
+    }
+
+    private static byte[] combineGameSlots(SnapshotGame game) {
+        LOGGER.debug("Combining game slots");
+        byte[] result = new byte[game.getSlotCount() * Constants.SLOT_SIZE];
+        for (int slot = 0; slot < game.getSlotCount(); slot++) {
+            System.arraycopy(game.getSlot(slot), 0, result, slot * Constants.SLOT_SIZE,
+                    Constants.SLOT_SIZE);
+        }
+        return result;
     }
 
     public static SnaImage fromSnapshotGame(SnapshotGame game) throws IOException {
@@ -88,15 +100,22 @@ public class SnaFactory {
         snaImage.setCpcType(header.getCpcType());
         snaImage.setFddMotorDriveState(header.getFddMotorDriveState());
 
-        if (header.getMemoryDumpSize() > 0) {
-            snaImage.getSnaChunks().put(SnaChunk.CHUNK_MEM0,
-                    createSnaChunk(game, new int[]{0, 1, 2, 3}, SnaChunk.CHUNK_MEM0));
-            if (header.getMemoryDumpSize() > 64) {
-                snaImage.getSnaChunks().put(SnaChunk.CHUNK_MEM1,
-                        createSnaChunk(game, new int[]{4, 5, 6, 7}, SnaChunk.CHUNK_MEM1));
+        if (Configuration.getInstance().isCompressSnaDumps()) {
+
+            if (header.getMemoryDumpSize() > 0) {
+                snaImage.getSnaChunks().put(SnaChunk.CHUNK_MEM0,
+                        createSnaChunk(game, new int[]{0, 1, 2, 3}, SnaChunk.CHUNK_MEM0));
+                if (header.getMemoryDumpSize() > 64) {
+                    snaImage.getSnaChunks().put(SnaChunk.CHUNK_MEM1,
+                            createSnaChunk(game, new int[]{4, 5, 6, 7}, SnaChunk.CHUNK_MEM1));
+                }
+            } else {
+                throw new IllegalArgumentException("Illegal peripheral dump size");
             }
         } else {
-            throw new IllegalArgumentException("Illegal peripheral dump size");
+            byte[] memory = combineGameSlots(game);
+            snaImage.setMemory(memory);
+            snaImage.setMemoryDumpSize(memory.length > (64 * 1024) ? 128 : 64);
         }
         return snaImage;
     }
