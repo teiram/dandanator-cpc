@@ -168,13 +168,13 @@
 }
 
 
-.text-area {
+basicCode .text-area {
     -fx-font-family: monospaced;
     -fx-font-size: 15;
     -fx-text-fill: #ffff00;
     -fx-display-caret:true;
 }
 
-.text-area .content {
+basicCode .text-area .content {
     -fx-background-color: #000080;
 }
