@@ -239,8 +239,10 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         int value = game.getType().typeId();
         if (game instanceof SnapshotGame) {
             SnapshotGame snapshotGame = (SnapshotGame) game;
-            if (snapshotGame.getHardwareMode().supported()) {
-                value |= (1 << 7) | ((snapshotGame.getHardwareMode().snaValue() & 3) << 4);
+            if (snapshotGame.getHardwareMode() != null) {
+                if (snapshotGame.getHardwareMode().supported()) {
+                    value |= (1 << 7) | ((snapshotGame.getHardwareMode().snaValue() & 3) << 4);
+                }
             }
         }
         LOGGER.debug("Gametype calculated for {} is {}", game, String.format("0x%02x", value));
@@ -462,7 +464,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write((configuration.isIncludeExtraRom() ? Constants.B_01 : Constants.B_00));
             os.write((configuration.isEnforceFollowRom() ? Constants.B_01: Constants.B_00));
             if (configuration.isEnforceFollowRom()) {
-                int baseSlot = 24;
+                int baseSlot = 16;
                 if (configuration.isIncludeExtraRom()) {
                     baseSlot -= 8;
                 }
