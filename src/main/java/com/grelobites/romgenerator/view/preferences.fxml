@@ -13,22 +13,22 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="379.0" prefWidth="630.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.grelobites.romgenerator.view.PreferencesController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="321.0" prefWidth="630.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.grelobites.romgenerator.view.PreferencesController">
    <children>
       <ImageView fx:id="backgroundImageView" fitHeight="200.0" fitWidth="320.0" layoutX="7.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" />
       <HBox alignment="CENTER_LEFT" layoutY="220.0" spacing="10.0" AnchorPane.leftAnchor="5.0">
          <children>
             <Label alignment="CENTER" text="%backgroundImageMessage">
                <font>
-                  <Font size="12.0" />
+                  <Font size="14.0" />
                </font></Label>
             <Button fx:id="changeBackgroundImageButton" mnemonicParsing="false" text="%changeButton">
                <font>
-                  <Font size="12.0" />
+                  <Font size="14.0" />
                </font></Button>
             <Button fx:id="resetBackgroundImageButton" mnemonicParsing="false" text="%resetButton">
                <font>
-                  <Font size="12.0" />
+                  <Font size="14.0" />
                </font></Button>
          </children>
          <padding>
@@ -39,17 +39,17 @@
          <children>
             <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" text="%charSetMessage" HBox.hgrow="ALWAYS">
                <font>
-                  <Font size="12.0" />
+                  <Font size="14.0" />
                </font>
             </Label>
             <Button fx:id="changeCharSetButton" alignment="CENTER" mnemonicParsing="false" text="%changeButton">
                <font>
-                  <Font size="12.0" />
+                  <Font size="14.0" />
                </font>
             </Button>
             <Button fx:id="resetCharSetButton" mnemonicParsing="false" text="%resetButton">
                <font>
-                  <Font size="12.0" />
+                  <Font size="14.0" />
                </font>
             </Button>
          </children>
@@ -57,30 +57,47 @@
             <Insets left="5.0" />
          </padding>
       </HBox>
-      <HBox alignment="CENTER" layoutX="360.0" layoutY="153.0" prefHeight="100.0" prefWidth="272.0" spacing="20.0">
+      <HBox alignment="CENTER_LEFT" layoutX="360.0" layoutY="153.0" prefHeight="100.0" prefWidth="272.0" spacing="20.0">
          <children>
-            <Label maxWidth="1.7976931348623157E308" text="%tapeLoaderTarget" HBox.hgrow="ALWAYS" />
+            <Label maxWidth="1.7976931348623157E308" text="%tapeLoaderTarget" HBox.hgrow="ALWAYS">
+               <font>
+                  <Font size="14.0" />
+               </font></Label>
             <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                <children>
                   <RadioButton fx:id="tapeMode464" mnemonicParsing="false" selected="true" text="CPC464">
                      <toggleGroup>
                         <ToggleGroup fx:id="tapeLoaderToggleGroup" />
                      </toggleGroup>
+                     <font>
+                        <Font size="14.0" />
+                     </font>
                   </RadioButton>
-                  <RadioButton fx:id="tapeMode6128" mnemonicParsing="false" text="CPC6128" toggleGroup="$tapeLoaderToggleGroup" />
+                  <RadioButton fx:id="tapeMode6128" mnemonicParsing="false" text="CPC6128" toggleGroup="$tapeLoaderToggleGroup">
+                     <font>
+                        <Font size="14.0" />
+                     </font></RadioButton>
                </children>
             </VBox>
          </children>
       </HBox>
       <Pagination fx:id="charSetPagination" layoutX="357.0" pageCount="10" prefHeight="112.0" prefWidth="264.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
-      <HBox alignment="CENTER" layoutX="299.0" layoutY="219.0" prefHeight="100.0" prefWidth="272.0" spacing="20.0">
+      <HBox alignment="CENTER_LEFT" layoutX="360.0" layoutY="219.0" prefHeight="100.0" prefWidth="272.0" spacing="20.0">
          <children>
-            <CheckBox fx:id="includeExtraRom" mnemonicParsing="false" text="%includeExtraRom" />
+            <CheckBox fx:id="includeExtraRom" mnemonicParsing="false" text="%includeExtraRom">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </CheckBox>
          </children>
       </HBox>
-      <HBox alignment="CENTER" layoutX="328.0" layoutY="279.0" prefHeight="100.0" prefWidth="272.0" spacing="20.0">
+      <HBox alignment="CENTER_LEFT" layoutX="360.0" layoutY="247.0" prefHeight="100.0" prefWidth="272.0" spacing="20.0">
          <children>
-            <CheckBox fx:id="enforceFollowRomEnable" mnemonicParsing="false" text="%enforceFollowRomEnable" />
+            <CheckBox fx:id="enforceFollowRomEnable" mnemonicParsing="false" text="%enforceFollowRomEnable">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </CheckBox>
          </children>
       </HBox>
    </children>
