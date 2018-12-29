@@ -10,7 +10,7 @@ public class SnaImageBase {
 
     //Version 2
     public int getCpcType() {
-        return 0;
+        return 3; //Type unknown
     }
 
     public int getInterruptNumber() {
