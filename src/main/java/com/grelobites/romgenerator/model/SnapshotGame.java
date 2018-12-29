@@ -270,11 +270,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
 
     public void setHardwareMode(HardwareMode hardwareMode) {
         LOGGER.debug("Setting hardware mode " + hardwareMode);
-        if (hardwareMode != HardwareMode.HW_UNKNOWN) {
-            this.hardwareMode = hardwareMode;
-        } else {
-            throw new IllegalArgumentException("Unknown Hardware Mode");
-        }
+        this.hardwareMode = hardwareMode;
     }
 
     public void updateScreen(byte[] screen) throws IOException {
