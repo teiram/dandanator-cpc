@@ -1,5 +1,8 @@
 package com.grelobites.romgenerator.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public enum HardwareMode {
     HW_CPC464("CPC464", 0, true),
     HW_CPC664("CPC664", 1, true),
@@ -9,6 +12,7 @@ public enum HardwareMode {
     HW_CPC464PLUS("CPC464+", 5, false),
     HW_GX4000("GX4000", 6, false);
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HardwareMode.class);
     private int snaValue;
     private String displayName;
     private boolean supported;
@@ -29,5 +33,15 @@ public enum HardwareMode {
 
     public boolean supported() {
         return supported;
+    }
+
+    public static HardwareMode fromSnaType(int type) {
+        for (HardwareMode hardwareMode : values()) {
+            if (hardwareMode.snaValue() == type) {
+                return hardwareMode;
+            }
+        }
+        LOGGER.warn("No hardware mode detected for type {}", type);
+        return null;
     }
 }
