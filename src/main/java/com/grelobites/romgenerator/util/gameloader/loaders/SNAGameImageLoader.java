@@ -90,6 +90,7 @@ public class SNAGameImageLoader implements GameImageLoader {
             SnapshotGame game = new SnapshotGame(gameSlots.size() == 4 ?
                     GameType.RAM64 : GameType.RAM128, new ArrayList(gameSlots.values()));
             game.setGameHeader(header);
+            game.setHardwareMode(HardwareMode.fromSnaType(snaImage.getCpcType()));
             return game;
         } catch (Exception e) {
             LOGGER.error("Creating SnapshotGame from SNA", e);
