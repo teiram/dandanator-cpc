@@ -1,5 +1,8 @@
 package com.grelobites.romgenerator.util.wav;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -7,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class WavOutputStream {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(WavOutputStream.class);
     private static final int SPECTRUM_CLOCK = 3500000;
     private static final int WAV_HEADER_LENGTH = 44;
 
@@ -37,11 +40,16 @@ public class WavOutputStream {
     private ByteArrayOutputStream wavStream = new ByteArrayOutputStream();
     private final OutputStream out;
     private WavFormat format;
-    private int cpuClock = SPECTRUM_CLOCK;
+    private int cpuClock;
+    private double factor;
+
+    private long tStatesToSamples0(long tstates) {
+        return (long) (0.5D + factor * tstates);
+    }
 
     private long tStatesToSamples(long tstates) {
         long upper = tstates * format.getSampleRate();
-        return (upper + cpuClock - 1) / cpuClock;
+        return upper / cpuClock + (upper % cpuClock == 0 ? 0 : 1);
     }
 
     private int getLowValue() {
@@ -71,13 +79,14 @@ public class WavOutputStream {
     }
 
     public WavOutputStream(OutputStream out, WavFormat format) {
-        this.out = out;
-        this.format = format;
+        this(out, format, SPECTRUM_CLOCK);
     }
 
     public WavOutputStream(OutputStream out, WavFormat format, int cpuClock) {
-        this(out, format);
+        this.out = out;
+        this.format = format;
         this.cpuClock = cpuClock;
+        this.factor = 1.0D * format.getSampleRate() / cpuClock;
     }
 
     public void flush() throws IOException {
