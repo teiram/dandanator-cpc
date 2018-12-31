@@ -24,7 +24,7 @@ public class PlayerConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(PlayerConfiguration.class);
 
     private static final String DEFAULT_LOADER_BINARY = "/player/eewriter.bin";
-    private static final String ROMSET_LOADER_BINARY = "/player/romset_eewriter.bin";
+    private static final String ROMSET_LOADER_BINARY = "/player/romset-eewriter.bin";
     private static final String SCREEN_RESOURCE = "/player/screen.scr";
     private static final String AUDIOMODE_PROPERTY = "audioMode";
     private static final String ENCODINGSPEED_PROPERTY = "encodingSpeed";
