@@ -8,7 +8,7 @@
    <content>
       <VBox maxHeight="1.7976931348623157E308">
          <children>
-            <TextArea fx:id="codeTextArea" styleClass="basicCode" editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+            <TextArea fx:id="codeTextArea" styleClass="basic-code" editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
    </content>
