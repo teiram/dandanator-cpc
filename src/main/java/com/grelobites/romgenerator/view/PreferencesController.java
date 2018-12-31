@@ -2,7 +2,6 @@ package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.FontViewer;
