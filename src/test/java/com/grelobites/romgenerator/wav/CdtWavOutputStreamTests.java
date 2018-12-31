@@ -207,7 +207,7 @@ public class CdtWavOutputStreamTests {
                 .withExecAddress(0x2000)
                 .withName("Lala Loader")
                 .build());
-        builder.dump(new FileOutputStream(new File("C:\\Users\\mteira\\Desktop\\test.cdt")));
+        builder.dump(new FileOutputStream(new File("output/test.cdt")));
     }
 
     @Test
