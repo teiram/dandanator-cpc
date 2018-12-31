@@ -214,6 +214,7 @@ public class CdtWavOutputStream {
         output.writeValue(sync1Length, casseteInput);
         casseteInput = !casseteInput;
         output.writeValue(sync2Length, casseteInput);
+        casseteInput = !casseteInput;
     }
 
     private void dumpPause(int pauseLength) {
