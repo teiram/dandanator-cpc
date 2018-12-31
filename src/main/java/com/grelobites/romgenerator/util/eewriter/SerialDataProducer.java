@@ -44,6 +44,12 @@ public class SerialDataProducer implements DataProducer {
         setupBlockData(block, data);
     }
 
+    public SerialDataProducer(SerialPort serialPort, byte[] rawData) {
+        this.serialPort = serialPort;
+        init();
+        data = rawData;
+    }
+
     private void setupBlockData(int block, byte[] buffer) {
         int blockSize = configuration.getBlockSize();
         data = new byte[blockSize + 3];

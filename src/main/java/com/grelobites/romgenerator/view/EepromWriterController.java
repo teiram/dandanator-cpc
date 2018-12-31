@@ -28,7 +28,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -72,11 +71,16 @@ public class EepromWriterController {
     @FXML
     private Button rescueLoaderShowButton;
 
+    @FXML
+    private Button usbLoaderSendButton;
+
     private ApplicationContext applicationContext;
 
     private BooleanProperty playing;
 
     private BooleanProperty rescuePlaying;
+
+    private BooleanProperty usbRescueSending;
 
     private byte[] romsetByteArray;
 
@@ -166,6 +170,7 @@ public class EepromWriterController {
         this.applicationContext = applicationContext;
         playing = new SimpleBooleanProperty(false);
         rescuePlaying = new SimpleBooleanProperty(false);
+        usbRescueSending = new SimpleBooleanProperty(false);
         currentBlock = new SimpleIntegerProperty(-1);
         nextBlockRequested = new SimpleBooleanProperty();
         currentDataProducer = new SimpleObjectProperty<>();
@@ -213,6 +218,7 @@ public class EepromWriterController {
     private void onEndOfMedia() {
         try {
             txLed.setVisible(false);
+            usbRescueSending.set(false);
             stop();
         } catch (Exception e) {
             LOGGER.error("Setting next player", e);
@@ -297,6 +303,21 @@ public class EepromWriterController {
         return nextBlockRequested;
     }
 
+    private void sendUsbRescue() {
+        try {
+            if (!usbRescueSending.get()) {
+                usbRescueSending.set(true);
+                byte[] data = new byte[Constants.SLOT_SIZE];
+                byte[] eewriter = Constants.getRescueEewriter();
+                System.arraycopy(eewriter, 0, data, 0, eewriter.length);
+                DataProducer producer = new SerialDataProducer(serialDataConsumer.serialPort(),
+                        data);
+                initDataProducer(producer);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Preparing Data Producer", e);
+        }
+    }
     public void doPlayExternal() {
         try {
             stop();
@@ -434,7 +455,7 @@ public class EepromWriterController {
             }
         });
 
-        /*
+
         rescueLoaderPlayButton.disableProperty().bind(playing.or(rescuePlayer.isNull()));
         rescueLoaderShowButton.disableProperty().bind(playing);
 
@@ -449,9 +470,16 @@ public class EepromWriterController {
         rescueLoaderShowButton.setOnAction(c -> {
             getCodeViewerStage().show();
         });
-        */
-        rescueLoaderPlayButton.setDisable(true);
-        rescueLoaderShowButton.setDisable(true);
+
+        usbLoaderSendButton.disableProperty().bind(playing.or(rescuePlaying));
+        usbLoaderSendButton.setOnAction(c -> {
+           if (usbRescueSending.get()) {
+               stop();
+               usbRescueSending.set(false);
+           } else {
+               sendUsbRescue();
+           }
+        });
     }
 
 }
