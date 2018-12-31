@@ -47,5 +47,6 @@
             <Image url="@/eewriter/firstaid.png" />
          </image>
       </ImageView>
+      <Button fx:id="usbLoaderSendButton" layoutX="245.0" layoutY="77.0" mnemonicParsing="false" text="USB" />
    </children>
 </AnchorPane>
