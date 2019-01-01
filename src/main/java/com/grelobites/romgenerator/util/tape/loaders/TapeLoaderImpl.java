@@ -48,8 +48,9 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
 
     private boolean validExitZone() {
         return memory.isAddressInRam(z80.getRegPC()) &&
-                !(z80.getRegPC() >= 0xB900 && z80.getRegPC() <= 0xBE42);
+                !(z80.getRegPC() >= 0xB100 && z80.getRegPC() < 0xBE00);
     }
+
     @Override
     public Game loadTape(InputStream tapeFile) throws IOException {
         long compensation = 0;
@@ -135,7 +136,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         }
         */
 
-        long deadline = clock.getTstates() + (5 * CPU_HZ); //Five seconds
+        long deadline = clock.getTstates() + (2 * CPU_HZ); //Two seconds
 
         /*
         while (!memory.isAddressInRam(z80.getRegPC())) {
@@ -149,6 +150,15 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
             z80.execute();
             if (clock.getTstates() > deadline) {
                 LOGGER.warn("Unable to exit banned zone [0xB900-0xBE42] before deadline");
+                //Try to press SPACE to exit dead zone
+                pressKeyDuringFrames(20, KeyboardCode.KEY_SPACE);
+                deadline = clock.getTstates() + (1 * CPU_HZ); //One second
+                while (!validExitZone()) {
+                    z80.execute();
+                    if (clock.getTstates() > deadline) {
+                        LOGGER.warn("Unable to exite banned zone before deadline (2)");
+                    }
+                }
                 break;
             }
         }
