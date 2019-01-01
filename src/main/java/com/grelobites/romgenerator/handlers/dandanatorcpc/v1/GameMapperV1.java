@@ -90,6 +90,7 @@ public class GameMapperV1 implements GameMapper {
         mapper.gameHeader = GameHeaderV1Serializer.deserialize(is);
         LOGGER.debug("Game header deserialized to {}", mapper.gameHeader);
         mapper.gameType = GameType.byTypeId(is.read());
+        mapper.gameHeader.setMemoryDumpSize(mapper.gameType.sizeInKBytes());
         is.skip(DandanatorCpcConstants.GAME_CHUNK_SIZE);
         mapper.isGameCompressed = is.read() != 0;
         mapper.screenHold = is.read() != 0;

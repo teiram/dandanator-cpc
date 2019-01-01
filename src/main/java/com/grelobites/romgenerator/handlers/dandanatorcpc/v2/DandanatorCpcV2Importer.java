@@ -64,7 +64,8 @@ public class DandanatorCpcV2Importer implements DandanatorCpcImporter {
                     slotZero.getScreen(),
                     slotZero.getScreenPalette()));
             globalConfiguration.setBackgroundImagePath(Constants.ROMSET_PROVIDED);
-
+            globalConfiguration.setIncludeExtraRom(slotZero.getExtraRomPresent());
+            globalConfiguration.setEnforceFollowRom(slotZero.getEnforceFollowRom());
             dandanatorCpcConfiguration.setExtraRomPath(Constants.ROMSET_PROVIDED);
             dandanatorCpcConfiguration.setExtraRom(extraRom);
 
@@ -72,6 +73,7 @@ public class DandanatorCpcV2Importer implements DandanatorCpcImporter {
             dandanatorCpcConfiguration.setTogglePokesMessage(slotZero.getTogglePokesMessage());
             dandanatorCpcConfiguration.setLaunchGameMessage(slotZero.getLaunchGameMessage());
             dandanatorCpcConfiguration.setSelectPokesMessage(slotZero.getSelectPokesMessage());
+            dandanatorCpcConfiguration.setAutoboot(slotZero.getAutoboot());
         } catch (Exception e) {
             LOGGER.error("Importing RomSet", e);
         }

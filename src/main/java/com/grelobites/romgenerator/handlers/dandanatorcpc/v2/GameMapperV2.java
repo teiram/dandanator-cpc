@@ -29,6 +29,7 @@ public class GameMapperV2 implements GameMapper {
     private String name;
     private boolean isGameCompressed;
     private GameType gameType;
+    private HardwareMode hardwareMode;
     private boolean screenHold;
     private List<GameBlock> blocks = new ArrayList<>();
     private TrainerList trainerList = new TrainerList(null);
@@ -83,7 +84,15 @@ public class GameMapperV2 implements GameMapper {
         GameMapperV2 mapper = new GameMapperV2(slotZero);
         mapper.gameHeader = GameHeaderV1Serializer.deserialize(is);
         LOGGER.debug("Game header deserialized to {}", mapper.gameHeader);
-        mapper.gameType = GameType.byTypeId(is.read());
+        int gameType = is.read();
+        mapper.gameType = GameType.byTypeId(gameType & 0x0f);
+        if ((gameType & 0x80) != 0) {
+            mapper.hardwareMode = HardwareMode.fromSnaType((gameType & 0x70) >>> 3);
+        } else {
+            mapper.hardwareMode = HardwareMode.HW_UNKNOWN;
+        }
+        LOGGER.debug("Setting memory dump size as {}", mapper.gameType.sizeInKBytes());
+        mapper.gameHeader.setMemoryDumpSize(mapper.gameType.sizeInKBytes());
         is.skip(DandanatorCpcConstants.GAME_CHUNK_SIZE);
         mapper.isGameCompressed = is.read() != 0;
         mapper.screenHold = is.read() != 0;
@@ -169,6 +178,7 @@ public class GameMapperV2 implements GameMapper {
                     snapshotGame.setHoldScreen(screenHold);
                     snapshotGame.setGameHeader(gameHeader);
                     snapshotGame.setTrainerList(trainerList);
+                    snapshotGame.setHardwareMode(hardwareMode);
                     if (isGameCompressed) {
                         snapshotGame.setCompressedData(getGameCompressedData());
                     }

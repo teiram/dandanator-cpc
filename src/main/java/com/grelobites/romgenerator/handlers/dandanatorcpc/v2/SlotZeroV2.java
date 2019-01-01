@@ -4,6 +4,7 @@ import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.*;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.V1Constants;
 import com.grelobites.romgenerator.model.Trainer;
 import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.PositionAwareInputStream;
@@ -29,6 +30,9 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
     private String launchGameMessage;
     private String selectPokesMessage;
     List<GameBlock> gameBlocks;
+    private boolean autoboot;
+    private boolean extraRomPresent;
+    private boolean enforceFollowRom;
 
     public SlotZeroV2(byte[] data) {
         super(data);
@@ -37,7 +41,7 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
     @Override
     public boolean validate() {
         try {
-            return getMajorVersion() == 1;
+            return getMajorVersion() == 2;
         } catch (Exception e) {
             LOGGER.debug("Validation failed", e);
             return false;
@@ -120,6 +124,10 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
         selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
 
         charSet = RomSetUtil.decodeCharset(encodedCharset);
+
+        autoboot = data[V2Constants.AUTOBOOT_OFFSET] == 0 ? false : true;
+        enforceFollowRom = data[V2Constants.ENFORCE_FOLLOWROM_OFFSET] == 0 ? false : true;
+        extraRomPresent = data[V2Constants.EXTRA_ROM_PRESENT_OFFSET] == 0 ? false : true;
     }
 
     @Override
@@ -135,6 +143,21 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
     @Override
     public byte[] getScreenPalette() {
         return screenPalette;
+    }
+
+    @Override
+    public boolean getAutoboot() {
+        return autoboot;
+    }
+
+    @Override
+    public boolean getExtraRomPresent() {
+        return extraRomPresent;
+    }
+
+    @Override
+    public boolean getEnforceFollowRom() {
+        return enforceFollowRom;
     }
 
     @Override

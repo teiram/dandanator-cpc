@@ -114,7 +114,6 @@ public class GameHeaderV1Serializer {
 
         header.setCpcType(Byte.toUnsignedInt(buffer.get()));
         header.setFddMotorDriveState(Byte.toUnsignedInt(buffer.get()));
-
         return header;
     }
 

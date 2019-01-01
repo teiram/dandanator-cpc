@@ -31,13 +31,13 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
     protected int altHlRegister;
 
     protected int gateArraySelectedPen;
-    protected byte[] gateArrayCurrentPalette;
+    protected byte[] gateArrayCurrentPalette = new byte[GATE_ARRAY_PALETTE_LENGTH];
     protected int gateArrayMultiConfiguration;
 
     protected int currentRamConfiguration;
 
     protected int crtcSelectedRegisterIndex;
-    protected byte[] crtcRegisterData;
+    protected byte[] crtcRegisterData = new byte[CRTC_REGISTER_DATA_LENGTH];
 
     protected int currentRomSelection;
 
@@ -47,7 +47,7 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
     protected int ppiControlPort;
 
     protected int psgSelectedRegisterIndex;
-    protected byte[] psgRegisterData;
+    protected byte[] psgRegisterData = new byte[PSG_REGISTER_DATA_LENGTH];
 
     protected int memoryDumpSize;
     protected byte[] memory;
@@ -290,7 +290,8 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
     }
 
     public void setGateArrayCurrentPalette(byte[] gateArrayCurrentPalette) {
-        this.gateArrayCurrentPalette = gateArrayCurrentPalette;
+        System.arraycopy(gateArrayCurrentPalette, 0, this.gateArrayCurrentPalette, 0,
+                Math.min(GATE_ARRAY_PALETTE_LENGTH, gateArrayCurrentPalette.length));
     }
 
     public void setGateArrayMultiConfiguration(int gateArrayMultiConfiguration) {
@@ -306,7 +307,8 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
     }
 
     public void setCrtcRegisterData(byte[] crtcRegisterData) {
-        this.crtcRegisterData = crtcRegisterData;
+        System.arraycopy(crtcRegisterData, 0,
+                this.crtcRegisterData, 0, Math.min(CRTC_REGISTER_DATA_LENGTH, crtcRegisterData.length));
     }
 
     public void setCurrentRomSelection(int currentRomSelection) {
@@ -334,7 +336,8 @@ public class SnaImageV1 extends SnaImageBase implements SnaImage {
     }
 
     public void setPsgRegisterData(byte[] psgRegisterData) {
-        this.psgRegisterData = psgRegisterData;
+        System.arraycopy(psgRegisterData, 0, this.psgRegisterData, 0,
+                Math.min(PSG_REGISTER_DATA_LENGTH, psgRegisterData.length));
     }
 
     public void setMemory(byte[] memory) {

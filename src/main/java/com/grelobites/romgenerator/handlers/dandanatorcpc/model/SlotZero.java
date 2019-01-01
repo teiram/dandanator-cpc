@@ -1,6 +1,7 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc.model;
 
 import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.SlotZeroV1;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.v2.SlotZeroV2;
 import com.grelobites.romgenerator.util.PositionAwareInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,8 @@ public interface SlotZero {
     Logger LOGGER = LoggerFactory.getLogger(SlotZero.class);
     Class<?>[] implementations =
             new Class<?>[] {
-                    SlotZeroV1.class
+                    SlotZeroV1.class,
+                    SlotZeroV2.class
     };
 
     static Optional<SlotZero> getImplementation(byte[] data) {
@@ -66,4 +68,8 @@ public interface SlotZero {
     default boolean getAutoboot() {
         return false;
     }
+
+    default boolean getExtraRomPresent() { return true; }
+
+    default boolean getEnforceFollowRom() { return false; }
 }

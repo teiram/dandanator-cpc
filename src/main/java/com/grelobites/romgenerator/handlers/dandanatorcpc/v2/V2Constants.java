@@ -10,7 +10,10 @@ public class V2Constants {
     protected static final int GAME_HEADER_SIZE = 90;
     protected static final int GAME_LAUNCHCODE_SIZE = 9;
     protected static final int GAME_STRUCT_OFFSET = BASEROM_SIZE + 1;
-    protected static final int EXTRA_ROM_PRESENT_OFFSET = 16350;
     protected static int EXTRA_ROM_SLOT = 32;
     protected static int INTERNAL_ROM_SLOT = 33;
+
+    protected static final int AUTOBOOT_OFFSET = 16382;
+    protected static final int EXTRA_ROM_PRESENT_OFFSET = 16350;
+    protected static final int ENFORCE_FOLLOWROM_OFFSET = 16351;
 }

@@ -5,7 +5,9 @@ import java.io.OutputStream;
 import java.util.Map;
 
 public interface SnaImage {
-
+    static final int CRTC_REGISTER_DATA_LENGTH = 18;
+    static final int GATE_ARRAY_PALETTE_LENGTH = 17;
+    static final int PSG_REGISTER_DATA_LENGTH = 16;
     int getSnapshotVersion();
     int getAFRegister();
     int getBCRegister();
