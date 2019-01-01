@@ -94,6 +94,9 @@ public class DandanatorCpcFrameController {
     private Label gameType;
 
     @FXML
+    private Label gameHardware;
+
+    @FXML
     private CheckBox gameHoldScreenAttribute;
 
     @FXML
@@ -325,10 +328,16 @@ public class DandanatorCpcFrameController {
         }
     }
 
+    private static HardwareMode getGameHardwareMode(Game game) {
+        return game instanceof SnapshotGame ?
+                ((SnapshotGame) game).getHardwareMode() : HardwareMode.HW_UNKNOWN;
+    }
     private void bindInfoPropertiesToGame(Game game) {
         if (game != null) {
             gameName.textProperty().bindBidirectional(game.nameProperty());
             gameType.textProperty().set(game.getType().screenName());
+            gameHardware.textProperty().set(LocaleUtil.i18n(
+                    getGameHardwareMode(game).displayName()));
             compressedSize.textProperty().bind(getGameSizeProperty(game).asString());
             if (game instanceof SnapshotGame) {
                 SnapshotGame snapshotGame = (SnapshotGame) game;

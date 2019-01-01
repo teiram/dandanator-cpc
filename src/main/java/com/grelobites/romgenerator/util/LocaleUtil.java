@@ -42,7 +42,11 @@ public class LocaleUtil {
         try {
             return getBundle().getString(key);
         } catch (MissingResourceException mre) {
-            return defaultLocaleBundle.getString(key);
+            try {
+                return defaultLocaleBundle.getString(key);
+            } catch (Exception e) {
+                return key;
+            }
         }
     }
 }

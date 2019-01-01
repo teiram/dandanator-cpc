@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" xmlns="http://javafx.com/javafx/8.0.181" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
    <children>
         <TabPane fx:id="gameInfoTabPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" styleClass="infoTabPane">
             <tabs>
@@ -22,7 +22,7 @@
                         <AnchorPane fx:id="gameInfoPane">
                             <children>
                                 <Label layoutX="10.0" layoutY="14.0" text="%gameNameProperty" />
-                                <Label layoutX="10.0" layoutY="45.0" text="%gameTypeProperty" textFill="WHITE" />
+                                <Label layoutX="10.0" layoutY="45.0" text="%gameTypeProperty" />
                                 <Label layoutX="141.0" layoutY="118.0" text="%gameSizeProperty" />
                                 <Label fx:id="compressedSize" layoutX="203.0" layoutY="118.0" prefHeight="17.0" prefWidth="54.0" text="0" textAlignment="RIGHT" />
                                 <CheckBox fx:id="gameHoldScreenAttribute" layoutX="10.0" layoutY="92.0" mnemonicParsing="false" text="%holdScreenProperty" />
@@ -33,6 +33,8 @@
                         </TextField>
                                 <Label fx:id="gameType" layoutX="74.0" layoutY="45.0" text="RAM" />
                         <CheckBox fx:id="gameCompressedAttribute" layoutX="10.0" layoutY="117.0" mnemonicParsing="false" text="%gameCompressedProperty" />
+                        <Label fx:id="gameHardware" layoutX="217.0" layoutY="45.0" text="Unknown" />
+                        <Label layoutX="132.0" layoutY="45.0" text="%gameHwProperty" />
                             </children>
                         </AnchorPane>
                     </content>
