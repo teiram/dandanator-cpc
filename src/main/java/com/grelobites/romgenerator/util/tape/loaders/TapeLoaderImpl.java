@@ -25,6 +25,8 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
     private static final int MAX_FRAMES_WITHOUT_TAPE_MOVEMENT = 5000;
     private static final int CPU_HZ = 4000000;
+    private static final int FIRM_ZONE_START = 0xB100;
+    private static final int FIRM_ZONE_END = 0xBE00;
     private final CdtTapePlayer tapePlayer;
     private SnapshotGame currentSnapshot;
     private int tapeLastSavePosition = 0;
@@ -46,9 +48,9 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         }
     }
 
-    private boolean validExitZone() {
+    private boolean validLandingZone() {
         return memory.isAddressInRam(z80.getRegPC()) &&
-                !(z80.getRegPC() >= 0xB100 && z80.getRegPC() < 0xBE00);
+                !(z80.getRegPC() >= FIRM_ZONE_START && z80.getRegPC() < FIRM_ZONE_END);
     }
 
     @Override
@@ -146,14 +148,14 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
             }
         }
         */
-        while (!validExitZone()) {
+        while (!validLandingZone()) {
             z80.execute();
             if (clock.getTstates() > deadline) {
                 LOGGER.warn("Unable to exit banned zone [0xB900-0xBE42] before deadline");
                 //Try to press SPACE to exit dead zone
                 pressKeyDuringFrames(20, KeyboardCode.KEY_SPACE);
                 deadline = clock.getTstates() + (1 * CPU_HZ); //One second
-                while (!validExitZone()) {
+                while (!validLandingZone()) {
                     z80.execute();
                     if (clock.getTstates() > deadline) {
                         LOGGER.warn("Unable to exite banned zone before deadline (2)");
