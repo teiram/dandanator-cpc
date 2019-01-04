@@ -1,6 +1,7 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
 import com.grelobites.romgenerator.model.HardwareMode;
+import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,6 +167,11 @@ public class GateArray {
                     break;
                 case PALETTE_DATA_FN:
                     palette[selectedPen] = (byte) (value & 0x1f);
+                    if ((selectedPen & 0x10)  == 0) {
+                        LOGGER.debug("Setting pen {} to color {} ({})", selectedPen,
+                                String.format("0x%02x", palette[selectedPen]),
+                                CpcColor.hardIndexed(palette[selectedPen]));
+                    }
                     break;
                 case SCREEN_MODE_AND_ROM_CFG_FN:
                     screenModeAndRomConfigurationRegister = value;

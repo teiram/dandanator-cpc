@@ -57,8 +57,8 @@ public class ImageUtil {
                         ((pixelData & 0x10) >> 2) |
                         ((pixelData & 0x04) >> 1) |
                         ((pixelData & 0x40) >> 6);
-                int color0 = CpcColor.hardIndexed(palette[color0Index]);
-                int color1 = CpcColor.hardIndexed(palette[color1Index]);
+                int color0 = CpcColor.hardIndexedArgb(palette[color0Index]);
+                int color1 = CpcColor.hardIndexedArgb(palette[color1Index]);
                 for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 4; j++) {
                         writer.setArgb(4 * ((2 * x) + 0) + j + xBorderSize, y * 2 + i + yBorderSize, color0);
@@ -92,10 +92,10 @@ public class ImageUtil {
                 int color3Index = ((pixelData & 0x01) << 1) |
                         ((pixelData & 0x10) >> 4);
 
-                int color0 = CpcColor.hardIndexed(palette[color0Index]);
-                int color1 = CpcColor.hardIndexed(palette[color1Index]);
-                int color2 = CpcColor.hardIndexed(palette[color2Index]);
-                int color3 = CpcColor.hardIndexed(palette[color3Index]);
+                int color0 = CpcColor.hardIndexedArgb(palette[color0Index]);
+                int color1 = CpcColor.hardIndexedArgb(palette[color1Index]);
+                int color2 = CpcColor.hardIndexedArgb(palette[color2Index]);
+                int color3 = CpcColor.hardIndexedArgb(palette[color3Index]);
 
                 for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 2; j++) {
@@ -127,21 +127,21 @@ public class ImageUtil {
 
 				for (int i = 0; i < 2; i++) {
 					writer.setArgb(x * 8 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x80) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x80) != 0 ? 1 : 0]));
 					writer.setArgb(x * 8 + 1 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x40) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x40) != 0 ? 1 : 0]));
                     writer.setArgb(x * 8 + 2 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x20) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x20) != 0 ? 1 : 0]));
                     writer.setArgb(x * 8 + 3 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x10) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x10) != 0 ? 1 : 0]));
                     writer.setArgb(x * 8 + 4 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x08) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x08) != 0 ? 1 : 0]));
                     writer.setArgb(x * 8 + 5 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x04) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x04) != 0 ? 1 : 0]));
                     writer.setArgb(x * 8 + 6 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x02) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x02) != 0 ? 1 : 0]));
                     writer.setArgb(x * 8 + 7 + xBorderSize, y * 2 + i + yBorderSize,
-                            CpcColor.hardIndexed(palette[(pixelData & 0x01) != 0 ? 1 : 0]));
+                            CpcColor.hardIndexedArgb(palette[(pixelData & 0x01) != 0 ? 1 : 0]));
                 }
 			}
 		}
@@ -172,7 +172,7 @@ public class ImageUtil {
                                                         byte[] palette) {
         LOGGER.debug("scrLoader with screenMode {}, crtcDisplayData {}", screenMode, crtcDisplayData);
         PixelWriter writer = image.getPixelWriter();
-        fillBackground(image, writer, CpcColor.hardIndexed(palette[16]));
+        fillBackground(image, writer, CpcColor.hardIndexedArgb(palette[16]));
         switch (screenMode) {
             case 0:
                 writeToImageMode0(writer, slot, crtcDisplayData, palette);

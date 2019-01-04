@@ -108,8 +108,12 @@ public enum CpcColor {
 		return FIRM_INDEXED[paletteIndex].argb();
 	}
 
-	public static int hardIndexed(int paletteIndex) {
-	    return HARD_INDEXED[paletteIndex & HARDWARE_MASK].argb();
+	public static CpcColor hardIndexed(int paletteIndex) {
+        return HARD_INDEXED[paletteIndex & HARDWARE_MASK];
+    }
+
+	public static int hardIndexedArgb(int paletteIndex) {
+	    return hardIndexed(paletteIndex).argb();
     }
 
     public static int snaValue(int firmIndex) {
