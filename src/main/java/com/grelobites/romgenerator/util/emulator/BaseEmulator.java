@@ -253,7 +253,7 @@ public class BaseEmulator implements Z80operations {
     @Override
     public void outPort(int port, int value) {
         clock.addTstates(4); // 4 clocks to write byte to bus
-        if ((port & 0xFF00) == 0x7F00) {
+        if ((port & 0xC000) == 0x4000) {
             //LOGGER.debug("GateArray I/O Port {}, Value {}",
             //      String.format("%04x", port), String.format("%02x", value));
             //gateArray.onPortWriteOperation(port & 0xff);
