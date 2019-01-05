@@ -140,14 +140,16 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         while (!validLandingZone()) {
             z80.execute();
             if (clock.getTstates() > deadline) {
-                LOGGER.warn("Unable to find landing zone before deadline. Simulating keypress");
+                LOGGER.warn("Unable to find landing zone before deadline with status {}", z80.getZ80State());
+                LOGGER.info("Simulating Space keypress");
                 //Try to press SPACE to exit dead zone
                 pressKeyDuringFrames(20, KeyboardCode.KEY_SPACE);
-                deadline = clock.getTstates() + (1 * CPU_HZ); //One second
+                deadline = clock.getTstates() + CPU_HZ; //One second
                 while (!validLandingZone()) {
                     z80.execute();
                     if (clock.getTstates() > deadline) {
                         LOGGER.warn("Unable to exit banned zone before deadline even after keypress");
+                        break;
                     }
                 }
                 break;
