@@ -167,11 +167,6 @@ public class GateArray {
                     break;
                 case PALETTE_DATA_FN:
                     palette[selectedPen] = (byte) (value & 0x1f);
-                    if ((selectedPen & 0x10)  == 0) {
-                        LOGGER.debug("Setting pen {} to color {} ({})", selectedPen,
-                                String.format("0x%02x", palette[selectedPen]),
-                                CpcColor.hardIndexed(palette[selectedPen]));
-                    }
                     break;
                 case SCREEN_MODE_AND_ROM_CFG_FN:
                     screenModeAndRomConfigurationRegister = value;
@@ -180,8 +175,9 @@ public class GateArray {
                     ramBankingRegister = value != 0 ? value : null;
                     break;
             }
+        } else {
+            LOGGER.info("GateArray change cancelled by listener");
         }
-
     }
 
     @Override

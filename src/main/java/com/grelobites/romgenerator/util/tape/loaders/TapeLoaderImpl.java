@@ -61,6 +61,9 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         //Pressing enter key to continue with loading
         final GateArrayChangeListener paletteGateArrayChangeListener = (f, v) -> {
             if (f == GateArrayFunction.PALETTE_DATA_FN) {
+                if (gateArray.getSelectedPen() == 0 && (v & 0x1F) == 0x14) {
+                    LOGGER.debug("Setting pen 0 to black at {}", z80.getZ80State());
+                }
                 //Ignore border changes
                 if ((gateArray.getSelectedPen() & 0x10) == 0) {
                     if (isTapeNearEndPosition()) {
@@ -78,12 +81,14 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         while (!ppi.isMotorOn()) {
             compensation = executeFrame(compensation);
         }
+        z80.setBreakpoint(0x0cec, true);
         final AtomicInteger sequence = new AtomicInteger();
         final MotorStateChangeListener motorStateChangeListener = (c) -> {
             if (!c) {
                 LOGGER.debug("Stopping tape from listener with status {}", tapePlayer);
                 currentSnapshot = getSnapshotGame();
                 tapeLastSavePosition = tapePlayer.getCurrentTapePosition();
+                //saveGameAsSna(getSnapshotGame(), sequence.getAndIncrement());
                 tapePlayer.pause();
                 if (tapePlayer.isInLastBlock()) {
                     LOGGER.debug("Aborting emulation with tape stopped in last block");
@@ -100,7 +105,6 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         LOGGER.info("Motor is on!");
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
-        int frameCounter = 0;
         boolean stopOnTapeStalled = false;
         gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {
@@ -126,44 +130,30 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
                     z80.getZ80State(), tapePlayer, tfe);
         }
 
-        gateArray.removeChangeListener(paletteGateArrayChangeListener);
         ppi.removeMotorStateChangeListener(motorStateChangeListener);
-        LOGGER.info("Tape finished at {}, tapeLastSavePosition was {}",
-                tapePlayer.getCurrentTapePosition(), tapeLastSavePosition);
+        LOGGER.info("Tape finished with cpu status {}, tape: {}",
+                z80.getZ80State(), tapePlayer);
 
-        /*
-        executionAborted = false;
-        for (int i = 0; i < 1000; i++) {
-            compensation = executeFrame(compensation);
-        }
-        */
-
+        LOGGER.debug("Searching for proper landing zone");
         long deadline = clock.getTstates() + (2 * CPU_HZ); //Two seconds
 
-        /*
-        while (!memory.isAddressInRam(z80.getRegPC())) {
-            z80.execute();
-            if (clock.getTstates() > deadline) {
-                break;
-            }
-        }
-        */
         while (!validLandingZone()) {
             z80.execute();
             if (clock.getTstates() > deadline) {
-                LOGGER.warn("Unable to exit banned zone [0xB900-0xBE42] before deadline");
+                LOGGER.warn("Unable to find landing zone before deadline. Simulating keypress");
                 //Try to press SPACE to exit dead zone
                 pressKeyDuringFrames(20, KeyboardCode.KEY_SPACE);
                 deadline = clock.getTstates() + (1 * CPU_HZ); //One second
                 while (!validLandingZone()) {
                     z80.execute();
                     if (clock.getTstates() > deadline) {
-                        LOGGER.warn("Unable to exite banned zone before deadline (2)");
+                        LOGGER.warn("Unable to exit banned zone before deadline even after keypress");
                     }
                 }
                 break;
             }
         }
+        gateArray.removeChangeListener(paletteGateArrayChangeListener);
 
         //if (tapePlayer.getCurrentTapePosition() > tapeLastSavePosition) {
             LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
@@ -212,4 +202,19 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         return clock.getTstates() - limit;
     }
 
+    @Override
+    public void breakpoint() {
+        super.breakpoint();
+        if (z80.getRegPC() == 0x0cec) {
+            LOGGER.debug("Calling SCR SET INK (A={}, B={}, C={}) with stack {}, {}, {}",
+                    String.format("0x%02x", z80.getRegA()),
+                    String.format("0x%02x", z80.getRegB()),
+                    String.format("0x%02x", z80.getRegC()),
+                    String.format("0x%04x", peek16(z80.getRegSP())),
+                    String.format("0x%04x", peek16(z80.getRegSP() + 2)),
+                    String.format("0x%04x", peek16(z80.getRegSP() + 4))
+
+                    );
+        }
+    }
 }
