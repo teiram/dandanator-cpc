@@ -410,19 +410,17 @@ public class CdtTapePlayer implements ClockTimeoutListener {
                     }
                     break;
                 case LAST_PULSE:
-                    if (endBlockPause == 0) {
-                        state = State.TZX_HEADER;
-                        repeat = true;
-                    } else {
-                        casseteInput = !casseteInput;
-                        state = State.PAUSE;
-                        clockTimeout.setTimeout(MILLISECOND_TSTATES);
-                    }
+                    casseteInput = !casseteInput;
+                    state = State.PAUSE;
+                    repeat = true;
                     break;
                 case PAUSE:
-                    casseteInput = invertedOutput;
                     state = State.TZX_HEADER;
-                    clockTimeout.setTimeout(endBlockPause);
+                    if (endBlockPause == 0) {
+                        repeat = true;
+                    } else {
+                        clockTimeout.setTimeout(endBlockPause);
+                    }
                     break;
                 case TZX_HEADER:
                     if (currentBlockIndex >= blockOffsets.size()) {
