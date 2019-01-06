@@ -4062,22 +4062,11 @@ public class Z80 {
             }
             case 0x46: {            /* LD B,(IX+d)      20 t-states     */
                 clock.addTstates(4);
-            }
-            /*
-            case 0x78: {            // IN A,(C)         8 t-states
-                memptr = getRegBC();
-                clock.addTstates(4);
-                regA = Z80opsImpl.inPort(memptr++);
-                sz5h3pnFlags = sz53pn_addTable[regA];
-                flagQ = true;
                 memptr = (regIXY + (byte) Z80opsImpl.peek8(regPC)) & 0xffff;
                 regB = Z80opsImpl.peek8(memptr);
                 regPC = (regPC + 1) & 0xffff;
-                throw new IllegalStateException("Unexpected IN");
-
-               // break;
+                break;
             }
-            */
             case 0x4C: {            /* LD C,IXh         8 t-states      */
                 regC = regIXY >>> 8;
                 break;
