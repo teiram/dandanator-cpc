@@ -81,7 +81,6 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         while (!ppi.isMotorOn()) {
             compensation = executeFrame(compensation);
         }
-        z80.setBreakpoint(0x0cec, true);
         final AtomicInteger sequence = new AtomicInteger();
         final MotorStateChangeListener motorStateChangeListener = (c) -> {
             if (!c) {
@@ -204,19 +203,4 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         return clock.getTstates() - limit;
     }
 
-    @Override
-    public void breakpoint() {
-        super.breakpoint();
-        if (z80.getRegPC() == 0x0cec) {
-            LOGGER.debug("Calling SCR SET INK (A={}, B={}, C={}) with stack {}, {}, {}",
-                    String.format("0x%02x", z80.getRegA()),
-                    String.format("0x%02x", z80.getRegB()),
-                    String.format("0x%02x", z80.getRegC()),
-                    String.format("0x%04x", peek16(z80.getRegSP())),
-                    String.format("0x%04x", peek16(z80.getRegSP() + 2)),
-                    String.format("0x%04x", peek16(z80.getRegSP() + 4))
-
-                    );
-        }
-    }
 }
