@@ -235,7 +235,7 @@ public class Ppi {
     private void applyPsgFunction() {
         switch (psgFunction) {
             case SELECT:
-                selectedPsgRegister = portACurrentValue;
+                selectedPsgRegister = portACurrentValue & 0x0f;
                 break;
             case READ:
                 portACurrentValue = psgRegisterData[selectedPsgRegister];
