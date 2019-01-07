@@ -834,7 +834,11 @@ public class CdtTapePlayer implements ClockTimeoutListener {
             clock.removeClockTimeout(clockTimeout);
             //Compensate for the pause/resume sequence? Lala needs something like this to work
             //But breaks some others like 1942
-            //clockTimeout.append(5000000);
+            /*
+            if (currentBlockIndex == 3 && clockTimeout.remaining() < 2000) {
+                clockTimeout.append(5000000);
+            }
+            */
             playing = false;
         }
     }
