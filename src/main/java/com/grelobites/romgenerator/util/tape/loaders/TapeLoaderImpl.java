@@ -61,9 +61,6 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         //Pressing enter key to continue with loading
         final GateArrayChangeListener paletteGateArrayChangeListener = (f, v) -> {
             if (f == GateArrayFunction.PALETTE_DATA_FN) {
-                if (gateArray.getSelectedPen() == 0 && (v & 0x1F) == 0x14) {
-                    LOGGER.debug("Setting pen 0 to black at {}", z80.getZ80State());
-                }
                 //Ignore border changes
                 if ((gateArray.getSelectedPen() & 0x10) == 0) {
                     if (isTapeNearEndPosition()) {
@@ -85,7 +82,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         final MotorStateChangeListener motorStateChangeListener = (c) -> {
             if (!c) {
                 LOGGER.debug("Stopping tape from listener with status {}", tapePlayer);
-                currentSnapshot = getSnapshotGame();
+                //currentSnapshot = getSnapshotGame();
                 tapeLastSavePosition = tapePlayer.getCurrentTapePosition();
                 //saveGameAsSna(getSnapshotGame(), sequence.getAndIncrement());
                 tapePlayer.pause();
@@ -100,7 +97,8 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
             }
         };
         ppi.addMotorStateChangeListener(motorStateChangeListener);
-
+        z80.setBreakpoint(0xbca1, true);
+        z80.setBreakpoint(0xbc83, true);
         LOGGER.info("Motor is on!");
         tapePlayer.play();
         framesWithoutTapeMovement = 0;
@@ -203,4 +201,13 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         return clock.getTstates() - limit;
     }
 
+    @Override
+    public void breakpoint() {
+        super.breakpoint();
+        if (z80.getRegPC() == 0xbca1) {
+            LOGGER.debug("CAS READ Invoked with status {}", z80.getZ80State());
+        } else if (z80.getRegPC() == 0xbc83) {
+            LOGGER.debug("CAS IN DIRECT invoked with status {}", z80.getZ80State());
+        }
+    }
 }
