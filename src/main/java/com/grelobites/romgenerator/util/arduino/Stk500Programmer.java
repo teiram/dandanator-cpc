@@ -18,6 +18,8 @@ public class Stk500Programmer {
     private static final int RESP_STK_OK = 0x10;
     private static final int RESP_STK_INSYNC = 0x14;
 
+    private static final byte[] ATMEGA_328P_SIGNATURE = {(byte) 0x1e, (byte) 0x95, (byte) 0x0F};
+
     private static class ParametersBuilder {
         List<Byte> parameters = new ArrayList<>();
 
@@ -336,6 +338,10 @@ public class Stk500Programmer {
         } else {
             throw new IllegalStateException("Sync lost");
         }
+    }
+
+    public boolean supportedSignature(byte[] signature) {
+        return Arrays.equals(ATMEGA_328P_SIGNATURE, signature);
     }
 
 }

@@ -3,6 +3,7 @@ package com.grelobites.romgenerator.view;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.util.OperationResult;
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.arduino.*;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
@@ -131,10 +132,6 @@ public class CpldProgrammerController {
         });
     }
 
-    private static void validateSignature(byte[] signature) {
-        throw new IllegalArgumentException("Unsupported arduino signature");
-    }
-
     @FXML
     void initialize() throws IOException {
         programButton.disableProperty().bind(programming.or(
@@ -172,7 +169,11 @@ public class CpldProgrammerController {
                         onStartOperation(arduinoValidatedLed);
 
                         byte[] signature = arduinoProgrammer.getDeviceSignature();
-                        validateSignature(signature);
+                        if (arduinoProgrammer.supportedSignature(signature)) {
+                            LOGGER.warn("Arduino model with signature {} not supported",
+                                    Util.dumpAsHexString(signature));
+                            throw new IllegalArgumentException("Unsupported Arduino model");
+                        }
                         arduinoProgrammer.enterProgramMode();
                         onSuccessfulOperation(arduinoValidatedLed, 0.3);
                     } catch (Exception e) {
@@ -193,9 +194,13 @@ public class CpldProgrammerController {
                         LOGGER.error("During arduino update", e);
                         onFailedOperation(arduinoUpdatedLed);
                         throw e;
+                    } finally {
+                        arduinoProgrammer.leaveProgramMode();
                     }
 
+                    //This is currenty a no-op
                     onSuccessfulOperation(dandanatorDetectedLed, 0.7);
+
                     try {
                         LOGGER.debug("Starting dandanator update");
                         onStartOperation(dandanatorUpdatedLed);
