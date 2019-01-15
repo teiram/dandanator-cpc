@@ -102,6 +102,7 @@ public class MainApp extends Application {
                 .backgroundTaskCountProperty().greaterThan(0));
         cpldProgrammer.setOnAction(f -> {
             try {
+                applicationContext.currentPageProperty().set(0);
                 getCpldProgrammerStage().show();
             } catch (Exception e) {
                 LOGGER.error("Trying to show CPLD Programmer Stage", e);

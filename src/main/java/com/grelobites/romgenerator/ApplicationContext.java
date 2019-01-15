@@ -61,6 +61,7 @@ public class ApplicationContext {
     private StringProperty applicationTitle;
     private DirectoryAwareFileChooser fileChooser;
     private StringProperty exportGameMenuEntryMessage;
+    private IntegerProperty currentPage;
 
     private void updateApplicationTitle() {
         StringBuilder title = new StringBuilder(APPLICATION_TITLE);
@@ -157,6 +158,14 @@ public class ApplicationContext {
 
     public Pane getRomSetHandlerInfoPane() {
         return romSetHandlerInfoPane;
+    }
+
+    public IntegerProperty currentPageProperty() {
+        return currentPage;
+    }
+
+    public void setCurrentPageProperty(IntegerProperty currentPage) {
+        this.currentPage = currentPage;
     }
 
     public void setRomSetHandlerInfoPane(Pane romSetHandlerInfoPane) {

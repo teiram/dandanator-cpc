@@ -238,7 +238,6 @@ public class Stk500Programmer {
     }
 
     public void enterProgramMode() {
-
         sendCommandAndHandleResponse(ParametersBuilder.newInstance()
                 .withByte(0x42) //Set device program parameters
                 .withByte(0x86) //devicecode
