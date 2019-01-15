@@ -6,6 +6,7 @@ import java.util.Locale;
 
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.PreferencesProvider;
+import com.grelobites.romgenerator.view.CpldProgrammerController;
 import com.grelobites.romgenerator.view.MainAppController;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
 import de.codecentric.centerdevice.MenuToolkit;
@@ -24,6 +25,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
@@ -35,9 +37,11 @@ public class MainApp extends Application {
 
 	private Stage primaryStage;
     private Stage preferencesStage;
+    private Stage cpldProgrammerStage;
     private Stage aboutStage;
     private TabPane preferencesPane;
     private TabPane aboutPane;
+    private VBox cpldProgrammerPane;
     private MenuToolkit menuToolkit;
     private ApplicationContext applicationContext;
 
@@ -57,6 +61,7 @@ public class MainApp extends Application {
         }
 
         Menu extraMenu = new Menu(LocaleUtil.i18n("extraMenuTitle"));
+        extraMenu.getItems().add(cpldProgrammerMenuItem(applicationContext));
         extraMenu.visibleProperty().bind(Bindings.size(extraMenu.getItems()).greaterThan(0));
         applicationContext.setExtraMenu(extraMenu);
 
@@ -90,6 +95,20 @@ public class MainApp extends Application {
         return exportGame;
     }
 
+    private MenuItem cpldProgrammerMenuItem(ApplicationContext applicationContext) {
+        MenuItem cpldProgrammer = new MenuItem(LocaleUtil.i18n("cpldProgrammerMenuEntry"));
+
+        cpldProgrammer.disableProperty().bind(applicationContext
+                .backgroundTaskCountProperty().greaterThan(0));
+        cpldProgrammer.setOnAction(f -> {
+            try {
+                getCpldProgrammerStage().show();
+            } catch (Exception e) {
+                LOGGER.error("Trying to show CPLD Programmer Stage", e);
+            }
+        });
+        return cpldProgrammer;
+    }
 
     private MenuItem importRomSetMenuItem(Scene scene, ApplicationContext applicationContext) {
         MenuItem importRomSet = new MenuItem(LocaleUtil.i18n("importRomSetMenuEntry"));
@@ -173,6 +192,7 @@ public class MainApp extends Application {
         return preferencesStage;
     }
 
+
     private TabPane getAboutPane() throws IOException {
         if (aboutPane == null) {
             FXMLLoader loader = new FXMLLoader();
@@ -195,6 +215,31 @@ public class MainApp extends Application {
             aboutStage.setResizable(false);
         }
         return aboutStage;
+    }
+
+    private VBox getCpldProgrammerPane() throws IOException {
+        if (cpldProgrammerPane == null) {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("view/cpldProgrammer.fxml"));
+            loader.setResources(LocaleUtil.getBundle());
+            loader.setController(new CpldProgrammerController());
+            cpldProgrammerPane = loader.load();
+        }
+        return cpldProgrammerPane;
+    }
+
+    private Stage getCpldProgrammerStage() throws IOException {
+        if (cpldProgrammerStage == null) {
+            cpldProgrammerStage = new Stage();
+            Scene scene = new Scene(getCpldProgrammerPane());
+            scene.getStylesheets().add(Constants.getThemeResourceUrl());
+            cpldProgrammerStage.setScene(scene);
+            cpldProgrammerStage.setTitle(LocaleUtil.i18n("cpldProgrammerStageTitle"));
+            cpldProgrammerStage.initModality(Modality.APPLICATION_MODAL);
+            cpldProgrammerStage.initOwner(primaryStage.getOwner());
+            cpldProgrammerStage.setResizable(false);
+        }
+        return cpldProgrammerStage;
     }
 
     private void showPreferencesStage() {
