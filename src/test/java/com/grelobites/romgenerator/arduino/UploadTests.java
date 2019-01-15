@@ -8,10 +8,11 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.List;
 
 public class UploadTests {
     private static final Logger LOGGER = LoggerFactory.getLogger(UploadTests.class);
-    private static final String SERIAL_PORT = "COM4";
+    private static final String SERIAL_PORT = "/dev/ttyACM0";
 
     @Test
     public void uploadSketchTest() throws Exception {
@@ -21,30 +22,29 @@ public class UploadTests {
                 SerialPort.DATABITS_8,
                 SerialPort.STOPBITS_1,
                 SerialPort.PARITY_NONE);
+
         Stk500Programmer programmer = new Stk500Programmer(serialPort);
+        programmer.initialize();
         programmer.sync();
+        int majorVersion = programmer.getMajorVersion();
+        int minorVersion = programmer.getMinorVersion();
+        LOGGER.debug("Major version is {}, minor is {}", majorVersion, minorVersion);
+
+
         byte[] signature = programmer.getDeviceSignature();
         LOGGER.debug("Signature is {}", Arrays.toString(signature));
-        programmer.enterProgramMode();
-        BufferedReader br = new BufferedReader(new InputStreamReader(
-                UploadTests.class.getResourceAsStream("/hex/JTAGTest.hex")));
-        String line;
-        boolean hexEof = false;
-        while ((line = br.readLine()) != null && !hexEof) {
-            HexRecord record = HexRecord.fromLine(line);
-            switch (record.getType()) {
-                case DATA:
-                    programmer.programHexRecord(record);
-                    break;
-                case EOF:
-                    LOGGER.debug("Reached EOF HEX record");
-                    hexEof = true;
-                    break;
-                default:
-                    LOGGER.error("Unsupported HEX record");
+
+        List<Binary> binaries = HexUtil.toBinaryList(
+                UploadTests.class.getResourceAsStream("/hex/JTAGTest.hex"));
+
+        LOGGER.debug("Got {} binaries from hex stream", binaries.size());
+        if (binaries.size() > 0) {
+            programmer.enterProgramMode();
+            for (Binary binary : binaries) {
+                programmer.programBinary(binary);
             }
+            programmer.leaveProgramMode();
         }
-        programmer.leaveProgramMode();
     }
 
     @Test
@@ -57,6 +57,6 @@ public class UploadTests {
                 SerialPort.PARITY_NONE);
 
         XsvfUploader uploader = new XsvfUploader(serialPort);
-        uploader.upload(UploadTests.class.getResourceAsStream("/xsvf/test.xsvf"));
+        uploader.upload(UploadTests.class.getResourceAsStream("/xsvf/dan-fix.xsvf"));
     }
 }

@@ -20,8 +20,11 @@ public class XsvfUploader {
     private void clearSerialPort() {
         try {
             serialPort.setDTR(false);
-            serialPort.purgePort(SerialPort.PURGE_RXCLEAR | SerialPort.PURGE_TXCLEAR);
+            serialPort.setRTS(false);
+            Thread.sleep(50);
             serialPort.setDTR(true);
+            serialPort.setRTS(true);
+            Thread.sleep(50);
         } catch (Exception e) {
             LOGGER.error("Clearing serial port", e);
             throw new RuntimeException(e);
@@ -34,6 +37,16 @@ public class XsvfUploader {
             return response[0];
         } catch (Exception e) {
             throw new RuntimeException("Reading from serial port", e);
+        }
+    }
+
+    private void purgeSerialPort() {
+        while (true) {
+            try {
+                serialPort.readBytes(1, 500);
+            } catch (Exception e) {
+                return;
+            }
         }
     }
 
@@ -54,17 +67,27 @@ public class XsvfUploader {
     }
 
     Command getNextCommand() {
-        String command = new String(readBytes(1));
-        StringBuilder argument = new StringBuilder();
         int nextValue;
-        while ((nextValue = readByte()) != 0x10) {
-            argument.append((char) nextValue);
+        while (true) {
+            StringBuilder line = new StringBuilder();
+            while ((nextValue = readByte()) != 10) {
+                if (nextValue >= 32 && nextValue <= 128) {
+                    char c = (char) nextValue;
+                    line.append((char) nextValue);
+                }
+            }
+            String rawCommand = line.toString().trim();
+            if (!rawCommand.isEmpty()) {
+                LOGGER.debug("Got raw command {}", rawCommand);
+                return new Command(rawCommand.substring(0, 1), rawCommand.substring(1));
+            }
         }
-        return new Command(command, argument.toString().trim());
     }
+
 
     public void upload(InputStream stream) throws IOException {
         clearSerialPort();
+        purgeSerialPort();
         boolean finished = false;
         while (!finished) {
             Command command = getNextCommand();
@@ -74,7 +97,8 @@ public class XsvfUploader {
                     int numBytes = Integer.parseInt(command.getArgument());
                     byte[] chunk = new byte[numBytes];
                     int bytesRead = stream.read(chunk, 0, numBytes);
-                    Arrays.fill(chunk, bytesRead, numBytes, (byte) 0xff);
+                    //bytesRead will be -1 on eof
+                    Arrays.fill(chunk, Math.max(0, bytesRead), numBytes, (byte) 0xff);
                     sendBytes(chunk);
                     break;
                 case "R":

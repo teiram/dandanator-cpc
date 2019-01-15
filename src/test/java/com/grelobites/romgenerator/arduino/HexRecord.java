@@ -1,5 +1,7 @@
 package com.grelobites.romgenerator.arduino;
 
+import com.grelobites.romgenerator.util.Util;
+
 import java.util.Arrays;
 
 public class HexRecord {
@@ -51,8 +53,8 @@ public class HexRecord {
     public String toString() {
         return "HexRecord{" +
                 "type=" + type +
-                ", address=" + address +
-                ", data=" + Arrays.toString(data) +
+                ", address=" + String.format("0x%04x", address) +
+                ", data=" + Util.dumpAsHexString(data) +
                 '}';
     }
 }
