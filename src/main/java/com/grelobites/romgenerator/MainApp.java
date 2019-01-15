@@ -222,7 +222,7 @@ public class MainApp extends Application {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(MainApp.class.getResource("view/cpldProgrammer.fxml"));
             loader.setResources(LocaleUtil.getBundle());
-            loader.setController(new CpldProgrammerController());
+            loader.setController(new CpldProgrammerController(applicationContext));
             cpldProgrammerPane = loader.load();
         }
         return cpldProgrammerPane;

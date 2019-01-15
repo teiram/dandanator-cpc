@@ -145,14 +145,20 @@ public class Stk500Programmer {
         this.serialPort = serialPort;
     }
 
-    public void programBinary(Binary binary) throws IOException {
+    public void programBinary(Binary binary, boolean checkCurrent, boolean validate) throws IOException {
         byte[] data = binary.toByteArray();
         int chunks = (data.length + PROGRAM_CHUNK_SIZE - 1) / PROGRAM_CHUNK_SIZE;
         int address = binary.getAddress();
         for (int i = 0; i < chunks; i++) {
             byte[] chunkData = Arrays.copyOfRange(data, i * PROGRAM_CHUNK_SIZE,
                     Math.min((i + 1) * PROGRAM_CHUNK_SIZE, data.length));
-            programChunk(address, chunkData);
+            if (!checkCurrent || !checkChunk(address, chunkData)) {
+                programChunk(address, chunkData);
+            }
+            if (validate && checkChunk(address, chunkData)) {
+                LOGGER.error("Validating flash content");
+                throw new IllegalStateException("Flash validation failed");
+            }
             address += PROGRAM_CHUNK_SIZE >> 1;
         }
     }
@@ -171,6 +177,43 @@ public class Stk500Programmer {
                 .withByteArray(data)
                 .withByte(0x20)
                 .build());
+    }
+
+    private boolean checkChunk(int address, byte[] data) {
+        LOGGER.debug("Checking chunk with address={}",
+                String.format("0x%04x", address));
+        sendCommandAndHandleResponse(ParametersBuilder.newInstance()
+                .withByte(0x55)
+                .withLittleEndianShort(address)
+                .withByte(0x20).build());
+        sendCommand(ParametersBuilder.newInstance()
+                .withByte(0x64)
+                .withBigEndianShort(data.length)
+                .withChar('F')
+                .withByteArray(data)
+                .withByte(0x20)
+                .build());
+
+        try {
+            byte response = readByte();
+            if (response == RESP_STK_INSYNC) {
+                LOGGER.debug("Got RESP_STK_INSYNC code");
+                byte[] flashData = readBytes(data.length);
+                boolean result = Arrays.equals(flashData, data);
+                response = readByte();
+                if (response != RESP_STK_OK) {
+                    LOGGER.debug("Got non RESP_STK_OK response {}", response);
+                    throw new RuntimeException("STK Operation returned error");
+                }
+                return result;
+            } else {
+                LOGGER.warn("Got out of sync!");
+                throw new RuntimeException("Sync lost");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     private void waitMillis(long millis) {

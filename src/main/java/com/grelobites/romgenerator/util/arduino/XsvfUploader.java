@@ -70,9 +70,8 @@ public class XsvfUploader {
         int nextValue;
         while (true) {
             StringBuilder line = new StringBuilder();
-            while ((nextValue = readByte()) != 10) {
-                if (nextValue >= 32 && nextValue <= 128) {
-                    char c = (char) nextValue;
+            while ((nextValue = readByte()) != 10) { //Read to EOL
+                if (nextValue >= 32 && nextValue <= 128) { //Append only ASCII
                     line.append((char) nextValue);
                 }
             }
@@ -102,7 +101,7 @@ public class XsvfUploader {
                     sendBytes(chunk);
                     break;
                 case "R":
-                    LOGGER.debug("Got R command.");
+                    LOGGER.debug("Got R command. Programming started");
                     break;
                 case "Q":
                     String[] arguments = command.getArgument().split(",");
