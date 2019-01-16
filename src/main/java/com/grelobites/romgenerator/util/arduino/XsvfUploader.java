@@ -78,7 +78,7 @@ public class XsvfUploader {
             }
             String rawCommand = line.toString().trim();
             if (!rawCommand.isEmpty()) {
-                LOGGER.debug("Got raw command {}", rawCommand);
+                LOGGER.trace("Got raw command {}", rawCommand);
                 return new Command(rawCommand.substring(0, 1), rawCommand.substring(1));
             }
         }
