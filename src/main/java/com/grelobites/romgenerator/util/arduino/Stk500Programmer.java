@@ -76,7 +76,7 @@ public class Stk500Programmer {
     private static final int PARM_STK_PARAMODE          = 0x94; //TRUE or FALSE
     private static final int PARM_STK_POLLING           = 0x95; //TRUE or FALSE
     private static final int PARM_STK_SELFTIMED         = 0x96; //TRUE or FALSE
-    private static final int Param_STK500_TOPCARD_DETECT = 0x98; //Detect top-card attached
+    private static final int PARM_STK500_TOPCARD_DETECT = 0x98; //Detect top-card attached
     
     private static final byte[] ATMEGA_328P_SIGNATURE = {(byte) 0x1e, (byte) 0x95, (byte) 0x0F};
 
