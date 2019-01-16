@@ -33,40 +33,33 @@
                         <HBox>
                            <children>
                               <Circle fx:id="arduinoDetectedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator HBox.hgrow="ALWAYS" />
-                              <Label text="Detectado" />
+                              <Separator visible="false" HBox.hgrow="ALWAYS" />
+                              <Label text="%cpld.detected" />
                            </children>
                         </HBox>
                         <HBox>
                            <children>
                               <Circle fx:id="arduinoValidatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator HBox.hgrow="ALWAYS" />
-                              <Label text="Validado" />
+                              <Separator visible="false" HBox.hgrow="ALWAYS" />
+                              <Label text="%cpld.valid" />
                            </children>
                         </HBox>
                         <HBox>
                            <children>
                               <Circle fx:id="arduinoUpdatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator HBox.hgrow="ALWAYS" />
-                              <Label text="Actualizado" />
+                              <Separator visible="false" HBox.hgrow="ALWAYS" />
+                              <Label text="%cpld.programmed" />
                            </children>
                         </HBox>
                      </children>
                   </VBox>
-                  <VBox layoutX="211.0" layoutY="115.0" prefHeight="92.0" prefWidth="151.0" spacing="5.0">
+                  <VBox layoutX="209.0" layoutY="135.0" prefHeight="26.0" prefWidth="151.0" spacing="5.0">
                      <children>
                         <HBox>
                            <children>
-                              <Circle fx:id="dandanatorDetectedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator HBox.hgrow="ALWAYS" />
-                              <Label text="Detectado" />
-                           </children>
-                        </HBox>
-                        <HBox>
-                           <children>
                               <Circle fx:id="dandanatorUpdatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator HBox.hgrow="ALWAYS" />
-                              <Label text="Actualizado" />
+                              <Separator visible="false" HBox.hgrow="ALWAYS" />
+                              <Label text="%cpld.updated" />
                            </children>
                         </HBox>
                      </children>
@@ -79,7 +72,7 @@
          <children>
             <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
                <children>
-                  <Label text="Progreso">
+                  <Label text="%cpld.progress">
                      <padding>
                         <Insets bottom="5.0" right="10.0" top="5.0" />
                      </padding></Label>
@@ -88,7 +81,7 @@
                         <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                      </padding>
                   </ProgressBar>
-                  <Button fx:id="programButton" alignment="TOP_LEFT" mnemonicParsing="false" text="Programar">
+                  <Button fx:id="programButton" alignment="TOP_LEFT" mnemonicParsing="false" text="%cpld.program">
                      <padding>
                         <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                      </padding></Button>

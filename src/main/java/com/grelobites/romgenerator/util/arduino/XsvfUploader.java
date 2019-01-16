@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.arduino;
 
+import com.grelobites.romgenerator.util.Util;
 import jssc.SerialPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class XsvfUploader {
         }
     }
 
-    private byte readByte() {
+    private int readByte() {
         try {
             byte[] response = serialPort.readBytes(1);
             return response[0];
@@ -83,11 +84,22 @@ public class XsvfUploader {
         }
     }
 
-
     public void upload(InputStream stream) throws IOException {
+        upload(Util.fromInputStream(stream));
+    }
+
+    public void upload(byte[] data) {
+        upload(data, null);
+    }
+
+    public void upload(byte[] data, ProgressListener progressListener) {
         clearSerialPort();
         purgeSerialPort();
         boolean finished = false;
+        int errorCode = 0;
+        String errorMessage = null;
+        int totalBytes = data.length;
+        int sentBytes = 0;
         while (!finished) {
             Command command = getNextCommand();
             LOGGER.debug("Processing command {}", command);
@@ -95,10 +107,15 @@ public class XsvfUploader {
                 case "S":
                     int numBytes = Integer.parseInt(command.getArgument());
                     byte[] chunk = new byte[numBytes];
-                    int bytesRead = stream.read(chunk, 0, numBytes);
-                    //bytesRead will be -1 on eof
-                    Arrays.fill(chunk, Math.max(0, bytesRead), numBytes, (byte) 0xff);
+                    System.arraycopy(data, sentBytes, chunk, 0, Math.min(numBytes, totalBytes - sentBytes));
+                    if (totalBytes - sentBytes < numBytes) {
+                        Arrays.fill(chunk, totalBytes - sentBytes, numBytes, (byte) 0xff);
+                    }
                     sendBytes(chunk);
+                    sentBytes += numBytes;
+                    if (progressListener != null) {
+                        progressListener.onProgressUpdate((1.0 * sentBytes) / totalBytes);
+                    }
                     break;
                 case "R":
                     LOGGER.debug("Got R command. Programming started");
@@ -106,6 +123,13 @@ public class XsvfUploader {
                 case "Q":
                     String[] arguments = command.getArgument().split(",");
                     LOGGER.error("Got error {}, {}", arguments[0], arguments[1]);
+                    try {
+                        errorCode = Integer.parseInt(arguments[0]);
+                    } catch (Exception e) {
+                        LOGGER.warn("Unable to parse error code from arduino response {}", arguments[0], e);
+                        errorCode = -1;
+                    }
+                    errorMessage = arguments[1];
                     finished = true;
                     break;
                 case "D":
@@ -117,6 +141,10 @@ public class XsvfUploader {
                 default:
                     LOGGER.info("Unrecognized command {}", command);
             }
+        }
+        if (errorCode != 0) {
+            throw new RuntimeException("During XSVF Upload. Code: "
+                    + errorCode + ", message : " + errorMessage);
         }
 
     }

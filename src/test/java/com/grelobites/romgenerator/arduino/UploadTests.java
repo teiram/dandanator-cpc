@@ -1,5 +1,9 @@
 package com.grelobites.romgenerator.arduino;
 
+import com.grelobites.romgenerator.util.arduino.Binary;
+import com.grelobites.romgenerator.util.arduino.HexUtil;
+import com.grelobites.romgenerator.util.arduino.Stk500Programmer;
+import com.grelobites.romgenerator.util.arduino.XsvfUploader;
 import jssc.SerialPort;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -41,7 +45,7 @@ public class UploadTests {
         if (binaries.size() > 0) {
             programmer.enterProgramMode();
             for (Binary binary : binaries) {
-                programmer.programBinary(binary);
+                programmer.programBinary(binary, true, true);
             }
             programmer.leaveProgramMode();
         }

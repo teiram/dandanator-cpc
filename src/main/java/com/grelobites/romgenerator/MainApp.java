@@ -42,6 +42,7 @@ public class MainApp extends Application {
     private TabPane preferencesPane;
     private TabPane aboutPane;
     private VBox cpldProgrammerPane;
+    private CpldProgrammerController cpldProgrammerController;
     private MenuToolkit menuToolkit;
     private ApplicationContext applicationContext;
 
@@ -223,7 +224,8 @@ public class MainApp extends Application {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(MainApp.class.getResource("view/cpldProgrammer.fxml"));
             loader.setResources(LocaleUtil.getBundle());
-            loader.setController(new CpldProgrammerController(applicationContext));
+            cpldProgrammerController = new CpldProgrammerController(applicationContext);
+            loader.setController(cpldProgrammerController);
             cpldProgrammerPane = loader.load();
         }
         return cpldProgrammerPane;
@@ -239,6 +241,7 @@ public class MainApp extends Application {
             cpldProgrammerStage.initModality(Modality.APPLICATION_MODAL);
             cpldProgrammerStage.initOwner(primaryStage.getOwner());
             cpldProgrammerStage.setResizable(false);
+            cpldProgrammerStage.setOnHiding((e) -> cpldProgrammerController.resetView());
         }
         return cpldProgrammerStage;
     }

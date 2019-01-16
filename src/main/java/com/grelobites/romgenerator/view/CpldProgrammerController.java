@@ -17,6 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import jssc.SerialPort;
 import org.slf4j.Logger;
@@ -38,9 +39,6 @@ public class CpldProgrammerController {
 
     @FXML
     private Circle arduinoUpdatedLed;
-
-    @FXML
-    private Circle dandanatorDetectedLed;
 
     @FXML
     private Circle dandanatorUpdatedLed;
@@ -68,7 +66,7 @@ public class CpldProgrammerController {
     }
 
     public Animation createLedAnimation(Circle led) {
-        FadeTransition ft = new FadeTransition(Duration.millis(500), led);
+        FadeTransition ft = new FadeTransition(Duration.millis(1000), led);
         ft.setFromValue(1.0);
         ft.setToValue(0.0);
         ft.setCycleCount(Animation.INDEFINITE);
@@ -78,6 +76,7 @@ public class CpldProgrammerController {
 
     private void setLedOKStatus(Circle led) {
         led.setFill(Color.GREEN);
+        led.setOpacity(1.0);
     }
 
     private void setLedWorkingStatus(Circle led) {
@@ -86,15 +85,22 @@ public class CpldProgrammerController {
 
     private void setLedErrorStatus(Circle led) {
         led.setFill(Color.RED);
+        led.setOpacity(1.0);
     }
 
     private void resetLedStatus(Circle... leds) {
         for (Circle led: leds) {
             led.setFill(Color.DARKGREY);
+            led.setOpacity(1.0);
         }
     }
 
     public void onProgrammingEnd() {
+        if (serialPort != null) {
+            try {
+                serialPort.closePort();
+            } catch (Exception e) {}
+        }
         Platform.runLater(() -> {
             programming.set(false);
         });
@@ -103,9 +109,7 @@ public class CpldProgrammerController {
     public void onProgrammingStart() {
         Platform.runLater(() -> {
             programming.set(true);
-            progress.set(0.0);
-            resetLedStatus(arduinoDetectedLed, arduinoValidatedLed, arduinoUpdatedLed,
-                    dandanatorDetectedLed, dandanatorUpdatedLed);
+            resetView();
         });
     }
 
@@ -130,6 +134,12 @@ public class CpldProgrammerController {
             setLedOKStatus(led);
             progress.set(currentProgress);
         });
+    }
+
+    public void resetView() {
+        progress.set(0.0);
+        resetLedStatus(arduinoDetectedLed, arduinoValidatedLed,
+                arduinoUpdatedLed, dandanatorUpdatedLed);
     }
 
     @FXML
@@ -157,11 +167,10 @@ public class CpldProgrammerController {
                         arduinoProgrammer = new Stk500Programmer(serialPort);
                         arduinoProgrammer.initialize();
                         arduinoProgrammer.sync();
-                        onSuccessfulOperation(arduinoDetectedLed, 0.1);
+                        onSuccessfulOperation(arduinoDetectedLed, 0.10);
                     } catch (Exception e) {
                         LOGGER.error("Trying to detect and sync on arduino");
                         onFailedOperation(arduinoDetectedLed);
-                        throw e;
                     }
 
                     try {
@@ -169,17 +178,16 @@ public class CpldProgrammerController {
                         onStartOperation(arduinoValidatedLed);
 
                         byte[] signature = arduinoProgrammer.getDeviceSignature();
-                        if (arduinoProgrammer.supportedSignature(signature)) {
+                        if (!arduinoProgrammer.supportedSignature(signature)) {
                             LOGGER.warn("Arduino model with signature {} not supported",
                                     Util.dumpAsHexString(signature));
                             throw new IllegalArgumentException("Unsupported Arduino model");
                         }
                         arduinoProgrammer.enterProgramMode();
-                        onSuccessfulOperation(arduinoValidatedLed, 0.3);
+                        onSuccessfulOperation(arduinoValidatedLed, 0.15);
                     } catch (Exception e) {
                         LOGGER.error("During arduino validation", e);
                         onFailedOperation(arduinoValidatedLed);
-                        throw e;
                     }
 
                     try {
@@ -187,28 +195,27 @@ public class CpldProgrammerController {
                         onStartOperation(arduinoUpdatedLed);
                         List<Binary> binaries = HexUtil.toBinaryList(ArduinoConstants.hexResource());
                         for (Binary binary : binaries) {
-                            arduinoProgrammer.programBinary(binary, true, true);
+                            arduinoProgrammer.programBinary(binary, (d) -> progress.set(0.15 + 0.25 * d),
+                                    true, true);
                         }
-                        onSuccessfulOperation(arduinoUpdatedLed, 0.6);
+                        onSuccessfulOperation(arduinoUpdatedLed, 0.40);
                     } catch (Exception e) {
                         LOGGER.error("During arduino update", e);
                         onFailedOperation(arduinoUpdatedLed);
-                        throw e;
                     } finally {
                         arduinoProgrammer.leaveProgramMode();
                     }
 
-                    //This is currenty a no-op
-                    onSuccessfulOperation(dandanatorDetectedLed, 0.7);
 
                     try {
                         LOGGER.debug("Starting dandanator update");
                         onStartOperation(dandanatorUpdatedLed);
                         xsvfUploader = new XsvfUploader(serialPort);
-                        xsvfUploader.upload(ArduinoConstants.xsvfResource());
+                        xsvfUploader.upload(Util.fromInputStream(ArduinoConstants.xsvfResource()),
+                                (d) -> progress.set(0.4 + 0.6 * d));
                         onSuccessfulOperation(dandanatorUpdatedLed, 1.0);
                     } catch (Exception e) {
-                        LOGGER.error("During dandanator detection");
+                        LOGGER.error("During dandanator update");
                         onFailedOperation(dandanatorUpdatedLed);
                     }
 

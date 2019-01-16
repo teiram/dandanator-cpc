@@ -148,18 +148,28 @@ public class Stk500Programmer {
     }
 
     public void programBinary(Binary binary, boolean checkCurrent, boolean validate) throws IOException {
+        programBinary(binary, null, checkCurrent, validate);
+    }
+
+    public void programBinary(Binary binary, ProgressListener listener,
+                              boolean checkCurrent, boolean validate) throws IOException {
         byte[] data = binary.toByteArray();
         int chunks = (data.length + PROGRAM_CHUNK_SIZE - 1) / PROGRAM_CHUNK_SIZE;
         int address = binary.getAddress();
         for (int i = 0; i < chunks; i++) {
+            boolean programmed = false;
             byte[] chunkData = Arrays.copyOfRange(data, i * PROGRAM_CHUNK_SIZE,
                     Math.min((i + 1) * PROGRAM_CHUNK_SIZE, data.length));
             if (!checkCurrent || !checkChunk(address, chunkData)) {
                 programChunk(address, chunkData);
+                programmed = true;
             }
-            if (validate && checkChunk(address, chunkData)) {
+            if (validate && programmed && !checkChunk(address, chunkData)) {
                 LOGGER.error("Validating flash content");
                 throw new IllegalStateException("Flash validation failed");
+            }
+            if (listener != null) {
+                listener.onProgressUpdate(1.0 * (i + 1) / chunks);
             }
             address += PROGRAM_CHUNK_SIZE >> 1;
         }
@@ -189,10 +199,9 @@ public class Stk500Programmer {
                 .withLittleEndianShort(address)
                 .withByte(0x20).build());
         sendCommand(ParametersBuilder.newInstance()
-                .withByte(0x64)
+                .withByte(0x74)
                 .withBigEndianShort(data.length)
                 .withChar('F')
-                .withByteArray(data)
                 .withByte(0x20)
                 .build());
 
@@ -209,7 +218,8 @@ public class Stk500Programmer {
                 }
                 return result;
             } else {
-                LOGGER.warn("Got out of sync!");
+                LOGGER.warn("Got out of sync. Value {}",
+                        String.format("0x%02x", response));
                 throw new RuntimeException("Sync lost");
             }
         } catch (Exception e) {
