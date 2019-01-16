@@ -171,6 +171,7 @@ public class CpldProgrammerController {
                     } catch (Exception e) {
                         LOGGER.error("Trying to detect and sync on arduino");
                         onFailedOperation(arduinoDetectedLed);
+                        throw e;
                     }
 
                     try {
@@ -188,6 +189,7 @@ public class CpldProgrammerController {
                     } catch (Exception e) {
                         LOGGER.error("During arduino validation", e);
                         onFailedOperation(arduinoValidatedLed);
+                        throw e;
                     }
 
                     try {
@@ -202,6 +204,7 @@ public class CpldProgrammerController {
                     } catch (Exception e) {
                         LOGGER.error("During arduino update", e);
                         onFailedOperation(arduinoUpdatedLed);
+                        throw e;
                     } finally {
                         arduinoProgrammer.leaveProgramMode();
                     }
@@ -222,7 +225,7 @@ public class CpldProgrammerController {
                     return OperationResult.successResult();
                 } catch (Exception e) {
                     LOGGER.error("During programming operation", e);
-                    return OperationResult.errorResult("foo", "During Programming Operation");
+                    return OperationResult.successResult();
                 } finally {
                     onProgrammingEnd();
                 }
