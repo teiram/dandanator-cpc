@@ -52,13 +52,27 @@ public class SnapshotGame extends BaseGame implements RamGame {
     private HardwareMode hardwareMode;
     private int currentRasterInterrupt;
 
+    private void try64KReduction() {
+        if (gameType == GameType.RAM128 && data.size() == 8) {
+            for (int i = 4; i < 8; i++) {
+                if (data.get(i) != null) {
+                    return;
+                }
+            }
+            //All high memory slots are zeroed
+            LOGGER.debug("Reducing game to 64K");
+            data = data.subList(0, 4);
+            gameType = GameType.RAM64;
+        }
+    }
 
     public SnapshotGame(GameType gameType, List<byte[]> data) {
         super(gameType, data);
 		holdScreen = new SimpleBooleanProperty();
         compressed = new SimpleBooleanProperty(true);
         compressedSize = new SimpleIntegerProperty(0);
-	}
+        try64KReduction();
+    }
 
     public GameHeader getGameHeader() {
         return gameHeader;
