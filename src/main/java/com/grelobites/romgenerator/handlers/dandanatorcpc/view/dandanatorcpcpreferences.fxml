@@ -62,7 +62,7 @@
          </padding>
       </HBox>
 
-              <HBox prefHeight="18.0" prefWidth="544.0" spacing="10.0">
+              <HBox prefHeight="18.0" prefWidth="544.0" spacing="10.0" visible="false">
          <children>
             <CheckBox fx:id="autoboot" mnemonicParsing="false" text="%autoboot" />
          </children>
