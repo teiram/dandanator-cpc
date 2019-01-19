@@ -2,71 +2,99 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.191" xmlns:fx="http://javafx.com/fxml/1">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="10.0" xmlns="http://javafx.com/javafx/8.0.201" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <HBox VBox.vgrow="ALWAYS">
+      <ImageView fx:id="scenarioImage" fitHeight="200.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@/cpld-programmer/uno-dandanator.png" />
+         </image>
+         <VBox.margin>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+         </VBox.margin>
+      </ImageView>
+      <HBox prefHeight="86.0" prefWidth="408.0" spacing="20.0">
          <children>
-            <AnchorPane prefHeight="200.0" prefWidth="400.0">
+            <VBox prefHeight="154.0" prefWidth="188.0" spacing="5.0" HBox.hgrow="ALWAYS">
                <children>
-                  <ImageView fitHeight="92.0" fitWidth="128.0" layoutX="14.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@/cpld-programmer/auno-128.png" />
-                     </image>
-                  </ImageView>
-                  <ImageView fitHeight="77.0" fitWidth="128.0" layoutX="222.0" layoutY="22.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@/cpld-programmer/dan-128.png" />
-                     </image>
-                  </ImageView>
-                  <VBox layoutX="17.0" layoutY="115.0" prefHeight="92.0" prefWidth="151.0" spacing="5.0">
+                  <HBox>
                      <children>
-                        <HBox>
-                           <children>
-                              <Circle fx:id="arduinoDetectedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator visible="false" HBox.hgrow="ALWAYS" />
-                              <Label text="%cpld.detected" />
-                           </children>
-                        </HBox>
-                        <HBox>
-                           <children>
-                              <Circle fx:id="arduinoValidatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator visible="false" HBox.hgrow="ALWAYS" />
-                              <Label text="%cpld.valid" />
-                           </children>
-                        </HBox>
-                        <HBox>
-                           <children>
-                              <Circle fx:id="arduinoUpdatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator visible="false" HBox.hgrow="ALWAYS" />
-                              <Label text="%cpld.programmed" />
-                           </children>
-                        </HBox>
+                        <Circle fx:id="arduinoDetectedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
+                        <Separator visible="false" />
+                        <Label text="%cpld.detected" />
                      </children>
-                  </VBox>
-                  <VBox layoutX="209.0" layoutY="135.0" prefHeight="26.0" prefWidth="151.0" spacing="5.0">
+                  </HBox>
+                  <HBox>
                      <children>
-                        <HBox>
-                           <children>
-                              <Circle fx:id="dandanatorUpdatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
-                              <Separator visible="false" HBox.hgrow="ALWAYS" />
-                              <Label text="%cpld.updated" />
-                           </children>
-                        </HBox>
+                        <Circle fx:id="arduinoValidatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
+                        <Separator visible="false" />
+                        <Label text="%cpld.valid" />
                      </children>
-                  </VBox>
+                  </HBox>
+                  <HBox>
+                     <children>
+                        <Circle fx:id="arduinoUpdatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
+                        <Separator visible="false" />
+                        <Label text="%cpld.programmed" />
+                     </children>
+                  </HBox>
                </children>
-            </AnchorPane>
+            </VBox>
+            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <HBox>
+                     <children>
+                        <Circle fx:id="dandanatorUpdatedLed" fill="#737373" radius="8.0" stroke="BLACK" strokeType="INSIDE" />
+                        <Separator visible="false" />
+                        <Label text="%cpld.updated" />
+                     </children>
+                  </HBox>
+                  <VBox prefHeight="107.0" prefWidth="200.0" spacing="10.0" />
+               </children>
+               <HBox.margin>
+                  <Insets left="5.0" right="5.0" />
+               </HBox.margin>
+            </VBox>
          </children>
+         <VBox.margin>
+            <Insets left="25.0" right="25.0" />
+         </VBox.margin>
+      </HBox>
+      <HBox alignment="CENTER" spacing="5.0">
+         <children>
+            <Label minWidth="40.0" text="%cpld.serialPort" HBox.hgrow="ALWAYS" />
+            <ComboBox fx:id="serialPortList" minWidth="150.0" HBox.hgrow="SOMETIMES" />
+            <Button fx:id="reloadPorts" mnemonicParsing="false">
+            <graphic>
+               <ImageView fitHeight="25.0" fitWidth="18.0" preserveRatio="true">
+                  <image>
+                     <Image url="@/eewriter/refresh.png" />
+                  </image>
+               </ImageView>
+            </graphic>
+            </Button>
+            <Separator maxWidth="1.7976931348623157E308" visible="false" HBox.hgrow="ALWAYS" />
+            <RadioButton fx:id="nanoRadioButton" minWidth="50.0" mnemonicParsing="false" text="%cpld.nano">
+               <toggleGroup>
+                  <ToggleGroup fx:id="arduinoType" />
+               </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="unoRadioButton" minWidth="50.0" mnemonicParsing="false" selected="true" text="%cpld.uno" toggleGroup="$arduinoType" />
+         </children>
+         <VBox.margin>
+            <Insets left="25.0" right="25.0" />
+         </VBox.margin>
       </HBox>
       <HBox>
          <children>
@@ -89,8 +117,11 @@
             </HBox>
          </children>
          <VBox.margin>
-            <Insets left="5.0" right="5.0" />
+            <Insets left="25.0" right="25.0" />
          </VBox.margin>
       </HBox>
    </children>
+   <padding>
+      <Insets bottom="10.0" />
+   </padding>
 </VBox>

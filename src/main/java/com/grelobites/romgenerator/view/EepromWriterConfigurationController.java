@@ -4,6 +4,7 @@ import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.PlayerConfiguration;
 import com.grelobites.romgenerator.util.LocaleUtil;
+import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.eewriter.SerialPortInterfaces;
 import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.beans.property.StringProperty;
@@ -116,12 +117,6 @@ public class EepromWriterConfigurationController {
 
     }
 
-    private static String[] getSerialPortNames() {
-        String[] serialPortNames = SerialPortInterfaces.getPortNames();
-        LOGGER.debug("Serial Port Names are " + Arrays.asList(serialPortNames));
-        return serialPortNames;
-    }
-
     @FXML
     private void initialize() throws IOException {
         EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
@@ -142,10 +137,10 @@ public class EepromWriterConfigurationController {
         refreshSerialPorts.setOnAction(e -> {
             serialPort.getSelectionModel().clearSelection();
             serialPort.getItems().clear();
-            serialPort.getItems().addAll(getSerialPortNames());
+            serialPort.getItems().addAll(Util.getSerialPortNames());
         });
 
-        ObservableList<String> serialPortNames = FXCollections.observableArrayList(getSerialPortNames());
+        ObservableList<String> serialPortNames = FXCollections.observableArrayList(Util.getSerialPortNames());
         serialPort.setItems(serialPortNames);
         if (serialPortNames.contains(configuration.getSerialPort())) {
             serialPort.getSelectionModel().select(configuration.getSerialPort());

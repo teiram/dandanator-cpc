@@ -3,6 +3,7 @@ package com.grelobites.romgenerator.util;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
 import com.grelobites.romgenerator.util.compress.Compressor;
 import com.grelobites.romgenerator.util.compress.zx7.Zx7InputStream;
+import com.grelobites.romgenerator.util.eewriter.SerialPortInterfaces;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,4 +254,11 @@ public class Util {
         }
         return (value + multiple - 1) & ~(multiple - 1);
     }
+
+    public static String[] getSerialPortNames() {
+        String[] serialPortNames = SerialPortInterfaces.getPortNames();
+        LOGGER.debug("Serial Port Names are " + Arrays.asList(serialPortNames));
+        return serialPortNames;
+    }
+
 }

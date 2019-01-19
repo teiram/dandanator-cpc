@@ -1,7 +1,6 @@
 package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.ApplicationContext;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.util.OperationResult;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.arduino.*;
@@ -14,10 +13,13 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.RadioButton;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import jssc.SerialPort;
 import org.slf4j.Logger;
@@ -28,6 +30,39 @@ import java.util.List;
 
 public class CpldProgrammerController {
     private static final Logger LOGGER = LoggerFactory.getLogger(CpldProgrammerController.class);
+
+    private enum SerialPortConfiguration {
+        NEW_BOOTLOADER(SerialPort.BAUDRATE_115200,
+                SerialPort.DATABITS_8,
+                SerialPort.STOPBITS_1,
+                SerialPort.PARITY_NONE),
+        OLD_BOOTLOADER(SerialPort.BAUDRATE_57600,
+                SerialPort.DATABITS_8,
+                SerialPort.STOPBITS_1,
+                SerialPort.PARITY_NONE);
+
+        public int baudrate;
+        public int dataBits;
+        public int stopBits;
+        public int parity;
+
+        SerialPortConfiguration(int baudrate, int dataBits, int stopBits, int parity) {
+            this.baudrate = baudrate;
+            this.dataBits = dataBits;
+            this.stopBits = stopBits;
+            this.parity = parity;
+        }
+
+        @Override
+        public String toString() {
+            return "SerialPortConfiguration{" +
+                    "baudrate=" + baudrate +
+                    ", dataBits=" + dataBits +
+                    ", stopBits=" + stopBits +
+                    ", parity=" + parity +
+                    '}';
+        }
+    }
 
     private ApplicationContext applicationContext;
 
@@ -49,6 +84,18 @@ public class CpldProgrammerController {
     @FXML
     private Button programButton;
 
+    @FXML
+    private ComboBox<String> serialPortList;
+
+    @FXML
+    private Button reloadPorts;
+
+    @FXML
+    private ImageView scenarioImage;
+
+    @FXML
+    private RadioButton unoRadioButton;
+
     private BooleanProperty programming;
 
     private DoubleProperty progress;
@@ -58,6 +105,9 @@ public class CpldProgrammerController {
     private SerialPort serialPort;
     private Stk500Programmer arduinoProgrammer;
     private XsvfUploader xsvfUploader;
+
+    private static Image unoImage = new Image("/cpld-programmer/uno-dandanator.png");
+    private static Image nanoImage = new Image("/cpld-programmer/nano-dandanator.png");
 
     public CpldProgrammerController(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -142,11 +192,36 @@ public class CpldProgrammerController {
                 arduinoUpdatedLed, dandanatorUpdatedLed);
     }
 
+    private static void sync(SerialPort serialPort, Stk500Programmer programmer) throws Exception {
+        for (SerialPortConfiguration spc : SerialPortConfiguration.values()) {
+            try {
+                LOGGER.debug("Trying to sync with serial configuration {}", spc);
+                serialPort.setParams(spc.baudrate, spc.dataBits, spc.stopBits, spc.parity);
+                programmer.initialize();
+                programmer.sync();
+                return;
+            } catch (Exception e) {
+                LOGGER.info("Unable to sync with serial port configuration {}", spc, e);
+            }
+        }
+        throw new RuntimeException("Unable to sync with arduino");
+    }
+
     @FXML
     void initialize() throws IOException {
         programButton.disableProperty().bind(programming.or(
-                EepromWriterConfiguration.getInstance().serialPortProperty().isEmpty()));
+                serialPortList.valueProperty().isNull()));
         progressBar.progressProperty().bind(progress);
+
+        reloadPorts.setOnAction(e -> {
+            serialPortList.getSelectionModel().clearSelection();
+            serialPortList.getItems().clear();
+            serialPortList.getItems().addAll(Util.getSerialPortNames());
+        });
+
+        unoRadioButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            scenarioImage.setImage(newValue ? unoImage : nanoImage);
+        });
 
         programButton.setOnAction(c -> {
 
@@ -156,20 +231,14 @@ public class CpldProgrammerController {
                     try {
                         LOGGER.debug("Starting arduino detection");
                         onStartOperation(arduinoDetectedLed);
-                        serialPort = new SerialPort(EepromWriterConfiguration
-                                .getInstance().getSerialPort());
-                        serialPort.openPort();
-                        serialPort.setParams(SerialPort.BAUDRATE_115200,
-                                SerialPort.DATABITS_8,
-                                SerialPort.STOPBITS_1,
-                                SerialPort.PARITY_NONE);
-
+                        serialPort = new SerialPort(serialPortList
+                                .getSelectionModel().getSelectedItem());
                         arduinoProgrammer = new Stk500Programmer(serialPort);
-                        arduinoProgrammer.initialize();
-                        arduinoProgrammer.sync();
+                        serialPort.openPort();
+                        sync(serialPort, arduinoProgrammer);
                         onSuccessfulOperation(arduinoDetectedLed, 0.10);
                     } catch (Exception e) {
-                        LOGGER.error("Trying to detect and sync on arduino");
+                        LOGGER.error("Unable to sync with arduino device");
                         onFailedOperation(arduinoDetectedLed);
                         throw e;
                     }
@@ -213,6 +282,10 @@ public class CpldProgrammerController {
                     try {
                         LOGGER.debug("Starting dandanator update");
                         onStartOperation(dandanatorUpdatedLed);
+                        serialPort.setParams(SerialPort.BAUDRATE_115200,
+                                SerialPort.DATABITS_8,
+                                SerialPort.STOPBITS_1,
+                                SerialPort.PARITY_NONE);
                         xsvfUploader = new XsvfUploader(serialPort);
                         xsvfUploader.upload(Util.fromInputStream(ArduinoConstants.xsvfResource()),
                                 (d) -> progress.set(0.4 + 0.6 * d));
