@@ -18,6 +18,7 @@ public class BaseEmulator implements Z80operations {
     protected static final int FRAME_TSTATES = 19968 * TSTATES_PER_US;
     protected static final int HSYNC_TSTATES = 64 * TSTATES_PER_US; // 64 microseconds
     protected static final int LINES_PER_INTERRUPT = 52;
+    protected static final int GAME_SETUP_TSTATES = 8;
     protected final LoaderResources loaderResources;
     protected final GateArray gateArray;
     protected final Z80 z80;
@@ -27,6 +28,8 @@ public class BaseEmulator implements Z80operations {
     protected final CpcMemory memory;
     protected final HardwareMode hardwareMode;
     protected boolean executionAborted = false;
+    protected int currentRasterInterrupt;
+    protected Counter gateArrayCounter = new Counter(6);
 
     private void loadRoms() throws IOException {
         memory.loadLowRom(loaderResources.osRom());
@@ -171,6 +174,13 @@ public class BaseEmulator implements Z80operations {
                 memory.toByteArrayList());
         game.setGameHeader(getGameHeader());
         game.setHardwareMode(hardwareMode);
+        if (gateArrayCounter.value() >= LINES_PER_INTERRUPT - GAME_SETUP_TSTATES) {
+            //Add an interrupt to the counter to take into account the time
+            //needed to setup the game
+            currentRasterInterrupt = (currentRasterInterrupt + 1) % 6;
+        }
+        LOGGER.debug("Setting current raster interrupt {}", currentRasterInterrupt);
+        game.setCurrentRasterInterrupt(currentRasterInterrupt);
         return game;
     }
 
@@ -289,6 +299,7 @@ public class BaseEmulator implements Z80operations {
     }
 
     protected long executeFrame(long compensation) {
+        currentRasterInterrupt = 0;
         final long frameStartTstates = clock.getTstates();
         final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;
         final long tStatesToHSync = (crtc.getHSyncPos() + crtc.getHSyncLength()) * TSTATES_PER_US;
@@ -298,6 +309,7 @@ public class BaseEmulator implements Z80operations {
         final long vSyncLines = (crtc.getMaximumRasterAddress() + 1) * crtc.getVSyncLength();
         final Counter gateArrayCounter = new Counter(6);
         final Counter hSyncCounter = new Counter(16);
+        gateArrayCounter.reset();
 
         final ClockTimeout clockTimeout = new ClockTimeout();
 
@@ -314,9 +326,10 @@ public class BaseEmulator implements Z80operations {
         });
 
         clockTimeout.setListener((long t) -> {
-            if (gateArrayCounter.increment() == 52) {
+            if (gateArrayCounter.increment() == LINES_PER_INTERRUPT) {
                 //LOGGER.debug("Enabling INT at {}", clock.getTstates() - frameStartTstates);
                 z80.setINTLine(true);
+                currentRasterInterrupt++;
                 gateArrayCounter.reset();
             }
             if (ppi.isvSyncActive()) {

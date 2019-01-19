@@ -50,6 +50,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
     private List<byte[]> compressedData;
     private IntegerProperty compressedSize;
     private HardwareMode hardwareMode;
+    private int currentRasterInterrupt;
 
 
     public SnapshotGame(GameType gameType, List<byte[]> data) {
@@ -285,6 +286,14 @@ public class SnapshotGame extends BaseGame implements RamGame {
             .compressSlot(slot, slotData));
         getCompressedSize(Configuration.getInstance().getRamGameCompressor(), true);
         screenshot = null;
+    }
+
+    public int getCurrentRasterInterrupt() {
+        return currentRasterInterrupt;
+    }
+
+    public void setCurrentRasterInterrupt(int currentRasterInterrupt) {
+        this.currentRasterInterrupt = currentRasterInterrupt;
     }
 
     @Override

@@ -49,8 +49,9 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     }
 
     private boolean validLandingZone() {
-        return memory.isAddressInRam(z80.getRegPC()) &&
-                !(z80.getRegPC() >= FIRM_ZONE_START && z80.getRegPC() < FIRM_ZONE_END);
+        //return memory.isAddressInRam(z80.getRegPC()) &&
+          //      !(z80.getRegPC() >= FIRM_ZONE_START && z80.getRegPC() < FIRM_ZONE_END);
+        return true;
     }
 
     @Override
