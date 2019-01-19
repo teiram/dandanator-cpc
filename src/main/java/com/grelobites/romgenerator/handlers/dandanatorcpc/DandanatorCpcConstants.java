@@ -35,6 +35,7 @@ public class DandanatorCpcConstants {
     private static final String DANDANATOR_ROM_RESOURCE = "dandanator-cpc/dandanator-mini.rom";
     private static final String EXTRA_ROM_RESOURCE = "dandanator-cpc/test.rom";
     private static final String CPC464_FIRMWARE_RESOURCE = "rom/464/OS_464.ROM";
+    private static final String BASIC_1_0_RESOURCE = "rom/464/BASIC_1.0.ROM";
     private static final String CPC6128_FIRMWARE_RESOURCE = "rom/6128/OS_6128.ROM";
 
 
@@ -52,6 +53,7 @@ public class DandanatorCpcConstants {
     private static byte[] DANDANATOR_ROM;
     private static byte[] EXTRA_ROM;
     private static byte[] CPC464_FIRMWARE;
+    private static byte[] CPC464_BASIC;
     private static byte[] CPC6128_FIRMWARE;
 
     private static PreferencesProvider providerRegister = new PreferencesProvider("Dandanator CPC",
@@ -85,6 +87,16 @@ public class DandanatorCpcConstants {
                     Constants.SLOT_SIZE);
         }
         return CPC464_FIRMWARE;
+    }
+
+    public static byte[] getCpc464Basic() throws IOException {
+        if (CPC464_BASIC == null) {
+            CPC464_BASIC = Util.fromInputStream(
+                    DandanatorCpcConstants.class.getClassLoader()
+                            .getResourceAsStream(BASIC_1_0_RESOURCE),
+                    Constants.SLOT_SIZE);
+        }
+        return CPC464_BASIC;
     }
 
     public static byte[] getCpc6128Firmware() throws IOException {

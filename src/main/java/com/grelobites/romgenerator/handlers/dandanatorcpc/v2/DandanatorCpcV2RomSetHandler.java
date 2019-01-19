@@ -249,15 +249,23 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         return value;
     }
 
+    private static int getCurrentRasterInterrupt(Game game) {
+        if (game instanceof SnapshotGame) {
+            return ((SnapshotGame) game).getCurrentRasterInterrupt();
+        } else {
+            return 0;
+        }
+    }
+
     private void dumpGameHeader(OutputStream os, int index, Game game,
                                Offsets offsets) throws IOException {
         os.write(getPaddedGameHeader(game));
-        os.write(getGameType(game));
+        os.write(game.getType().typeId());
         os.write(getGameChunk(game));
         os.write(isGameCompressed(game) ? Constants.B_01 : Constants.B_00);
         os.write(isGameScreenHold(game) ? Constants.B_01 : Constants.B_00);
-        os.write(0);
         os.write(0); //Upper and lower active roms. Unused in V2
+        os.write(getCurrentRasterInterrupt(game));
         dumpGameLaunchCode(os, game, index);
         dumpGameCBlocks(os, game, offsets);
         dumpGameName(os, game, index);
@@ -464,13 +472,13 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write((configuration.isIncludeExtraRom() ? Constants.B_01 : Constants.B_00));
             os.write((configuration.isEnforceFollowRom() ? Constants.B_01: Constants.B_00));
             if (configuration.isEnforceFollowRom()) {
-                int baseSlot = 16;
+                int baseSlot = 30; //30
                 if (configuration.isIncludeExtraRom()) {
-                    baseSlot -= 8;
+                    baseSlot--; //29
                 }
-                os.write((byte) baseSlot);  //464 ROM Slot
-                baseSlot += 8;
-                os.write((byte) baseSlot);  //6128 ROM Slot
+                os.write((byte) ((baseSlot - 28) * 8));  //464 ROM Slot
+                baseSlot ++;
+                os.write((byte) baseSlot);  //464 BASIC ROM Slot
             } else {
                 os.write(Constants.B_FF);
                 os.write(Constants.B_FF);
@@ -527,8 +535,8 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             if (configuration.isEnforceFollowRom()) {
                 os.write(DandanatorCpcConstants.getCpc464Firmware());
                 LOGGER.debug("Dumped 464 firmware. Offset {}", os.size());
-                os.write(DandanatorCpcConstants.getCpc6128Firmware());
-                LOGGER.debug("Dumped 6128 firmware. Offset {}", os.size());
+                os.write(DandanatorCpcConstants.getCpc464Basic());
+                LOGGER.debug("Dumped 464 Basic. Offset {}", os.size());
             }
             if (configuration.isIncludeExtraRom()) {
                 os.write(dmConfiguration.getExtraRom());
