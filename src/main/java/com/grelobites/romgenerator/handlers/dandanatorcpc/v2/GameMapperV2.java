@@ -31,6 +31,7 @@ public class GameMapperV2 implements GameMapper {
     private GameType gameType;
     private HardwareMode hardwareMode;
     private boolean screenHold;
+    private int currentRasterInterrupt;
     private List<GameBlock> blocks = new ArrayList<>();
     private TrainerList trainerList = new TrainerList(null);
     private int trainerCount;
@@ -97,7 +98,8 @@ public class GameMapperV2 implements GameMapper {
         mapper.isGameCompressed = is.read() != 0;
         mapper.screenHold = is.read() != 0;
 
-        is.skip(2); //Active ROMS
+        mapper.currentRasterInterrupt = is.read();
+        is.skip(1); //Active ROMS
         is.skip(V2Constants.GAME_LAUNCHCODE_SIZE);
         if (GameType.isMLD(mapper.gameType)) {
             addMldGameSlots(is, mapper);
@@ -179,6 +181,7 @@ public class GameMapperV2 implements GameMapper {
                     snapshotGame.setGameHeader(gameHeader);
                     snapshotGame.setTrainerList(trainerList);
                     snapshotGame.setHardwareMode(hardwareMode);
+                    snapshotGame.setCurrentRasterInterrupt(currentRasterInterrupt);
                     if (isGameCompressed) {
                         snapshotGame.setCompressedData(getGameCompressedData());
                     }
