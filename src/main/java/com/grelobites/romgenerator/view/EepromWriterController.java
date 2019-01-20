@@ -307,9 +307,10 @@ public class EepromWriterController {
         try {
             if (!usbRescueSending.get()) {
                 usbRescueSending.set(true);
-                byte[] data = new byte[Constants.SLOT_SIZE];
+                byte[] data = new byte[Constants.RESCUE_EEWRITER_SIZE];
                 byte[] eewriter = Constants.getRescueEewriter();
-                System.arraycopy(eewriter, 0, data, 0, eewriter.length);
+                System.arraycopy(eewriter, 0, data, 0,
+                        Math.min(eewriter.length, Constants.RESCUE_EEWRITER_SIZE));
                 DataProducer producer = new SerialDataProducer(serialDataConsumer.serialPort(),
                         data);
                 initDataProducer(producer);
@@ -318,6 +319,7 @@ public class EepromWriterController {
             LOGGER.error("Preparing Data Producer", e);
         }
     }
+
     public void doPlayExternal() {
         try {
             stop();
