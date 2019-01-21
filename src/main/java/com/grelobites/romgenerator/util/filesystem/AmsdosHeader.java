@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.filesystem;
 
+import com.grelobites.romgenerator.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,9 @@ import java.util.Optional;
  */
 public class AmsdosHeader {
     private static final Logger LOGGER = LoggerFactory.getLogger(AmsdosHeader.class);
+    private static final int AMSDOS_HEADER_LENGTH = 0x80;
+    private static final int AMSDOS_NAME_LENGTH = 8;
+    private static final int AMSDOS_EXTENSION_LENGTH = 3;
 
     public enum Type {
         BASIC(0),
@@ -50,11 +54,84 @@ public class AmsdosHeader {
             }
             return UNKNOWN;
         }
+
+        public int id() {
+            return id;
+        }
     }
 
-    private static final int AMSDOS_HEADER_LENGTH = 0x80;
-    private static final int AMSDOS_NAME_LENGTH = 8;
-    private static final int AMSDOS_EXTENSION_LENGTH = 3;
+    public static class Builder {
+        AmsdosHeader header = new AmsdosHeader();
+
+        public Builder withUser(int user) {
+            header.user = user;
+            return this;
+        }
+
+        public Builder withName(String name) {
+            header.name = Util.paddedString(name, AMSDOS_NAME_LENGTH, ' ');
+            return this;
+        }
+
+        public Builder withExtension(String extension) {
+            header.extension = Util.paddedString(extension, AMSDOS_EXTENSION_LENGTH, ' ');
+            return this;
+        }
+
+        public Builder withBlockNumber(int blockNumber) {
+            header.blockNumber = blockNumber;
+            return this;
+        }
+
+        public Builder withLastBlock(int lastBlock) {
+            header.lastBlock = lastBlock;
+            return this;
+        }
+
+        public Builder withType(Type type) {
+            header.type = type;
+            return this;
+        }
+
+        public Builder withDataLength(int dataLength) {
+            header.dataLength = dataLength;
+            return this;
+        }
+
+        public Builder withLoadAddress(int loadAddress) {
+            header.loadAddress = loadAddress;
+            return this;
+        }
+
+        public Builder withFirstBlock(int firstBlock) {
+            header.firstBlock = firstBlock;
+            return this;
+        }
+
+        public Builder withLogicalLength(int logicalLength) {
+            header.logicalLength = logicalLength;
+            return this;
+        }
+
+        public Builder withExecAddress(int execAddress) {
+            header.execAddress = execAddress;
+            return this;
+        }
+
+        public Builder withFileLength(int fileLength) {
+            header.fileLength = fileLength;
+            return this;
+        }
+
+        public AmsdosHeader build() {
+            return header;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
     private int user;
     private String name;
     private String extension;
@@ -113,6 +190,34 @@ public class AmsdosHeader {
 
     public static Optional<AmsdosHeader> fromArchive(Archive archive) {
         return fromByteArray(archive.getData());
+    }
+
+    public byte[] toByteArray() {
+        ByteBuffer buffer = ByteBuffer.allocate(AMSDOS_HEADER_LENGTH)
+                    .order(ByteOrder.LITTLE_ENDIAN);
+        byte[] nameBytes = Util.substring(name, AMSDOS_NAME_LENGTH)
+                .getBytes(StandardCharsets.US_ASCII);
+        byte[] extensionBytes = Util.substring(extension, AMSDOS_EXTENSION_LENGTH)
+                .getBytes(StandardCharsets.US_ASCII);
+
+        buffer.put(Integer.valueOf(user).byteValue());
+        buffer.put(nameBytes);
+        buffer.put(extensionBytes);
+        buffer.position(buffer.position() + 4);
+        buffer.put(Integer.valueOf(blockNumber).byteValue());
+        buffer.put(Integer.valueOf(lastBlock).byteValue());
+        buffer.put(Integer.valueOf(type.id()).byteValue());
+        buffer.putShort(Integer.valueOf(dataLength).shortValue());
+        buffer.putShort(Integer.valueOf(loadAddress).shortValue());
+        buffer.put(Integer.valueOf(firstBlock).byteValue());
+        buffer.putShort(Integer.valueOf(logicalLength).shortValue());
+        buffer.putShort(Integer.valueOf(execAddress).shortValue());
+        buffer.position(buffer.position() + 36); //Unused1
+        buffer.putShort(Integer.valueOf(fileLength).shortValue());
+        buffer.position(buffer.position() + 1); //Unused2
+        buffer.putShort(Integer.valueOf(calculateChecksum(buffer.array()))
+                .shortValue());
+        return buffer.array();
     }
 
     @Override

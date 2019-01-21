@@ -162,6 +162,17 @@ public class Util {
         return paddedByteArray(source, 0, length, filler);
     }
 
+    public static String paddedString(String source, int length, char filler) {
+        if (source.length() >= length) {
+            return source.substring(0, length);
+        } else {
+            StringBuilder sb = new StringBuilder(source);
+            while (sb.length() < length) {
+                sb.append(filler);
+            }
+            return sb.toString();
+        }
+    }
 
     public static <S extends T, T> Collection<T> collectionUpcast(Collection<S> list) {
         return list.stream().map(item -> (T) item)
