@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.eewriter;
 
+import com.grelobites.romgenerator.util.SerialPortUtils;
 import com.grelobites.romgenerator.view.EepromWriterController;
 import javafx.application.Platform;
 import jssc.SerialPort;
@@ -55,6 +56,7 @@ public class SerialBlockService {
         public void apply(SerialPort serialPort) throws SerialPortException {
             LOGGER.debug("Applying serial port configuration {}", this);
             serialPort.setParams(baudrate, dataBits, stopBits, parity);
+            //SerialPortUtils.clear(serialPort);
         }
 
         @Override
@@ -139,7 +141,7 @@ public class SerialBlockService {
                             try {
                                 controller.setCurrentBlock(value);
                                 sendSerialPortConfiguration.apply(serialPort);
-                                controller.sendCurrentBlock();
+                                controller.sendCurrentBlock().get();
                                 SerialPortConfiguration.MODE_57600.apply(serialPort);
                             } catch (Exception e) {
                                 LOGGER.error("Sending block", e);

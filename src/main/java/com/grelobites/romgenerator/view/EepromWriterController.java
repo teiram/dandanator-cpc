@@ -38,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.Future;
 
 public class EepromWriterController {
     private static final Logger LOGGER = LoggerFactory.getLogger(EepromWriterController.class);
@@ -156,7 +157,7 @@ public class EepromWriterController {
         currentDataProducer = new SimpleObjectProperty<>();
         rescuePlayer = new SimpleObjectProperty<>();
         try {
-            rescuePlayer.set(new SampledAudioDataPlayer());
+            rescuePlayer.set(new SampledAudioDataPlayer(applicationContext));
         } catch (Exception e) {
             LOGGER.error("Initializing rescue Player", e);
         }
@@ -199,24 +200,26 @@ public class EepromWriterController {
         }
     }
 
-    public void sendCurrentBlock() {
+    public Future<OperationResult> sendCurrentBlock() {
         LOGGER.debug("sendCurrentBlock with block " + currentBlock + " requested");
         if (!playing.get()) {
             Optional<DataProducer> dataProducer = getBlockDataProducer(currentBlock.get());
             if (dataProducer.isPresent()) {
                 playing.set(true);
                 prepareDataProducer(dataProducer.get());
-                send();
+                return send();
             } else {
                 LOGGER.warn("Unable to create data producer for current block");
             }
         }
+        return null;
     }
 
     private void onEndOfMedia() {
         try {
             txLed.setVisible(false);
             usbRescueSending.set(false);
+            playing.set(false);
         } catch (Exception e) {
             LOGGER.error("Setting next player", e);
         }
@@ -239,9 +242,10 @@ public class EepromWriterController {
         producer.onFinalization(this::onEndOfMedia);
     }
 
-    private void send() {
+    private Future<OperationResult> send() {
         txLed.setVisible(true);
-        applicationContext.addBackgroundTask(() -> {
+        playing.set(true);
+        return applicationContext.addBackgroundTask(() -> {
             try {
                 currentDataProducer.get().send();
             } catch (Exception e) {
@@ -249,7 +253,6 @@ public class EepromWriterController {
             }
             return OperationResult.successResult();
         });
-        playing.set(true);
     }
 
     private String getCurrentBlockString() {
@@ -294,6 +297,8 @@ public class EepromWriterController {
                         Util.reverseByteArray(data));
                 prepareDataProducer(producer);
                 send();
+            } else {
+                LOGGER.warn("USB rescue send already in progress");
             }
         } catch (Exception e) {
             LOGGER.error("Preparing Data Producer", e);
