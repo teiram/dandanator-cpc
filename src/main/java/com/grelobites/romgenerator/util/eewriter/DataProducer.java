@@ -8,8 +8,6 @@ public interface DataProducer {
 
     void send();
 
-    void stop();
-
     void onFinalization(Runnable onFinalization);
 
     void onDataSent(Runnable onDataSent);

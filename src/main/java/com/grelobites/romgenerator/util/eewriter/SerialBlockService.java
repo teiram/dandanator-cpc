@@ -8,9 +8,9 @@ import jssc.SerialPortTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SerialDataConsumer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SerialDataConsumer.class);
-    private static final String SERVICE_THREAD_NAME = "SerialDataConsumer";
+public class SerialBlockService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SerialBlockService.class);
+    private static final String SERVICE_THREAD_NAME = "SerialBlockService";
     private SerialPort serialPort;
     private Thread serviceThread;
     private Runnable onDataReceived;
@@ -68,7 +68,7 @@ public class SerialDataConsumer {
         }
     }
 
-    public SerialDataConsumer(EepromWriterController controller) {
+    public SerialBlockService(EepromWriterController controller) {
         this.controller = controller;
     }
 
@@ -139,7 +139,7 @@ public class SerialDataConsumer {
                             try {
                                 controller.setCurrentBlock(value);
                                 sendSerialPortConfiguration.apply(serialPort);
-                                controller.doPlayExternal();
+                                controller.sendCurrentBlock();
                                 SerialPortConfiguration.MODE_57600.apply(serialPort);
                             } catch (Exception e) {
                                 LOGGER.error("Sending block", e);
@@ -153,9 +153,6 @@ public class SerialDataConsumer {
                 } else if (value == MARK_EOC) {
                     LOGGER.debug("Received end of communications message");
                     dandanatorReady = false;
-                    Platform.runLater(() -> {
-                        controller.doStopExternal();
-                    });
                 } else if (value == MARK_SYNC_57600) {
                     LOGGER.debug("Received 57600 SYNC");
                     syncAck();

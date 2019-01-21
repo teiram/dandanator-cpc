@@ -14,27 +14,18 @@ import java.util.Arrays;
 
 public class SerialDataProducer implements DataProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(SerialDataProducer.class);
-    private static final String SERVICE_THREAD_NAME = "SerialDataProducerService";
     private static EepromWriterConfiguration configuration = EepromWriterConfiguration
             .getInstance();
     private static final int SEND_BUFFER_SIZE = 1024;
 
-    private Thread serviceThread;
     private SerialPort serialPort;
     private Runnable onFinalization;
     private Runnable onDataSent;
     private DoubleProperty progressProperty;
     private byte[] data;
-    private enum State {
-        STOPPED,
-        RUNNING,
-        STOPPING
-    }
-    private State state = State.STOPPED;
 
     private void init() {
         progressProperty = new SimpleDoubleProperty(0.0);
-        serviceThread = new Thread(null, this::serialSendData, SERVICE_THREAD_NAME);
     }
 
 
@@ -60,7 +51,8 @@ public class SerialDataProducer implements DataProducer {
         Util.writeAsLittleEndian(data, blockSize + 1, Util.getBlockCrc16(data, blockSize + 1));
     }
 
-    private void serialSendData() {
+    @Override
+    public void send() {
         try {
             int sentBytesCount = 0;
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
@@ -79,42 +71,12 @@ public class SerialDataProducer implements DataProducer {
                 }
                 final double progress = 1.0 * sentBytesCount / data.length;
                 Platform.runLater(() -> progressProperty.set(progress));
-                if (state != State.RUNNING) {
-                    LOGGER.debug("No more in running state");
-                    break;
-                }
             }
-
-            if (state == State.RUNNING && onFinalization != null) {
-                Platform.runLater(onFinalization);
-            }
-            state = State.STOPPED;
-            LOGGER.debug("State is now STOPPED");
         } catch (Exception e) {
             LOGGER.error("Exception during send process", e);
-            state = State.STOPPED;
-        }
-    }
-
-    @Override
-    public void send() {
-        state = State.RUNNING;
-        serviceThread.start();
-    }
-
-    @Override
-    public void stop() {
-        if (state == State.RUNNING) {
-            state = State.STOPPING;
-            LOGGER.debug("State changed to STOPPING");
-
-            while (state != State.STOPPED) {
-                try {
-                    serviceThread.join();
-                } catch (InterruptedException e) {
-                    LOGGER.debug("Serial thread was interrupted", e);
-                }
-            }
+            throw new RuntimeException(e);
+        } finally {
+            Platform.runLater(onFinalization);
         }
     }
 
