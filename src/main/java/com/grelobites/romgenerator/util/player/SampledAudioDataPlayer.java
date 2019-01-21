@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.player;
 
+import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.PlayerConfiguration;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -26,7 +27,14 @@ public class SampledAudioDataPlayer extends AudioDataPlayerSupport implements Da
     private DoubleProperty progressProperty;
     private Runnable onFinalization;
     private File mediaFile;
-    private ExecutorService executor;
+    private static ExecutorService executor = Executors.newFixedThreadPool(1, r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        t.setName("Audio Player");
+        return t;
+    });
+
+    private ApplicationContext applicationContext;
     private enum State {
         STOPPED,
         RUNNING,
@@ -38,9 +46,8 @@ public class SampledAudioDataPlayer extends AudioDataPlayerSupport implements Da
         progressProperty = new SimpleDoubleProperty();
     }
 
-    public SampledAudioDataPlayer() throws IOException {
+    public SampledAudioDataPlayer(ApplicationContext applicationContext) throws IOException {
         progressProperty = new SimpleDoubleProperty();
-        executor = Executors.newSingleThreadExecutor();
         mediaFile = getRescueLoaderAudioFile();
     }
 
