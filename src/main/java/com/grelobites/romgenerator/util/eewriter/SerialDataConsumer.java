@@ -53,7 +53,18 @@ public class SerialDataConsumer {
         }
 
         public void apply(SerialPort serialPort) throws SerialPortException {
+            LOGGER.debug("Applying serial port configuration {}", this);
             serialPort.setParams(baudrate, dataBits, stopBits, parity);
+        }
+
+        @Override
+        public String toString() {
+            return "SerialPortConfiguration{" +
+                    "baudrate=" + baudrate +
+                    ", dataBits=" + dataBits +
+                    ", stopBits=" + stopBits +
+                    ", parity=" + parity +
+                    '}';
         }
     }
 
@@ -146,9 +157,11 @@ public class SerialDataConsumer {
                         controller.doStopExternal();
                     });
                 } else if (value == MARK_SYNC_57600) {
+                    LOGGER.debug("Received 57600 SYNC");
                     syncAck();
                     sendSerialPortConfiguration = SerialPortConfiguration.MODE_57600;
                 } else if (value == MARK_SYNC_115200) {
+                    LOGGER.debug("Received 115200 SYNC");
                     syncAck();
                     sendSerialPortConfiguration = SerialPortConfiguration.MODE_115200;
                 } else {
@@ -179,7 +192,6 @@ public class SerialDataConsumer {
                 LOGGER.error("Trying to read from serial port", e);
                 state = State.STOPPING;
             }
-
         }
         LOGGER.debug("Exiting SerialListener service thread");
         state = State.STOPPED;
