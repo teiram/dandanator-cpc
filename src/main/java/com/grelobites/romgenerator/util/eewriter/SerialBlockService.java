@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.eewriter;
 
+import com.grelobites.romgenerator.util.OperationResult;
 import com.grelobites.romgenerator.util.SerialPortUtils;
 import com.grelobites.romgenerator.view.EepromWriterController;
 import javafx.application.Platform;
@@ -8,6 +9,8 @@ import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Future;
 
 public class SerialBlockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SerialBlockService.class);
@@ -81,6 +84,14 @@ public class SerialBlockService {
     public void start(String serialPort) {
         LOGGER.debug("Creating serial port on {}", serialPort);
         this.serialPort =  new SerialPort(serialPort);
+        /*
+        try {
+            this.serialPort.openPort();
+            SerialPortConfiguration.MODE_57600.apply(this.serialPort);
+        } catch (SerialPortException e) {
+            LOGGER.error("Opening serial port", e);
+        }
+        */
         this.serviceThread = new Thread(null, this::run, SERVICE_THREAD_NAME);
         this.serviceThread.setDaemon(true);
         this.serviceThread.start();
@@ -141,7 +152,11 @@ public class SerialBlockService {
                             try {
                                 controller.setCurrentBlock(value);
                                 sendSerialPortConfiguration.apply(serialPort);
-                                controller.sendCurrentBlock().get();
+                                Future<OperationResult> future = controller.sendCurrentBlock();
+                                if (future != null) {
+                                    future.get();
+                                    Thread.sleep(500);
+                                }
                                 SerialPortConfiguration.MODE_57600.apply(serialPort);
                             } catch (Exception e) {
                                 LOGGER.error("Sending block", e);
