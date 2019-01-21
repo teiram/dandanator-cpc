@@ -33,7 +33,7 @@ public class Constants {
     private static final String THEME_RESOURCE = "view/theme.css";
 
     public static final int RESCUE_LOADER_ADDRESS = 0xA000;
-    public static final int RESCUE_EEWRITER_SIZE = 0x1000;
+    public static final int RESCUE_EEWRITER_SIZE = 0x1005;
     public static final String RESCUE_LOADER_NAME = "Rescue Loader";
     private static final String RESCUE_LOADER_RESOURCE = "eewriter/rescue-loader.bin";
     private static final String RESCUE_EEWRITER_RESOURCE = "eewriter/rescue-eewriter.bin";
