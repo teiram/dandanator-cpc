@@ -34,7 +34,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -191,9 +190,13 @@ public class EepromWriterController {
                         romsetByteArray = Util.fromInputStream(fis);
                     }
                 } else {
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    applicationContext.getRomSetHandler().exportRomSet(bos);
-                    romsetByteArray = bos.toByteArray();
+                    if (applicationContext.getRomSetHandler().generationAllowedProperty().get()) {
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        applicationContext.getRomSetHandler().exportRomSet(bos);
+                        romsetByteArray = bos.toByteArray();
+                    } else {
+                        throw new IllegalStateException("Generation of romset currently not allowed");
+                    }
                 }
             }
             return romsetByteArray;
@@ -309,10 +312,11 @@ public class EepromWriterController {
                 usbRescueSending.set(true);
                 byte[] data = new byte[Constants.RESCUE_EEWRITER_SIZE];
                 byte[] eewriter = Constants.getRescueEewriter();
+                LOGGER.debug("Got rescue eewriter of size {}", eewriter.length);
                 System.arraycopy(eewriter, 0, data, 0,
                         Math.min(eewriter.length, Constants.RESCUE_EEWRITER_SIZE));
                 DataProducer producer = new SerialDataProducer(serialDataConsumer.serialPort(),
-                        data);
+                        Util.reverseByteArray(data));
                 initDataProducer(producer);
             }
         } catch (Exception e) {
