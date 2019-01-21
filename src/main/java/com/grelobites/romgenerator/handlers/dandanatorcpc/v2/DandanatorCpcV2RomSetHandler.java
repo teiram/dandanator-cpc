@@ -276,7 +276,8 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         //forwardOffset after the slot zero
         //backwardsOffset starts before the test ROM
         Offsets offsets = new Offsets(Constants.SLOT_SIZE,
-                Constants.SLOT_SIZE * (DandanatorCpcConstants.GAME_SLOTS + 1));
+                Constants.SLOT_SIZE * (DandanatorCpcConstants.EEPROM_SLOTS
+                        - getReservedSlots(Configuration.getInstance())));
         for (Game game : getApplicationContext().getGameList()) {
             dumpGameHeader(os, index, game, offsets);
             LOGGER.debug("Dumped gamestruct for " + game.getName() + ". Offset: " + os.size());
@@ -476,7 +477,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 if (configuration.isIncludeExtraRom()) {
                     baseSlot--; //29
                 }
-                os.write((byte) ((baseSlot - 28) * 8));  //464 ROM Slot
+                os.write((byte) ((baseSlot - 28) * 8));  //464 ROM Slot (base 28, increment 8)
                 baseSlot ++;
                 os.write((byte) baseSlot);  //464 BASIC ROM Slot
             } else {
