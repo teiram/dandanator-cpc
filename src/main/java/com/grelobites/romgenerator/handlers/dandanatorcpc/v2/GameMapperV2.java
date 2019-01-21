@@ -86,12 +86,9 @@ public class GameMapperV2 implements GameMapper {
         mapper.gameHeader = GameHeaderV1Serializer.deserialize(is);
         LOGGER.debug("Game header deserialized to {}", mapper.gameHeader);
         int gameType = is.read();
-        mapper.gameType = GameType.byTypeId(gameType & 0x0f);
-        if ((gameType & 0x80) != 0) {
-            mapper.hardwareMode = HardwareMode.fromSnaType((gameType & 0x70) >>> 3);
-        } else {
-            mapper.hardwareMode = HardwareMode.HW_UNKNOWN;
-        }
+        mapper.gameType = GameType.byTypeId(gameType);
+        mapper.hardwareMode = HardwareMode
+                .fromSnaType(mapper.gameHeader.getCpcType());
         LOGGER.debug("Setting memory dump size as {}", mapper.gameType.sizeInKBytes());
         mapper.gameHeader.setMemoryDumpSize(mapper.gameType.sizeInKBytes());
         is.skip(DandanatorCpcConstants.GAME_CHUNK_SIZE);

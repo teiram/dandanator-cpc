@@ -7,6 +7,7 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.model.GameMapper;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.GameType;
+import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.MLDGame;
 import com.grelobites.romgenerator.model.MLDInfo;
 import com.grelobites.romgenerator.model.RomGame;
@@ -35,6 +36,7 @@ public class GameMapperV1 implements GameMapper {
     private String name;
     private boolean isGameCompressed;
     private GameType gameType;
+    private HardwareMode hardwareMode;
     private boolean screenHold;
     private List<GameBlock> blocks = new ArrayList<>();
     private TrainerList trainerList = new TrainerList(null);
@@ -94,6 +96,8 @@ public class GameMapperV1 implements GameMapper {
         is.skip(DandanatorCpcConstants.GAME_CHUNK_SIZE);
         mapper.isGameCompressed = is.read() != 0;
         mapper.screenHold = is.read() != 0;
+        mapper.hardwareMode = HardwareMode.fromSnaType(mapper.gameHeader
+                .getCpcType());
 
         is.skip(2); //Active ROMS
         is.skip(V1Constants.GAME_LAUNCHCODE_SIZE);
@@ -176,6 +180,7 @@ public class GameMapperV1 implements GameMapper {
                     snapshotGame.setHoldScreen(screenHold);
                     snapshotGame.setGameHeader(gameHeader);
                     snapshotGame.setTrainerList(trainerList);
+                    snapshotGame.setHardwareMode(hardwareMode);
                     if (isGameCompressed) {
                         snapshotGame.setCompressedData(getGameCompressedData());
                     }
