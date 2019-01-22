@@ -272,4 +272,17 @@ public class Util {
         return serialPortNames;
     }
 
+    public static boolean isNumeric(String value) {
+        if (value != null && !value.isEmpty()) {
+            for (Character c : value.toCharArray()) {
+                if (!Character.isDigit(c)) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

@@ -18,6 +18,7 @@ public class SerialDataProducer implements DataProducer {
             .getInstance();
     private static final int SEND_BUFFER_SIZE = 1024;
 
+    private int id;
     private SerialPort serialPort;
     private Runnable onFinalization;
     private Runnable onDataSent;
@@ -31,14 +32,21 @@ public class SerialDataProducer implements DataProducer {
 
     public SerialDataProducer(SerialPort serialPort, int block, byte[] data) {
         this.serialPort = serialPort;
+        this.id = block;
         init();
         setupBlockData(block, data);
     }
 
     public SerialDataProducer(SerialPort serialPort, byte[] rawData) {
         this.serialPort = serialPort;
+        this.id = 0;
         init();
         data = rawData;
+    }
+
+    @Override
+    public int id() {
+        return id;
     }
 
     private void setupBlockData(int block, byte[] buffer) {

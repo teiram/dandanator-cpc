@@ -15,12 +15,7 @@ import com.grelobites.romgenerator.util.player.SampledAudioDataPlayer;
 import javafx.animation.FadeTransition;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -34,10 +29,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.Future;
 
 public class EepromWriterController {
@@ -87,8 +79,6 @@ public class EepromWriterController {
 
     private IntegerProperty currentBlock;
 
-    private ObjectProperty<DataProducer> currentDataProducer;
-
     private SerialBlockService serialBlockService;
 
     private ObjectProperty<SampledAudioDataPlayer> rescuePlayer;
@@ -108,6 +98,10 @@ public class EepromWriterController {
         if (configuration.getSerialPort() != null) {
             startSerialBlockService(configuration.getSerialPort());
         }
+    }
+
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 
     private void startSerialBlockService(String serialPort) {
@@ -154,7 +148,6 @@ public class EepromWriterController {
         rescuePlaying = new SimpleBooleanProperty(false);
         usbRescueSending = new SimpleBooleanProperty(false);
         currentBlock = new SimpleIntegerProperty(-1);
-        currentDataProducer = new SimpleObjectProperty<>();
         rescuePlayer = new SimpleObjectProperty<>();
         try {
             rescuePlayer.set(new SampledAudioDataPlayer(applicationContext));
@@ -163,91 +156,43 @@ public class EepromWriterController {
         }
     }
 
-
-    private Optional<byte[]> getRomsetByteArray() {
-        try {
-            if (romsetByteArray == null) {
-                if (configuration.getCustomRomSetPath() != null) {
-                    try (FileInputStream fis = new FileInputStream(configuration.getCustomRomSetPath())) {
-                        romsetByteArray = Util.fromInputStream(fis);
-                    }
-                } else {
-                    if (applicationContext.getRomSetHandler().generationAllowedProperty().get()) {
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        applicationContext.getRomSetHandler().exportRomSet(bos);
-                        romsetByteArray = bos.toByteArray();
-                    } else {
-                        LOGGER.info("Generation of romset byte array currently unavailable");
-                    }
-                }
-            }
-            return Optional.ofNullable(romsetByteArray);
-        } catch (IOException ioe) {
-            LOGGER.error("Trying to get Romset byte array", ioe);
-            return Optional.empty();
-        }
-    }
-
-    private Optional<DataProducer> getBlockDataProducer(int block) {
-        int blockSize = configuration.getBlockSize();
-        byte[] buffer = new byte[blockSize];
-        Optional<byte[]> romsetByteArray = getRomsetByteArray();
-        if (romsetByteArray.isPresent()) {
-            System.arraycopy(romsetByteArray.get(), block * blockSize, buffer, 0, blockSize);
-            return Optional.of(new SerialDataProducer(serialBlockService.serialPort(), block, buffer));
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    public Future<OperationResult> sendCurrentBlock() {
-        LOGGER.debug("sendCurrentBlock with block " + currentBlock + " requested");
-        if (!playing.get()) {
-            Optional<DataProducer> dataProducer = getBlockDataProducer(currentBlock.get());
-            if (dataProducer.isPresent()) {
-                playing.set(true);
-                prepareDataProducer(dataProducer.get());
-                return send();
-            } else {
-                LOGGER.warn("Unable to create data producer for current block");
-            }
-        }
-        return null;
-    }
-
     private void onEndOfMedia() {
         try {
             txLed.setVisible(false);
             usbRescueSending.set(false);
             playing.set(false);
+            unbindDataProducer();
         } catch (Exception e) {
             LOGGER.error("Setting next player", e);
         }
     }
 
-    private void unbindProducer(DataProducer producer) {
-        LOGGER.debug("Unbinding producer " + producer);
+    public void onCommunicationClosed() {
+        blockProgress.progressProperty().set(0);
+        currentBlock.set(-1);
+    }
+
+    private void unbindDataProducer() {
+        LOGGER.debug("Unbinding data producer");
         blockProgress.progressProperty().unbind();
         blockProgress.progressProperty().set(0);
     }
 
-    private void bindProducer(DataProducer producer) {
-        LOGGER.debug("Binding producer " + producer);
-        blockProgress.progressProperty().bind(producer.progressProperty());
-    }
-
-    private void prepareDataProducer(DataProducer producer) {
-        this.currentDataProducer.set(producer);
+    public void bindDataProducer(DataProducer producer) {
+        LOGGER.debug("Binding data producer " + producer);
         producer.onDataSent(this::ledAnimationOnDataSent);
         producer.onFinalization(this::onEndOfMedia);
+        blockProgress.progressProperty().bind(producer.progressProperty());
+        currentBlock.set(producer.id());
+        playing.set(true);
     }
 
-    private Future<OperationResult> send() {
+    private Future<OperationResult> asyncSend(DataProducer producer) {
         txLed.setVisible(true);
         playing.set(true);
         return applicationContext.addBackgroundTask(() -> {
             try {
-                currentDataProducer.get().send();
+                producer.send();
             } catch (Exception e) {
                 LOGGER.error("Sending serial data", e);
             }
@@ -266,24 +211,6 @@ public class EepromWriterController {
         return UNDEFINED_STRING;
     }
 
-    private void resetDataProducerAndRomSet() {
-        LOGGER.debug("Resetting player and RomSet on invalidating changes");
-        romsetByteArray = null;
-        currentBlock.set(0);
-    }
-
-    public int getCurrentBlock() {
-        return currentBlock.get();
-    }
-
-    public IntegerProperty currentBlockProperty() {
-        return currentBlock;
-    }
-
-    public void setCurrentBlock(int currentBlock) {
-        this.currentBlock.set(currentBlock);
-    }
-
     private void sendUsbRescue() {
         try {
             if (!usbRescueSending.get()) {
@@ -295,8 +222,8 @@ public class EepromWriterController {
                         Math.min(eewriter.length, Constants.RESCUE_EEWRITER_SIZE));
                 DataProducer producer = new SerialDataProducer(serialBlockService.serialPort(),
                         Util.reverseByteArray(data));
-                prepareDataProducer(producer);
-                send();
+                bindDataProducer(producer);
+                asyncSend(producer);
             } else {
                 LOGGER.warn("USB rescue send already in progress");
             }
@@ -375,20 +302,20 @@ public class EepromWriterController {
 
         //React to changes in the game list
         applicationContext.getGameList().addListener((InvalidationListener) e -> {
-            resetDataProducerAndRomSet();
+            serialBlockService.resetRomset();
         });
 
         DandanatorCpcConfiguration.getInstance().extraRomPathProperty()
                 .addListener(e -> {
-                    resetDataProducerAndRomSet();
+                    serialBlockService.resetRomset();
                 });
 
         Configuration.getInstance().backgroundImagePathProperty().addListener(e -> {
-            resetDataProducerAndRomSet();
+            serialBlockService.resetRomset();;
         });
 
         configuration.customRomSetPathProperty().addListener(e -> {
-            resetDataProducerAndRomSet();
+            serialBlockService.resetRomset();
         });
 
         if (configuration.getSerialPort() != null) {
@@ -401,15 +328,6 @@ public class EepromWriterController {
 
         requestedBlock.textProperty().bind(Bindings
                 .createStringBinding(this::getCurrentBlockString, currentBlock));
-
-        currentDataProducer.addListener((observable, oldValue, newValue) -> {
-            if (oldValue != null) {
-                unbindProducer(oldValue);
-            }
-            if (newValue != null) {
-                bindProducer(newValue);
-            }
-        });
 
         configuration.serialPortProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
