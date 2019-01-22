@@ -5,9 +5,10 @@ import com.grelobites.romgenerator.util.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class SectorInformationBlock {
-
+    private static final int BLOCK_SIZE = 8;
     private int track;
     private int side;
     private int sectorId;
@@ -16,9 +17,52 @@ public class SectorInformationBlock {
     private int fdcStatusRegister2;
     private int physicalPosition;
 
+    public static class Builder {
+        private SectorInformationBlock block = new SectorInformationBlock();
+
+        public Builder withTrack(int track) {
+            block.track = track;
+            return this;
+        }
+
+        public Builder withSide(int side) {
+            block.side = side;
+            return this;
+        }
+
+        public Builder withSectorId(int sectorId) {
+            block.sectorId = sectorId;
+            return this;
+        }
+
+        public Builder withSectorSize(int sectorSize) {
+            block.sectorSize = sectorSize;
+            return this;
+        }
+
+        public Builder withFdcStatusRegister1(int fdcStatusRegister1) {
+            block.fdcStatusRegister1 = fdcStatusRegister1;
+            return this;
+        }
+
+        public Builder withFdcStatusRegister2(int fdcStatusRegister2) {
+            block.fdcStatusRegister2 = fdcStatusRegister2;
+            return this;
+        }
+
+        public SectorInformationBlock build() {
+            return block;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static SectorInformationBlock fromInputStream(InputStream data) throws IOException {
         return fromByteArray(Util.fromInputStream(data, 8));
     }
+
 
     public static SectorInformationBlock fromByteArray(byte[] data) {
         SectorInformationBlock block = new SectorInformationBlock();
@@ -31,6 +75,17 @@ public class SectorInformationBlock {
         block.fdcStatusRegister2 = header.get();
 
         return block;
+    }
+
+    public byte[] toByteArray() {
+        ByteBuffer buffer = ByteBuffer.allocate(BLOCK_SIZE).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.put(Integer.valueOf(track).byteValue());
+        buffer.put(Integer.valueOf(side).byteValue());
+        buffer.put(Integer.valueOf(sectorId).byteValue());
+        buffer.put(Integer.valueOf(sectorSize >>> 8).byteValue());
+        buffer.put(Integer.valueOf(fdcStatusRegister1).byteValue());
+        buffer.put(Integer.valueOf(fdcStatusRegister2).byteValue());
+        return buffer.array();
     }
 
     public int getTrack() {

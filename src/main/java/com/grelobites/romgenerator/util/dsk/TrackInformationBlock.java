@@ -14,6 +14,8 @@ public class TrackInformationBlock {
     private static final Logger LOGGER = LoggerFactory.getLogger(TrackInformationBlock.class);
     private static final byte[] TRACK_HEADER = "Track-Info\r\n".getBytes();
 
+    public static final int BLOCK_SIZE = 256;
+
     private int trackNumber;
     private int sideNumber;
     private int sectorSize;
@@ -21,6 +23,62 @@ public class TrackInformationBlock {
     private int gap3Length;
     private int fillerByte;
     private SectorInformationBlock[] sectorInformationList;
+
+    public static class Builder {
+        private TrackInformationBlock block = new TrackInformationBlock();
+
+        public Builder withTrackNumber(int trackNumber) {
+            block.trackNumber = trackNumber;
+            return this;
+        }
+
+        public Builder withSideNumber(int sideNumber) {
+            block.sideNumber = sideNumber;
+            return this;
+        }
+
+        public Builder withSectorSize(int sectorSize) {
+            block.sectorSize = sectorSize;
+            return this;
+        }
+
+        public Builder withSectorCount(int sectorCount) {
+            block.sectorCount = sectorCount;
+            return this;
+        }
+
+        public Builder withGap3Length(int gap3Length) {
+            block.gap3Length = gap3Length;
+            return this;
+        }
+
+        public Builder withFillerByte(int fillerByte) {
+            block.fillerByte = fillerByte;
+            return this;
+        }
+
+        public Builder withSectorInformationList(int startSector) {
+            SectorInformationBlock sectorInfos[] = new SectorInformationBlock[block.sectorCount];
+            for (int i = 0; i < sectorInfos.length; i++) {
+                sectorInfos[i] = SectorInformationBlock.builder()
+                        .withSectorId(startSector++)
+                        .withSectorSize(block.sectorSize)
+                        .withSide(block.sideNumber)
+                        .withTrack(block.trackNumber)
+                        .build();
+            }
+            block.sectorInformationList = sectorInfos;
+            return this;
+        }
+
+        public TrackInformationBlock build() {
+            return block;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public static TrackInformationBlock fromInputStream(InputStream data) throws IOException {
         TrackInformationBlock block = fromByteArray(Util.fromInputStream(data, 0x100));
@@ -61,6 +119,23 @@ public class TrackInformationBlock {
         }
 
         return block;
+    }
+
+    public byte[] toByteArray() {
+        ByteBuffer buffer = ByteBuffer.allocate(BLOCK_SIZE).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.put(TRACK_HEADER);
+        buffer.position(buffer.position() + 4);
+        buffer.put(Integer.valueOf(trackNumber).byteValue());
+        buffer.put(Integer.valueOf(sideNumber).byteValue());
+        buffer.position(buffer.position() + 2);
+        buffer.put(Integer.valueOf(sectorSize >>> 8).byteValue());
+        buffer.put(Integer.valueOf(sectorCount).byteValue());
+        buffer.put(Integer.valueOf(gap3Length).byteValue());
+        buffer.put(Integer.valueOf(fillerByte).byteValue());
+        for (SectorInformationBlock block : sectorInformationList) {
+            buffer.put(block.toByteArray());
+        }
+        return buffer.array();
     }
 
     public int getTrackNumber() {

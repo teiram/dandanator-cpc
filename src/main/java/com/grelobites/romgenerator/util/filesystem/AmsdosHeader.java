@@ -28,6 +28,20 @@ import java.util.Optional;
 	unused2         1            Offset 66      (0x42)
 	checksum        2            Offset 67      (0x43-0x44)
 	unused3        59            Offset 69      (0x45-0x80)
+
+	Byte 00: User number (value from 0 to 15 or #E5 for deleted entries)
+    Byte 01 to 08: filename (fill unused char with spaces)
+    Byte 09 to 11: Extension (fill unused char with spaces)
+    Byte 16: first block (tape only)
+    Byte 17: first block (tape only)
+    Byte 18: file type (0:basic 1:protected 2:binary)
+    Byte 21 and 22: loading address LSB first
+    Byte 23: first block (tape only?)
+    Byte 24 and 25: file length LSB first
+    Byte 26 and 27: execution address for machine code program LSB first
+    Byte 64 and 66: 24 bits file length LSB first. Just a copy, not used!
+    Byte 67 and 68: checksum for bytes 00-66 stored LSB first
+    Byte 69 to 127: undefined content, free to use
  */
 public class AmsdosHeader {
     private static final Logger LOGGER = LoggerFactory.getLogger(AmsdosHeader.class);
