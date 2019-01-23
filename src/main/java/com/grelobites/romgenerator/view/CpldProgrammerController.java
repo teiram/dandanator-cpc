@@ -219,6 +219,8 @@ public class CpldProgrammerController {
             serialPortList.getItems().addAll(Util.getSerialPortNames());
         });
 
+        serialPortList.getItems().addAll(Util.getSerialPortNames());
+
         unoRadioButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
             scenarioImage.setImage(newValue ? unoImage : nanoImage);
         });
