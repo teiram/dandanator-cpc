@@ -19,8 +19,8 @@ import java.io.OutputStream;
 
 public class RescueUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(RescueUtil.class);
-    private static final int RESCUE_LOADER_LOAD_ADDR = 0x4000;
-    private static final int RESCUE_LOADER_EXEC_ADDR = 0x4000;
+    private static final int RESCUE_LOADER_LOAD_ADDR = 0x6000;
+    private static final int RESCUE_LOADER_EXEC_ADDR = 0x6000;
     private static final String RESCUE_LOADER_NAME = "RESCUE";
     private static final String RESCUE_LOADER_EXTENSION = "BIN";
     private static final String TAPE_RESCUE_LOADER_NAME = "RESCUE EEWRITER";

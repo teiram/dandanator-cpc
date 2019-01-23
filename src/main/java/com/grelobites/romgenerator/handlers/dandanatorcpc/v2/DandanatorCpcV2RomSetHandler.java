@@ -64,6 +64,8 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     protected MenuItem exportPokesMenuItem;
     protected MenuItem importPokesMenuItem;
     protected MenuItem exportExtraRomMenuItem;
+    protected MenuItem exportRescueEewriterToCdt;
+    protected MenuItem exportRescueEewriterToDsk;
     private BooleanProperty generationAllowedProperty = new SimpleBooleanProperty(false);
 
 
@@ -771,6 +773,42 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         return exportExtraRomMenuItem;
     }
 
+    private MenuItem getExportRescueEewriterToCdt() {
+        if (exportRescueEewriterToCdt == null) {
+            exportRescueEewriterToCdt = new MenuItem(LocaleUtil.i18n("exportRescueEewriterToCdtMenuEntry"));
+            exportRescueEewriterToCdt.setAccelerator(
+                    KeyCombination.keyCombination("SHORTCUT+C")
+            );
+
+            exportRescueEewriterToCdt.setOnAction(f -> {
+                try {
+                    exportRescueEewriterToCdt();
+                } catch (Exception e) {
+                    LOGGER.error("Exporting Rescue EEWriter to CDT", e);
+                }
+            });
+        }
+        return exportRescueEewriterToCdt;
+    }
+
+    private MenuItem getExportRescueEewriterToDsk() {
+        if (exportRescueEewriterToDsk == null) {
+            exportRescueEewriterToDsk = new MenuItem(LocaleUtil.i18n("exportRescueEewriterToDskMenuEntry"));
+            exportRescueEewriterToDsk.setAccelerator(
+                    KeyCombination.keyCombination("SHORTCUT+K")
+            );
+
+            exportRescueEewriterToDsk.setOnAction(f -> {
+                try {
+                    exportRescueEewriterToDsk();
+                } catch (Exception e) {
+                    LOGGER.error("Exporting Rescue EEWriter to DSK", e);
+                }
+            });
+        }
+        return exportRescueEewriterToDsk;
+    }
+
     private void exportExtraRom() {
         DirectoryAwareFileChooser chooser = applicationContext.getFileChooser();
         chooser.setTitle(LocaleUtil.i18n("exportExtraRomMenuEntry"));
@@ -781,6 +819,34 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 fos.write(DandanatorCpcConfiguration.getInstance().getExtraRom());
             } catch (IOException e) {
                 LOGGER.error("Exporting Extra ROM", e);
+            }
+        }
+    }
+
+    private void exportRescueEewriterToCdt() {
+        DirectoryAwareFileChooser chooser = applicationContext.getFileChooser();
+        chooser.setTitle(LocaleUtil.i18n("exportRescueEewriterToCdtMenuEntry"));
+        chooser.setInitialFileName("dandanator_rescue.cdt");
+        final File saveFile = chooser.showSaveDialog(applicationContext.getApplicationStage());
+        if (saveFile != null) {
+            try (FileOutputStream fos = new FileOutputStream(saveFile)) {
+                RescueUtil.generateRescueCdt(fos);
+            } catch (IOException e) {
+                LOGGER.error("Generating Rescue CDT", e);
+            }
+        }
+    }
+
+    private void exportRescueEewriterToDsk() {
+        DirectoryAwareFileChooser chooser = applicationContext.getFileChooser();
+        chooser.setTitle(LocaleUtil.i18n("exportRescueEewriterToDskMenuEntry"));
+        chooser.setInitialFileName("dandanator_rescue.dsk");
+        final File saveFile = chooser.showSaveDialog(applicationContext.getApplicationStage());
+        if (saveFile != null) {
+            try (FileOutputStream fos = new FileOutputStream(saveFile)) {
+                RescueUtil.generateRescueDisk(fos);
+            } catch (IOException e) {
+                LOGGER.error("Generating Rescue DSK", e);
             }
         }
     }
@@ -857,7 +923,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
         applicationContext.getExtraMenu().getItems().addAll(
                 getExportPokesMenuItem(), getImportPokesMenuItem(),
-                getExportExtraRomMenuItem());
+                getExportExtraRomMenuItem(),
+                getExportRescueEewriterToCdt(),
+                getExportRescueEewriterToDsk());
 
         updateRomUsage();
         previewUpdateTimer.start();
@@ -879,7 +947,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         applicationContext.getExtraMenu().getItems().removeAll(
                 getExportPokesMenuItem(),
                 getImportPokesMenuItem(),
-                getExportExtraRomMenuItem());
+                getExportExtraRomMenuItem(),
+                getExportRescueEewriterToCdt(),
+                getExportRescueEewriterToDsk());
         applicationContext.getGameList().removeListener(updateImageListener);
         applicationContext.getGameList().removeListener(updateRomUsageListener);
         applicationContext = null;
