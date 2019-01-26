@@ -28,7 +28,7 @@ public class UploadTests {
                 SerialPort.PARITY_NONE);
 
         Stk500Programmer programmer = new Stk500Programmer(serialPort);
-        programmer.initialize();
+        programmer.initialize(250, 50);
         programmer.sync();
         int majorVersion = programmer.getMajorVersion();
         int minorVersion = programmer.getMinorVersion();

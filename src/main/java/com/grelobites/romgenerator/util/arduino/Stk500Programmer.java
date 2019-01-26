@@ -14,7 +14,8 @@ public class Stk500Programmer {
     private static final Logger LOGGER = LoggerFactory.getLogger(Stk500Programmer.class);
 
     private static final int PROGRAM_CHUNK_SIZE = 128;
-    private static final int SERIAL_TIMEOUT = 500;
+    private static final int SERIAL_READ_TIMEOUT = 5000;
+    private static final int SERIAL_DRAIN_TIMEOUT = 250;
 
     private static final int RESP_STK_OK =          0x10;
     private static final int RESP_STK_FAILED =      0x11;
@@ -31,7 +32,7 @@ public class Stk500Programmer {
     private static final int  CMND_STK_SET_PARAMETER =     0x40;
     private static final int  CMND_STK_GET_PARAMETER =     0x41;
     private static final int  CMND_STK_SET_DEVICE =        0x42;
-    private static final int  CMND_STK_SET_DEVICE_EXT =    0x45;			
+    private static final int  CMND_STK_SET_DEVICE_EXT =    0x45;
 
     private static final int  CMND_STK_ENTER_PROGMODE =    0x50;
     private static final int  CMND_STK_LEAVE_PROGMODE =    0x51;
@@ -46,7 +47,7 @@ public class Stk500Programmer {
     private static final int  CMND_STK_PROG_FUSE =         0x62;
     private static final int  CMND_STK_PROG_LOCK =         0x63;
     private static final int  CMND_STK_PROG_PAGE =         0x64;
-    private static final int  CMND_STK_PROG_FUSE_EXT =     0x65;		
+    private static final int  CMND_STK_PROG_FUSE_EXT =     0x65;
 
     private static final int  CMND_STK_READ_FLASH =        0x70;
     private static final int  CMND_STK_READ_DATA =         0x71;
@@ -55,7 +56,7 @@ public class Stk500Programmer {
     private static final int  CMND_STK_READ_PAGE =         0x74;
     private static final int  CMND_STK_READ_SIGN =         0x75;
     private static final int  CMND_STK_READ_OSCCAL =       0x76;
-    private static final int  CMND_STK_READ_FUSE_EXT =     0x77;		
+    private static final int  CMND_STK_READ_FUSE_EXT =     0x77;
     private static final int  CMND_STK_READ_OSCCAL_EXT =   0x78;
 
     private static final int PARM_STK_HW_VER            = 0x80; //R
@@ -77,7 +78,7 @@ public class Stk500Programmer {
     private static final int PARM_STK_POLLING           = 0x95; //TRUE or FALSE
     private static final int PARM_STK_SELFTIMED         = 0x96; //TRUE or FALSE
     private static final int PARM_STK500_TOPCARD_DETECT = 0x98; //Detect top-card attached
-    
+
     private static final byte[] ATMEGA_328P_SIGNATURE = {(byte) 0x1e, (byte) 0x95, (byte) 0x0F};
 
     private static class ParametersBuilder {
@@ -148,22 +149,25 @@ public class Stk500Programmer {
 
     private byte readByte() {
         try {
-            byte[] response = serialPort.readBytes(1, SERIAL_TIMEOUT);
+            byte[] response = serialPort.readBytes(1, SERIAL_READ_TIMEOUT);
+            LOGGER.debug("SERIAL PORT. Received {}", Util.dumpAsHexString(response));
             return response[0];
         } catch (Exception e) {
             throw new RuntimeException("Reading from serial port", e);
         }
     }
 
-    public void initialize() {
+    public void initialize(int dtrRtsDelay, int afterDtrRtsDelay) {
         try {
             serialPort.setDTR(false);
             serialPort.setRTS(false);
-            Thread.sleep(50);
+            LOGGER.debug("DTR/RTS set low");
+            Thread.sleep(dtrRtsDelay);
             serialPort.setDTR(true);
             serialPort.setRTS(true);
-            Thread.sleep(50);
-            //purgeSerialPort();
+            LOGGER.debug("DTR/RTS set high");
+            Thread.sleep(afterDtrRtsDelay);
+            purgeSerialPort();
         } catch (Exception e) {
             LOGGER.error("Clearing serial port", e);
             throw new RuntimeException(e);
@@ -171,9 +175,11 @@ public class Stk500Programmer {
     }
 
     private void purgeSerialPort() {
+        LOGGER.debug("SERIAL PORT. Flushing");
         while (true) {
             try {
-                serialPort.readBytes(1, 500);
+                byte [] flushed = serialPort.readBytes(1, SERIAL_DRAIN_TIMEOUT);
+                LOGGER.debug("SERIAL PORT. Flushed: {}", Util.dumpAsHexString(flushed));
             } catch (Exception e) {
                 return;
             }
@@ -182,7 +188,9 @@ public class Stk500Programmer {
 
     private byte[] readBytes(int count) {
         try {
-            return serialPort.readBytes(count, SERIAL_TIMEOUT);
+            byte[] response = serialPort.readBytes(count, SERIAL_READ_TIMEOUT);
+            LOGGER.debug("SERIAL PORT. Received {}", Util.dumpAsHexString(response));
+            return response;
         } catch (Exception e) {
             throw new RuntimeException("Reading from serial port", e);
         }
@@ -190,6 +198,7 @@ public class Stk500Programmer {
 
     private void sendCommand(byte[] command) {
         try {
+            LOGGER.debug("SERIAL PORT. Sending {}", Util.dumpAsHexString(command));
             serialPort.writeBytes(command);
         } catch (Exception e) {
             LOGGER.error("In sendCommand", e);
@@ -296,15 +305,27 @@ public class Stk500Programmer {
     public void sync() {
         byte[] syncCommand = ParametersBuilder.newInstance()
                 .withByte(CMND_STK_GET_SYNC)
+                //.withByte(CMND_STK_GET_SIGN_ON)
                 .withByte(SYNC_CRC_EOP)
                 .build();
+        LOGGER.debug("Starting SYNC attempt");
         sendCommand(syncCommand);
         purgeSerialPort();
         waitMillis(100);
         sendCommand(syncCommand);
         purgeSerialPort();
         waitMillis(100);
-        sendCommandAndHandleResponse(syncCommand);
+        int syncAttempts = 20;
+        while (true) {
+            try {
+                sendCommandAndHandleResponse(syncCommand);
+                return;
+            } catch (Exception e) {
+                if (--syncAttempts == 0) {
+                    throw e;
+                }
+            }
+        }
     }
 
     public void enterProgramMode() {
