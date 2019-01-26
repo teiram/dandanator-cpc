@@ -192,12 +192,12 @@ public class CpldProgrammerController {
                 arduinoUpdatedLed, dandanatorUpdatedLed);
     }
 
-    private static void sync(SerialPort serialPort, Stk500Programmer programmer) throws Exception {
+    private static void sync(SerialPort serialPort, Stk500Programmer programmer) {
         for (SerialPortConfiguration spc : SerialPortConfiguration.values()) {
             try {
                 LOGGER.debug("Trying to sync with serial configuration {}", spc);
                 serialPort.setParams(spc.baudrate, spc.dataBits, spc.stopBits, spc.parity);
-                programmer.initialize();
+                programmer.initialize(250, 50);
                 programmer.sync();
                 return;
             } catch (Exception e) {
