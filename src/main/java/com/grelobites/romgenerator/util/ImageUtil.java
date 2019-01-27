@@ -15,6 +15,8 @@ import java.util.Arrays;
 
 public class ImageUtil {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ImageUtil.class);
+    private static int[] PIXEL_INDEXES_MODE0;
+    private static int[] PIXEL_INDEXES_MODE1;
 
 	private static int getXBorderSize(CrtcDisplayData crtcDisplayData) {
 	    int width = crtcDisplayData.getVisibleWidth() * 16;
@@ -34,6 +36,46 @@ public class ImageUtil {
 	    return Math.min(crtcDisplayData.getVisibleWidth() * 2, 80);
     }
 
+    private static int getPixelIndexesMode0(int pixelData) {
+	    if (PIXEL_INDEXES_MODE0 == null) {
+	        PIXEL_INDEXES_MODE0 = new int[256];
+	        for (int i = 0; i < 256; i++) {
+	            PIXEL_INDEXES_MODE0[i] =
+                        (((i & 0x02) << 2) |
+                                ((i & 0x20) >> 3) |
+                                ((i & 0x08) >> 2) |
+                                ((i & 0x80) >> 7)) |
+                                ((((i & 0x01) << 3) |
+                                        ((i & 0x10) >> 2) |
+                                        ((i & 0x04) >> 1) |
+                                        ((i & 0x40) >> 6)) << 4);
+            }
+        }
+	    return PIXEL_INDEXES_MODE0[pixelData & 0xff];
+    }
+
+    private static int getPixelIndexesMode1(int pixelData) {
+	    if (PIXEL_INDEXES_MODE1 == null) {
+	        PIXEL_INDEXES_MODE1 = new int[256];
+	        for (int i = 0; i < 256; i++) {
+	            PIXEL_INDEXES_MODE1[i] =
+                        (((i & 0x08) >> 2) |
+                                ((i & 0x80) >> 7)) |
+                                ((((i & 0x04) >> 1) |
+                                        ((i & 0x40) >> 6)) << 2) |
+                                (((i & 0x02) |
+                                        ((i & 0x20) >> 5)) << 4) |
+                                ((((i & 0x01) << 1) |
+                                        ((i & 0x10) >> 4)) << 6);
+            }
+        }
+	    return PIXEL_INDEXES_MODE1[pixelData & 0xff];
+    }
+
+    private static int getPixelColorIndexMode0(int pixelData, int position) {
+	    return (getPixelIndexesMode0(pixelData) >>> (position * 4)) & 0x0f;
+    }
+
     private static void writeToImageMode0(PixelWriter writer, byte[] data,
                                           CrtcDisplayData crtcDisplayData,
                                           byte[] palette) {
@@ -49,16 +91,8 @@ public class ImageUtil {
             int lineAddress = ((((y + 2) / 8) * width) + (((y + 2) % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
             for (int x = 0; x < width; x++) {
                 int pixelData = data[lineAddress + x];
-                int color0Index = ((pixelData & 0x02) << 2) |
-                        ((pixelData & 0x20) >> 3) |
-                        ((pixelData & 0x08) >> 2) |
-                        ((pixelData & 0x80) >> 7);
-                int color1Index = ((pixelData & 0x01) << 3) |
-                        ((pixelData & 0x10) >> 2) |
-                        ((pixelData & 0x04) >> 1) |
-                        ((pixelData & 0x40) >> 6);
-                int color0 = CpcColor.hardIndexedArgb(palette[color0Index]);
-                int color1 = CpcColor.hardIndexedArgb(palette[color1Index]);
+                int color0 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode0(pixelData, 0)]);
+                int color1 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode0(pixelData, 1)]);
                 for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 4; j++) {
                         writer.setArgb(4 * ((2 * x) + 0) + j + xBorderSize, y * 2 + i + yBorderSize, color0);
@@ -67,6 +101,10 @@ public class ImageUtil {
                 }
             }
         }
+    }
+
+    private static int getPixelColorIndexMode1(int pixelData, int position) {
+        return (getPixelIndexesMode1(pixelData) >>> (position * 2)) & 0x03;
     }
 
     private static void writeToImageMode1(PixelWriter writer, byte[] data,
@@ -83,19 +121,10 @@ public class ImageUtil {
             int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
             for (int x = 0; x < width; x++) {
                 int pixelData = Byte.toUnsignedInt(data[lineAddress + x]);
-                int color0Index = ((pixelData & 0x08) >> 2) |
-                        ((pixelData & 0x80) >> 7);
-                int color1Index = ((pixelData & 0x04) >> 1) |
-                        ((pixelData & 0x40) >> 6);
-                int color2Index = (pixelData & 0x02) |
-                        ((pixelData & 0x20) >> 5);
-                int color3Index = ((pixelData & 0x01) << 1) |
-                        ((pixelData & 0x10) >> 4);
-
-                int color0 = CpcColor.hardIndexedArgb(palette[color0Index]);
-                int color1 = CpcColor.hardIndexedArgb(palette[color1Index]);
-                int color2 = CpcColor.hardIndexedArgb(palette[color2Index]);
-                int color3 = CpcColor.hardIndexedArgb(palette[color3Index]);
+                int color0 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode1(pixelData, 0)]);
+                int color1 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode1(pixelData, 1)]);
+                int color2 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode1(pixelData, 2)]);
+                int color3 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode1(pixelData, 3)]);
 
                 for (int i = 0; i < 2; i++) {
                     for (int j = 0; j < 2; j++) {
