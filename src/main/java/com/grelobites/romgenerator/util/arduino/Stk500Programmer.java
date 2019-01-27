@@ -16,6 +16,7 @@ public class Stk500Programmer {
     private static final int PROGRAM_CHUNK_SIZE = 128;
     private static final int SERIAL_READ_TIMEOUT = 5000;
     private static final int SERIAL_DRAIN_TIMEOUT = 250;
+    private static final int MAX_SYNC_ATTEMPTS = 3;
 
     private static final int RESP_STK_OK =          0x10;
     private static final int RESP_STK_FAILED =      0x11;
@@ -315,7 +316,7 @@ public class Stk500Programmer {
         sendCommand(syncCommand);
         purgeSerialPort();
         waitMillis(100);
-        int syncAttempts = 20;
+        int syncAttempts = MAX_SYNC_ATTEMPTS;
         while (true) {
             try {
                 sendCommandAndHandleResponse(syncCommand);
