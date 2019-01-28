@@ -9,30 +9,8 @@ import java.util.List;
 public class Ppi {
     private static final Logger LOGGER = LoggerFactory.getLogger(Ppi.class);
     private static final int PSG_REGISTERS = 16;
-    private static final int KEYSCAN_PSG_REGISTER = 14;
+    public static final int KEYSCAN_PSG_REGISTER = 14;
     private static final int KEYBOARD_SCANLINES = 10;
-    private enum PsgFunction {
-        NONE(0),
-        READ(1),
-        WRITE(2),
-        SELECT(3);
-        private int id;
-
-        PsgFunction(int id) {
-            this.id = id;
-        }
-        public int id() {
-            return id;
-        }
-        public static PsgFunction fromId(int id) {
-            for (PsgFunction f : PsgFunction.values()) {
-                if (f.id == id) {
-                    return f;
-                }
-            }
-            throw new IllegalArgumentException("Unexisting PSG function: " + id);
-        }
-    }
 
     private PsgFunction psgFunction = PsgFunction.NONE;
     private int selectedPsgRegister;
@@ -53,6 +31,7 @@ public class Ppi {
     private int controlCurrentValue;
     private byte[] keyStatus = new byte[KEYBOARD_SCANLINES];
     private List<MotorStateChangeListener> motorStateChangeListeners = new ArrayList<>();
+    private List<PsgFunctionListener> psgFunctionListeners = new ArrayList<>();
 
     public Ppi() {
         for (int i = 0; i < keyStatus.length; i++) {
@@ -233,6 +212,7 @@ public class Ppi {
     }
 
     private void applyPsgFunction() {
+        notifyPsgFunctionListeners(psgFunction);
         switch (psgFunction) {
             case SELECT:
                 selectedPsgRegister = portACurrentValue & 0x0f;
@@ -302,7 +282,23 @@ public class Ppi {
         }
     }
 
-    public void notifyMotorStateChangeListeners() {
+    public void addPsgFunctionListener(PsgFunctionListener listener) {
+        this.psgFunctionListeners.add(listener);
+    }
+
+    public void removePsgFunctionListener(PsgFunctionListener listener) {
+        if (!this.psgFunctionListeners.remove(listener)) {
+            LOGGER.warn("Trying to remove unregistered PsgFunctionListener");
+        }
+    }
+
+    private void notifyPsgFunctionListeners(PsgFunction function) {
+        for (PsgFunctionListener listener: psgFunctionListeners) {
+            listener.onPsgFunctionExecution(function);
+        }
+    }
+
+    private void notifyMotorStateChangeListeners() {
         for (MotorStateChangeListener listener: motorStateChangeListeners) {
             listener.onMotorStateChange(motorOn);
         }

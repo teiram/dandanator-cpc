@@ -1,16 +1,23 @@
 package com.grelobites.romgenerator.util.emulator;
 
-import com.grelobites.romgenerator.model.*;
+import com.grelobites.romgenerator.model.GameHeader;
+import com.grelobites.romgenerator.model.GameType;
+import com.grelobites.romgenerator.model.HardwareMode;
+import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.Counter;
-import com.grelobites.romgenerator.util.emulator.peripheral.*;
+import com.grelobites.romgenerator.util.emulator.peripheral.CpcMemory;
+import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
+import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
+import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
+import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
+import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
-import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class BaseEmulator implements Z80operations {
     private static final Logger LOGGER = LoggerFactory.getLogger(BaseEmulator.class);
@@ -91,7 +98,7 @@ public class BaseEmulator implements Z80operations {
         return z80State;
     }
 
-    protected void loadSnapshot(SnapshotGame game) throws IOException {
+    protected void loadSnapshot(SnapshotGame game) {
         GameHeader header = game.getGameHeader();
         z80.setZ80State(getZ80State(game.getGameHeader()));
 
@@ -299,6 +306,10 @@ public class BaseEmulator implements Z80operations {
     }
 
     protected long executeFrame(long compensation) {
+        return executeFrame(() -> false, compensation);
+    }
+
+    protected long executeFrame(Supplier<Boolean> restoreOnAbortedEmulation, long compensation) {
         currentRasterInterrupt = 0;
         final long frameStartTstates = clock.getTstates();
         final long tStatesPerLine = crtc.getHorizontalTotal() * TSTATES_PER_US;
@@ -362,7 +373,7 @@ public class BaseEmulator implements Z80operations {
 
         clock.addClockTimeout(clockTimeout);
         try {
-            compensation = executeTstates(FRAME_TSTATES - compensation);
+            compensation = executeTstates(restoreOnAbortedEmulation, FRAME_TSTATES - compensation);
         } finally {
             ppi.setvSyncActive(false);
             z80.resetInterruptAckListener();
@@ -371,10 +382,10 @@ public class BaseEmulator implements Z80operations {
         return compensation;
     }
 
-    public long executeTstates(long tStates) {
+    public long executeTstates(Supplier<Boolean> restoreOnAbortedEmulation, long tStates) {
         long limit = clock.getTstates() + tStates;
         while (clock.getTstates() < limit && !executionAborted) {
-            z80.execute();
+            z80.execute(restoreOnAbortedEmulation.get());
             //Check if our thread gets interrupted
             if (Thread.interrupted()) {
                 LOGGER.warn("Thread running emulation was interrupted");
@@ -390,8 +401,4 @@ public class BaseEmulator implements Z80operations {
         LOGGER.debug("Breakpoint reached!!");
     }
 
-    @Override
-    public void execDone() {
-
-    }
 }

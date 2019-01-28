@@ -12,5 +12,4 @@ public interface Z80operations {
     void outPort(int port, int value);
 
     void breakpoint();
-    void execDone();
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="321.0" prefWidth="630.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.grelobites.romgenerator.view.EmulatorConfigurationController">
+   <children>
+      <CheckBox fx:id="testTapeStopConditions" layoutX="20.0" layoutY="10.0" mnemonicParsing="false" text="Habilitar comprobaciones de finalización" />
+      <CheckBox fx:id="testPaletteChanges" layoutX="20.0" layoutY="75.0" mnemonicParsing="false" text="Habilitar comprobación de cambios de paleta" />
+      <TextField fx:id="tapeRemainingBytes" layoutX="428.0" layoutY="36.0" prefHeight="31.0" prefWidth="48.0" />
+      <Label layoutX="47.0" layoutY="40.0" text="Bytes restantes de cinta para habilitar comprobaciones" />
+      <CheckBox fx:id="testCrtcAccess" layoutX="20.0" layoutY="105.0" mnemonicParsing="false" text="Habilitar comprobación de acceso al CRTC" />
+      <CheckBox fx:id="testVramWrites" layoutX="20.0" layoutY="135.0" mnemonicParsing="false" text="Habilitar comprobación de escritura a pantalla" />
+      <CheckBox fx:id="testOnMotorStopped" layoutX="20.0" layoutY="165.0" mnemonicParsing="false" text="Habilitar comprobación en paradas de motor de cassette" />
+      <CheckBox fx:id="testPsgAccess" layoutX="20.0" layoutY="195.0" mnemonicParsing="false" text="Habilitar comprobación de acceso al PSG" />
+      <CheckBox fx:id="testKeyboardReads" layoutX="20.0" layoutY="225.0" mnemonicParsing="false" text="Habilitar comprobación de lectura de teclado" />
+   </children>
+</AnchorPane>

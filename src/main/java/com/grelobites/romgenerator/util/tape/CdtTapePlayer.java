@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.tape;
 
+import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.emulator.Clock;
 import com.grelobites.romgenerator.util.emulator.ClockTimeout;
@@ -22,6 +23,7 @@ import java.util.zip.InflaterInputStream;
 public class CdtTapePlayer implements ClockTimeoutListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CdtTapePlayer.class);
+    private static final int TAPE_NEAR_END_THRESHOLD = 5;
 
     //Standard block timings
     private static final int LEADER_LENGHT          = adjustDuration(2168);

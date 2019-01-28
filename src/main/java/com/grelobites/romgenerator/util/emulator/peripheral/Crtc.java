@@ -1,7 +1,15 @@
 package com.grelobites.romgenerator.util.emulator.peripheral;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
+
 public class Crtc {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Crtc.class);
+
     private static final int NUM_REGISTERS = 18;
 
     public static final int REGISTER_HORIZ_TOTAL            = 0;
@@ -28,37 +36,74 @@ public class Crtc {
     private int selectedRegister;
     private CrtcType crtcType;
 
+    private Set<CrtcChangeListener> crtcChangeListeners = new HashSet<>();
+
     public Crtc(CrtcType crtcType) {
         this.crtcType = crtcType;
     }
 
+    private boolean notifyListeners(CrtcOperation operation) {
+        for (CrtcChangeListener listener: crtcChangeListeners) {
+            if (!listener.onChange(operation)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void addChangeListener(CrtcChangeListener listener) {
+        crtcChangeListeners.add(listener);
+    }
+
+    public void removeChangeListener(CrtcChangeListener listener) {
+        crtcChangeListeners.remove(listener);
+    }
+
     public void onSelectRegisterOperation(int register) {
-        if (register < NUM_REGISTERS) {
-            selectedRegister = register;
+        if (notifyListeners(CrtcOperation.SELECT_REGISTER)) {
+            if (register < NUM_REGISTERS) {
+                selectedRegister = register;
+            } else {
+                throw new IllegalArgumentException("Invalid CRTC register index");
+            }
         } else {
-            throw new IllegalArgumentException("Invalid CRTC register index");
+            LOGGER.debug("CRTC Register Select rejected by listener");
         }
     }
 
     public void onWriteRegisterOperation(int value) {
-        crtcRegisterData[selectedRegister] = (byte) value;
-    }
-
-    public int onReadStatusRegisterOperation() {
-        if (crtcType.hasFunction2()) {
-            if (!crtcType.hasReadStatusFunction()) {
-                return onReadRegisterOperation();
-            } else {
-                return statusRegister;
-            }
+        if (notifyListeners(CrtcOperation.WRITE_REGISTER)) {
+            crtcRegisterData[selectedRegister] = (byte) value;
         } else {
-            return 0;
+            LOGGER.debug("CRTC Write Register rejected by listener");
         }
     }
 
+    public int onReadStatusRegisterOperation() {
+        if (notifyListeners(CrtcOperation.READ_STATUS_REGISTER)) {
+            if (crtcType.hasFunction2()) {
+                if (!crtcType.hasReadStatusFunction()) {
+                    return onReadRegisterOperation();
+                } else {
+                    return statusRegister;
+                }
+            } else {
+                return 0;
+            }
+        } else {
+            LOGGER.debug("CRTC Read Status rejected by listener");
+        }
+        return 0;
+    }
+
     public int onReadRegisterOperation() {
-        return crtcType.canReadRegister(selectedRegister) ?
-                crtcRegisterData[selectedRegister] : 0;
+        if (notifyListeners(CrtcOperation.READ_REGISTER)) {
+            return crtcType.canReadRegister(selectedRegister) ?
+                    crtcRegisterData[selectedRegister] : 0;
+        } else {
+            LOGGER.debug("CRTC Read Register rejected by listener");
+            return 0;
+        }
     }
 
     public byte[] getCrtcRegisterData() {

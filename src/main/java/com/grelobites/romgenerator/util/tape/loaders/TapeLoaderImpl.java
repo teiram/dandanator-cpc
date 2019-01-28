@@ -1,17 +1,17 @@
 package com.grelobites.romgenerator.util.tape.loaders;
 
+import com.grelobites.romgenerator.Configuration;
+import com.grelobites.romgenerator.EmulatorConfiguration;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.emulator.BaseEmulator;
-import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayChangeListener;
-import com.grelobites.romgenerator.util.emulator.peripheral.GateArrayFunction;
-import com.grelobites.romgenerator.util.emulator.peripheral.MotorStateChangeListener;
+import com.grelobites.romgenerator.util.emulator.EmulationAbortedException;
+import com.grelobites.romgenerator.util.emulator.peripheral.*;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
-import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
@@ -28,9 +29,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     private static final int FIRM_ZONE_START = 0xB100;
     private static final int FIRM_ZONE_END = 0xBE00;
     private final CdtTapePlayer tapePlayer;
-    private SnapshotGame currentSnapshot;
-    private int tapeLastSavePosition = 0;
-    private int framesWithoutTapeMovement = 0;
+    private static EmulatorConfiguration configuration = EmulatorConfiguration.getInstance();
 
     public TapeLoaderImpl(HardwareMode hardwareMode,
                           LoaderResources loaderResources) {
@@ -48,6 +47,13 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         }
     }
 
+
+    private boolean isTapeNearEndPosition() {
+        return configuration.isTestTapeStopConditions() &&
+                tapePlayer.getTapeLength() - tapePlayer.getCurrentTapePosition() <
+                        configuration.getTapeRemainingBytes();
+    }
+
     private boolean validLandingZone() {
         //return memory.isAddressInRam(z80.getRegPC()) &&
           //      !(z80.getRegPC() >= FIRM_ZONE_START && z80.getRegPC() < FIRM_ZONE_END);
@@ -59,77 +65,102 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         long compensation = 0;
         tapePlayer.insert(tapeFile);
         loadSnapshot(loaderResources.snaLoader());
-        //Pressing enter key to continue with loading
+
+        //Define different listener to detect emulation stop conditions
         final GateArrayChangeListener paletteGateArrayChangeListener = (f, v) -> {
-            if (f == GateArrayFunction.PALETTE_DATA_FN) {
+            if (configuration.isTestPaletteChanges() && f == GateArrayFunction.PALETTE_DATA_FN) {
                 //Ignore border changes
-                if ((gateArray.getSelectedPen() & 0x10) == 0) {
-                    if (isTapeNearEndPosition()) {
-                        LOGGER.debug("Aborting execution on palette change with tape at end");
-                        executionAborted = true;
-                        return false;
-                    }
+                if (isTapeNearEndPosition() && (gateArray.getSelectedPen() & 0x10) == 0) {
+                    LOGGER.debug("Aborting execution on palette change with tape near end");
+                    executionAborted = true;
+                    throw new EmulationAbortedException("Palette changed");
                 }
-            } else if (f == GateArrayFunction.RAM_BANKING_FN) {
-                LOGGER.debug("Changing RAM Banking to {}", v);
             }
             return true;
         };
-        pressKeyDuringFrames(20, KeyboardCode.KEY_ENTER);
-        while (!ppi.isMotorOn()) {
-            compensation = executeFrame(compensation);
-        }
-        final AtomicInteger sequence = new AtomicInteger();
+
+        final CrtcChangeListener crtcChangeListener = (o) -> {
+            if (isTapeNearEndPosition()) {
+                LOGGER.debug("Aborting execution on CRTC modification with tape near end");
+                executionAborted = true;
+                throw new EmulationAbortedException("CRTC access attempt");
+            }
+            return true;
+        };
+        final PsgFunctionListener psgFunctionListener = (f) -> {
+            if (isTapeNearEndPosition()) {
+                if (configuration.isTestPsgAccess() && f == PsgFunction.WRITE) {
+                    LOGGER.debug("Aborting emulation on write to PSG with tape near end");
+                    executionAborted = true;
+                } else if (configuration.isTestKeyboardReads() &&
+                        f == PsgFunction.READ &&
+                        Ppi.KEYSCAN_PSG_REGISTER == ppi.getSelectedPsgRegister()) {
+                    LOGGER.debug("Aborting emulation on read keyboard with tape near end");
+                    executionAborted = true;
+                }
+            }
+        };
+
         final MotorStateChangeListener motorStateChangeListener = (c) -> {
             if (!c) {
                 LOGGER.debug("Stopping tape from listener with status {}", tapePlayer);
-                //currentSnapshot = getSnapshotGame();
-                tapeLastSavePosition = tapePlayer.getCurrentTapePosition();
-                //saveGameAsSna(getSnapshotGame(), sequence.getAndIncrement());
                 tapePlayer.pause();
-                if (tapePlayer.isInLastBlock()) {
-                    LOGGER.debug("Aborting emulation with tape stopped in last block");
+                if (configuration.isTestOnMotorStopped() && isTapeNearEndPosition()) {
+                    LOGGER.debug("Aborting emulation with tape stopped near tape end");
                     executionAborted = true;
                 }
             } else {
                 LOGGER.debug("Restarting tape from listener with status {} ", tapePlayer);
                 tapePlayer.resume();
-                framesWithoutTapeMovement = 0;
             }
         };
+
+        //Pressing enter key to continue with loading
+        //and wait for the motor to become on
+        pressKeyDuringFrames(20, KeyboardCode.KEY_ENTER);
+        while (!ppi.isMotorOn()) {
+            compensation = executeFrame(compensation);
+        }
+        LOGGER.info("Motor is on!");
+
+
         ppi.addMotorStateChangeListener(motorStateChangeListener);
+        crtc.addChangeListener(crtcChangeListener);
+        ppi.addPsgFunctionListener(psgFunctionListener);
+
         z80.setBreakpoint(0xbca1, true);
         z80.setBreakpoint(0xbc83, true);
-        LOGGER.info("Motor is on!");
         tapePlayer.play();
-        framesWithoutTapeMovement = 0;
+
+        int framesWithoutTapeMovement = 0;
+        int currentTapePosition = tapePlayer.getCurrentTapePosition();
         boolean stopOnTapeStalled = false;
         gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {
             while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted) {
-                compensation = executeFrame(compensation);
-                if (tapePlayer.getCurrentTapePosition() == tapeLastSavePosition) {
+                compensation = executeFrame(this::isTapeNearEndPosition, compensation);
+                if (tapePlayer.getCurrentTapePosition() == currentTapePosition) {
                     framesWithoutTapeMovement++;
                     if (framesWithoutTapeMovement >= MAX_FRAMES_WITHOUT_TAPE_MOVEMENT) {
                         LOGGER.debug("{} frames without tape movement. Stopping",
                                 MAX_FRAMES_WITHOUT_TAPE_MOVEMENT);
                         stopOnTapeStalled = true;
                     }
+                } else {
+                    framesWithoutTapeMovement = 0;
+                    currentTapePosition = tapePlayer.getCurrentTapePosition();
                 }
-                /*
-                if (++frameCounter % 1000 == 0) {
-                    saveGameAsSna(getSnapshotGame(), sequence.getAndIncrement());
-                }
-                */
             }
             tapePlayer.stop();
         } catch (TapeFinishedException tfe) {
-            LOGGER.debug("Tape finished with cpu status {}, tape: {}",
-                    z80.getZ80State(), tapePlayer, tfe);
+            LOGGER.debug("Tape finished", tfe);
+        } catch (EmulationAbortedException eae) {
+            LOGGER.debug("Emulation aborted", eae);
         }
 
         ppi.removeMotorStateChangeListener(motorStateChangeListener);
-        LOGGER.info("Tape finished with cpu status {}, tape: {}",
+        ppi.removePsgFunctionListener(psgFunctionListener);
+        LOGGER.info("End of emulation with cpu status {}, tape: {}",
                 z80.getZ80State(), tapePlayer);
 
         LOGGER.debug("Searching for proper landing zone");
@@ -155,51 +186,31 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         }
         gateArray.removeChangeListener(paletteGateArrayChangeListener);
 
-        //if (tapePlayer.getCurrentTapePosition() > tapeLastSavePosition) {
-            LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
-                    String.format("0x%04x", z80.getRegPC()),
-                    memory.isAddressInRam(z80.getRegPC()));
-            currentSnapshot = getSnapshotGame();
-        //}
-
-        return currentSnapshot;
-    }
-
-    private boolean isTapeNearEndPosition() {
-        //return tapePlayer.getTapeLength() - tapePlayer.getCurrentTapePosition() < 2;
-        return false;
+        LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
+                String.format("0x%04x", z80.getRegPC()),
+                memory.isAddressInRam(z80.getRegPC()));
+        return getSnapshotGame();
     }
 
     @Override
     public void poke8(int address, int value) {
         super.poke8(address, value);
-        if (crtc.isVideoAddress(address) && isTapeNearEndPosition()) {
+        if (isTapeNearEndPosition() && crtc.isVideoAddress(address)) {
             LOGGER.debug("Aborting execution on write to VRAM with tape at end");
             executionAborted = true;
+            throw new EmulationAbortedException("Write to VRAM");
         }
     }
 
     @Override
     public void poke16(int address, int word) {
         super.poke16(address, word);
-        if (crtc.isVideoAddress(address) && isTapeNearEndPosition()) {
+        if (isTapeNearEndPosition() && crtc.isVideoAddress(address)) {
             LOGGER.debug("Aborting execution on write to VRAM with tape at end");
             executionAborted = true;
+            throw new EmulationAbortedException("Write to VRAM");
         }
 
-    }
-
-    public long executeTstates(long tStates) {
-        long limit = clock.getTstates() + tStates;
-        while (clock.getTstates() < limit && !executionAborted) {
-            z80.execute();
-            /*
-            if (tapePlayer.getCurrentTapePosition() == tapePlayer.getTapeLength()) {
-                executionAborted = true;
-            }
-            */
-        }
-        return clock.getTstates() - limit;
     }
 
     @Override

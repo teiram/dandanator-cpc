@@ -148,8 +148,6 @@ public class Z80 {
     //when executing on that address
     private final boolean breakpointAt[] = new boolean[65536];
 
-    private int lastPC = 0;
-
     public Z80(Clock clock, Z80operations z80ops) {
         this.clock = clock;
         Z80opsImpl = z80ops;
@@ -276,10 +274,6 @@ public class Z80 {
 
     public final void setRegLx(int value) {
         regLx = value & 0xff;
-    }
-
-    public final int getLastPC() {
-        return lastPC;
     }
 
     public final int getRegAF() {
@@ -726,7 +720,7 @@ public class Z80 {
         regIX = state.getRegIX();
         regIY = state.getRegIY();
         regSP = state.getRegSP();
-        regPC = lastPC = state.getRegPC();
+        regPC = state.getRegPC();
         regI = state.getRegI();
         setRegR(state.getRegR());
         memptr = state.getMemPtr();
@@ -762,7 +756,7 @@ public class Z80 {
             memptr = 0xffff;
         }
 
-        regPC = lastPC = 0;
+        regPC = 0;
         regI = regR = 0;
         regRbit7 = false;
         ffIFF1 = false;
@@ -1459,12 +1453,24 @@ public class Z80 {
     public void resetBreakpoints() {
         Arrays.fill(breakpointAt, false);
     }
-    
+
+    public void execute(boolean restoreOnRejectedExecution) {
+        if (restoreOnRejectedExecution) {
+            Z80State previousState = getZ80State();
+            try {
+                execute();
+            } catch (EmulationAbortedException eae) {
+                LOGGER.debug("Emulation aborted with status {}", getZ80State(), eae);
+                LOGGER.debug("Restoring previous state {}", previousState);
+                setZ80State(previousState);
+                throw eae;
+            }
+        } else {
+            execute();
+        }
+    }
 
     public void execute() {
-        //Used to trace executing PC while handling exceptions
-        lastPC = regPC;
-
         //Check for NMI
         if (activeNMI) {
             activeNMI = false;
@@ -1498,10 +1504,6 @@ public class Z80 {
         //If interrupt was enabled and current opcode is not EI
         if (pendingEI && opCode != 0xFB) {
             pendingEI = false;
-        }
-
-        if (execDone) {
-            Z80opsImpl.execDone();
         }
     }
 
