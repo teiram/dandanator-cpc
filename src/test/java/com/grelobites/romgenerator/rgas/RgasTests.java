@@ -1,12 +1,15 @@
 package com.grelobites.romgenerator.rgas;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.grelobites.romgenerator.util.imageloader.loaders.rgas.ByteArrayTypeAdapter;
 import com.grelobites.romgenerator.util.imageloader.loaders.rgas.RgasFile;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
@@ -17,11 +20,13 @@ public class RgasTests {
 
     @Test
     public void rgasLoadTest() {
-        ObjectMapper objectMapper = new ObjectMapper();
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(byte[].class, new ByteArrayTypeAdapter())
+                .create();
         InputStream fileStream = RgasTests.class.getResourceAsStream("/image/test.rgas");
 
         try {
-            RgasFile rgasFile = objectMapper.readValue(fileStream, RgasFile.class);
+            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fileStream), RgasFile.class);
             LOGGER.debug("Read {}", rgasFile);
             assertNotNull(rgasFile.getImageList());
             assertNotNull(rgasFile.getImageList().getValues());

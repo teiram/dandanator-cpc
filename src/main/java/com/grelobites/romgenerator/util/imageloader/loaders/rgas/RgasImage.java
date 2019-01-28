@@ -1,21 +1,19 @@
 package com.grelobites.romgenerator.util.imageloader.loaders.rgas;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class RgasImage {
 
-    @JsonProperty("pixels")
+    @SerializedName("pixels")
     private RgasByteArray pixels;
 
-    @JsonProperty("Width")
+    @SerializedName("Width")
     private int width;
 
-    @JsonProperty("Height")
+    @SerializedName("Height")
     private int height;
 
-    @JsonProperty("_name")
+    @SerializedName("_name")
     private String name;
 
     public RgasByteArray getPixels() {

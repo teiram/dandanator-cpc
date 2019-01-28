@@ -1,14 +1,10 @@
 package com.grelobites.romgenerator.util.imageloader.loaders.rgas;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.gson.annotations.SerializedName;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class RgasByteArray {
 
-    @JsonProperty("$value")
-    @JsonDeserialize(using = Base64Deserializer.class)
+    @SerializedName("$value")
     private byte[] value;
 
     public byte[] getValue() {

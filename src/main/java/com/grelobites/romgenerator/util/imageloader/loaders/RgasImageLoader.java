@@ -1,9 +1,11 @@
 package com.grelobites.romgenerator.util.imageloader.loaders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.util.CpcColor;
 import com.grelobites.romgenerator.util.imageloader.ImageLoader;
+import com.grelobites.romgenerator.util.imageloader.loaders.rgas.ByteArrayTypeAdapter;
 import com.grelobites.romgenerator.util.imageloader.loaders.rgas.RgasByteArray;
 import com.grelobites.romgenerator.util.imageloader.loaders.rgas.RgasFile;
 import com.grelobites.romgenerator.util.imageloader.loaders.rgas.RgasImage;
@@ -13,12 +15,15 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Optional;
 
 public class RgasImageLoader implements ImageLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(RgasImageLoader.class);
 
-    ObjectMapper objectMapper = new ObjectMapper();
+    Gson gson = new GsonBuilder()
+            .registerTypeAdapter(byte[].class, new ByteArrayTypeAdapter())
+            .create();
 
     private static Optional<RgasImage> getSuitableImage(RgasFile rgasFile) {
         if (rgasFile.getImageList() != null) {
@@ -33,7 +38,7 @@ public class RgasImageLoader implements ImageLoader {
     @Override
     public boolean supportsFile(File file) {
         try (FileInputStream fis = new FileInputStream(file)) {
-            RgasFile rgasFile = objectMapper.readValue(fis, RgasFile.class);
+            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fis), RgasFile.class);
             if (rgasFile != null) {
                 if (rgasFile.getMode() == 0 && getSuitableImage(rgasFile).isPresent()) {
                     return true;
@@ -85,7 +90,7 @@ public class RgasImageLoader implements ImageLoader {
     @Override
     public byte[] asByteArray(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file)) {
-            RgasFile rgasFile = objectMapper.readValue(fis, RgasFile.class);
+            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fis), RgasFile.class);
             if (rgasFile != null) {
                 return getSuitableImage(rgasFile)
                         .map(i -> rgasToByteArray(i, rgasFile.getInks()))
