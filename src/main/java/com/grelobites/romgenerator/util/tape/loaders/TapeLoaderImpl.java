@@ -1,6 +1,5 @@
 package com.grelobites.romgenerator.util.tape.loaders;
 
-import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.EmulatorConfiguration;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
@@ -19,8 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
@@ -66,7 +63,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         tapePlayer.insert(tapeFile);
         loadSnapshot(loaderResources.snaLoader());
 
-        //Define different listener to detect emulation stop conditions
+        //Define different listeners to detect emulation stop conditions
         final GateArrayChangeListener paletteGateArrayChangeListener = (f, v) -> {
             if (configuration.isTestPaletteChanges() && f == GateArrayFunction.PALETTE_DATA_FN) {
                 //Ignore border changes
