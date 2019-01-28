@@ -9,6 +9,7 @@ import com.grelobites.romgenerator.util.emulator.EmulationAbortedException;
 import com.grelobites.romgenerator.util.emulator.peripheral.*;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.gameloader.loaders.SNAGameImageLoader;
+import com.grelobites.romgenerator.util.tape.TapeEntryPoint;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderImpl.class);
@@ -125,8 +127,12 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         crtc.addChangeListener(crtcChangeListener);
         ppi.addPsgFunctionListener(psgFunctionListener);
 
-        z80.setBreakpoint(0xbca1, true);
-        z80.setBreakpoint(0xbc83, true);
+        //Log calls to TAPE Entry points
+
+        for (TapeEntryPoint tep : TapeEntryPoint.values()) {
+            z80.setBreakpoint(tep.address(), true);
+        }
+
         tapePlayer.play();
 
         int framesWithoutTapeMovement = 0;
@@ -213,10 +219,9 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
     @Override
     public void breakpoint() {
         super.breakpoint();
-        if (z80.getRegPC() == 0xbca1) {
-            LOGGER.debug("CAS READ Invoked with status {}", z80.getZ80State());
-        } else if (z80.getRegPC() == 0xbc83) {
-            LOGGER.debug("CAS IN DIRECT invoked with status {}", z80.getZ80State());
+        Optional<TapeEntryPoint> entryPoint = TapeEntryPoint.forAddress(z80.getRegPC());
+        if (entryPoint.isPresent()) {
+            LOGGER.debug("TAPE: Detected invocation of {}", entryPoint.get());
         }
     }
 }
