@@ -157,7 +157,7 @@ public class Crtc {
     }
 
     private int getScreenPage() {
-        return crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0x30 << 10;
+        return (crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0x30) << 10;
     }
 
     private int getScreenOffset() {
