@@ -81,6 +81,9 @@ public class MainAppController {
     private ProgressIndicator operationInProgressIndicator;
 
     @FXML
+    private Tooltip operationInProgressTooltip;
+
+    @FXML
     private Pane romSetHandlerInfoPane;
 
     private Pane eepromWriterPane;
@@ -384,6 +387,12 @@ public class MainAppController {
 
         Configuration.getInstance().modeProperty().addListener(
                 (observable, oldValue, newValue) -> updateRomSetHandler());
+
+        operationInProgressTooltip.textProperty().bind(
+                Bindings.createStringBinding(() ->
+                        String.format(LocaleUtil.i18n("operationInProgressInformation"),
+                                applicationContext.backgroundTaskCountProperty().get())
+                , applicationContext.backgroundTaskCountProperty()));
     }
 
 
