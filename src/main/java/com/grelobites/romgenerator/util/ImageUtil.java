@@ -88,7 +88,7 @@ public class ImageUtil {
                 height, width, xBorderSize, yBorderSize);
 
         for (int y = 0; y < height; y++) {
-            int lineAddress = ((((y + 2) / 8) * width) + (((y + 2) % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
+            int lineAddress = (((y / 8) * width) + ((y % 8) * 2048) + crtcDisplayData.getDisplayOffset()) % Constants.SLOT_SIZE;
             for (int x = 0; x < width; x++) {
                 int pixelData = data[lineAddress + x];
                 int color0 = CpcColor.hardIndexedArgb(palette[getPixelColorIndexMode0(pixelData, 0)]);
