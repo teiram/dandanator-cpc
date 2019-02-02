@@ -11,6 +11,7 @@ import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
 import com.grelobites.romgenerator.util.emulator.peripheral.GateArray;
 import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
+import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,11 +33,14 @@ public class BaseEmulator implements Z80operations {
     protected final Clock clock;
     protected final Crtc crtc;
     protected final Ppi ppi;
+    protected Nec765 nec765;
+    protected long lastDiskAccessTstates;
     protected final CpcMemory memory;
     protected final HardwareMode hardwareMode;
     protected boolean executionAborted = false;
     protected int currentRasterInterrupt;
     protected Counter gateArrayCounter = new Counter(6);
+    private boolean hasDiskCapability = false;
 
     private void loadRoms() throws IOException {
         memory.loadLowRom(loaderResources.osRom());
@@ -57,6 +61,11 @@ public class BaseEmulator implements Z80operations {
                 .withHardwareDefaultValues(hardwareMode).build();
         crtc = new Crtc(CrtcType.CRTC_TYPE_0);
         memory = new CpcMemory(gateArray);
+        hasDiskCapability = hardwareMode == HardwareMode.HW_CPC6128 ||
+                hardwareMode == HardwareMode.HW_CPC6128PLUS;
+        if (hasDiskCapability) {
+            this.nec765 = new Nec765();
+        }
         try {
             loadRoms();
         } catch (IOException ioe) {
@@ -246,7 +255,13 @@ public class BaseEmulator implements Z80operations {
     @Override
     public int inPort(int port) {
         clock.addTstates(4); // 4 clocks to read byte from bus
-        if ((port & 0xFF00) == 0xBE00) {
+        if (hasDiskCapability && ((port & 0xFFFF) == 0xFB7F)) {
+            lastDiskAccessTstates = clock.getTstates();
+            return nec765.readDataRegister();
+        } else if (hasDiskCapability && ((port & 0xFFFF) == 0xFB7E)) {
+            lastDiskAccessTstates = clock.getTstates();
+            return nec765.readStatusRegister();
+        } else if ((port & 0xFF00) == 0xBE00) {
             //LOGGER.debug("CRTC Read Status");
             return crtc.onReadStatusRegisterOperation();
         } else if ((port & 0xFF00) == 0xBF00) {
@@ -270,7 +285,13 @@ public class BaseEmulator implements Z80operations {
     @Override
     public void outPort(int port, int value) {
         clock.addTstates(4); // 4 clocks to write byte to bus
-        if ((port & 0xC000) == 0x4000) {
+        if (hasDiskCapability && ((port & 0xFFFF) == 0xFA7E)) {
+            lastDiskAccessTstates = clock.getTstates();
+            nec765.writeControlRegister(value);
+        } else if (hasDiskCapability && ((port & 0xFFFF) == 0xFB7F)) {
+            lastDiskAccessTstates = clock.getTstates();
+            nec765.writeDataRegister(value);
+        } else if ((port & 0xC000) == 0x4000) {
             //LOGGER.debug("GateArray I/O Port {}, Value {}",
             //      String.format("%04x", port), String.format("%02x", value));
             //gateArray.onPortWriteOperation(port & 0xff);

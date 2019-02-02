@@ -3,7 +3,6 @@ package com.grelobites.romgenerator.util.dsk;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.emulator.BaseEmulator;
-import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
 import com.grelobites.romgenerator.util.filesystem.AmsdosHeader;
 import com.grelobites.romgenerator.util.filesystem.Archive;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,38 +26,9 @@ public class DskLoader extends BaseEmulator {
     private static final String CPM_BOOTSTRAP_COMMAND = "|cpm";
     private static final String RUN_COMMAND_TEMPLATE = "run \"%s";
 
-    private final Nec765 nec765;
-    private long lastDiskAccessTstates = 0;
     public DskLoader(HardwareMode hardwareMode,
                      LoaderResources loaderResources) {
         super(hardwareMode, loaderResources);
-        nec765 = new Nec765();
-    }
-
-    @Override
-    public void outPort(int port, int value) {
-        if ((port & 0xFFFF) == 0xFA7E) {
-            lastDiskAccessTstates = clock.getTstates();
-            nec765.writeControlRegister(value);
-        } else if ((port & 0xFFFF) == 0xFB7F) {
-            lastDiskAccessTstates = clock.getTstates();
-            nec765.writeDataRegister(value);
-        } else {
-            super.outPort(port, value);
-        }
-    }
-
-    @Override
-    public int inPort(int port) {
-        if ((port & 0xFFFF) == 0xFB7F) {
-            lastDiskAccessTstates = clock.getTstates();
-            return nec765.readDataRegister();
-        } else if ((port & 0xFFFF) == 0xFB7E) {
-            lastDiskAccessTstates = clock.getTstates();
-            return nec765.readStatusRegister();
-        } else {
-            return super.inPort(port);
-        }
     }
 
     private static List<Archive> getBasicLoaders(CpmFileSystem fileSystem) {
