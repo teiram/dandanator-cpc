@@ -10,7 +10,7 @@ public class Ppi {
     private static final Logger LOGGER = LoggerFactory.getLogger(Ppi.class);
     private static final int PSG_REGISTERS = 16;
     public static final int KEYSCAN_PSG_REGISTER = 14;
-    private static final int KEYBOARD_SCANLINES = 10;
+    private static final int KEYBOARD_SCANLINES = 0x10;
 
     private PsgFunction psgFunction = PsgFunction.NONE;
     private int selectedPsgRegister;
@@ -268,6 +268,7 @@ public class Ppi {
                 keyboardLineToScan = bitValue ?
                         keyboardLineToScan | (1 << bitToSet) :
                         keyboardLineToScan & ~(1 << bitToSet);
+                keyboardLineToScan &= 0x0F;
             }
         }
     }
