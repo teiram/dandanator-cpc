@@ -279,7 +279,8 @@ public class BaseEmulator implements Z80operations {
                     String.format("0x%04x", port),
                     z80.getZ80State());
         }
-        return 0;
+        //If no one responding, bus to one
+        return 0xff;
     }
 
     @Override
