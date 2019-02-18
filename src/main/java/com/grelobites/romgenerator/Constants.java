@@ -65,11 +65,12 @@ public class Constants {
             "/com/grelobites/romgenerator/view/eepromwriterconfiguration.fxml",
             PreferencesProvider.PRECEDENCE_OTHER);
 
+    /*
     private static PreferencesProvider emulatorPreferences = new PreferencesProvider(
             "Emulador",
             "/com/grelobites/romgenerator/view/emulatorConfiguration.fxml",
             PreferencesProvider.PRECEDENCE_OTHER);
-
+    */
 
     public static String currentVersion() {
         String version = Constants.class.getPackage()

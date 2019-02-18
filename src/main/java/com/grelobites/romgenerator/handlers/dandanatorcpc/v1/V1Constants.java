@@ -11,6 +11,7 @@ public class V1Constants {
     protected static final int GAME_LAUNCHCODE_SIZE = 9;
     protected static final int GAME_STRUCT_OFFSET = 3585;
     protected static final int AUTOBOOT_OFFSET = 16382;
+    protected static final int POKE_TARGET_ADDRESS = 7925;
 
     protected static int EXTRA_ROM_SLOT = 32;
     protected static int INTERNAL_ROM_SLOT = 33;

@@ -303,7 +303,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             }
             Util.fillWithValue(os, Constants.B_00, DandanatorCpcConstants.MAX_GAMES - games.size());
 
-            int basePokeAddress = DandanatorCpcConstants.POKE_TARGET_ADDRESS +
+            int basePokeAddress = V2Constants.POKE_TARGET_ADDRESS +
                     DandanatorCpcConstants.MAX_GAMES * 3;
 
             for (Game game : games) {

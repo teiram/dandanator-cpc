@@ -40,7 +40,6 @@ public class DandanatorCpcConstants {
 
 
 
-    public static final int POKE_TARGET_ADDRESS = 7925;
     public static final int GAME_CHUNK_SIZE = 32;
     public static final int GAME_CHUNK_SLOT = 2;
     public static final int VERSION_SIZE = 8;

@@ -13,6 +13,7 @@ public class V2Constants {
     protected static int EXTRA_ROM_SLOT = 32;
     protected static int INTERNAL_ROM_SLOT = 33;
 
+    protected static final int POKE_TARGET_ADDRESS = 8437;
     protected static final int AUTOBOOT_OFFSET = 16382;
     protected static final int EXTRA_ROM_PRESENT_OFFSET = 16350;
     protected static final int ENFORCE_FOLLOWROM_OFFSET = 16351;
