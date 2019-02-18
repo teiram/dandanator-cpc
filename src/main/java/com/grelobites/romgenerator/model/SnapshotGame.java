@@ -80,6 +80,10 @@ public class SnapshotGame extends BaseGame implements RamGame {
 
     public void setGameHeader(GameHeader gameHeader) {
         this.gameHeader = gameHeader;
+        //Adjust memoryDumpSize since we can have automatically reduced it on creation
+        if (gameHeader.getMemoryDumpSize() == 128 && gameType == GameType.RAM64) {
+            gameHeader.setMemoryDumpSize(64);
+        }
     }
 
     public boolean getCompressed() {
