@@ -848,6 +848,15 @@ public class CdtTapePlayer implements ClockTimeoutListener {
     public void resume() {
         if (!playing) {
             LOGGER.debug("On tape resume: {}", this);
+            /*
+            if (currentBlockLength < 5) {
+                LOGGER.debug("Discarding remaining bits in block with size {}", currentBlockLength);
+                currentBlockIndex++;
+                state = State.START;
+            }
+            */
+            //It helps 1942 in 6128 mode (and maybe others like Agent Orange)
+            clockTimeout.append(5000);
             clock.addClockTimeout(clockTimeout);
             playing = true;
         }
