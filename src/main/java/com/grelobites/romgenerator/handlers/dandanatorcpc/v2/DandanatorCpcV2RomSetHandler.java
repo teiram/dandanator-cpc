@@ -66,6 +66,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     protected MenuItem exportExtraRomMenuItem;
     protected MenuItem exportRescueEewriterToCdt;
     protected MenuItem exportRescueEewriterToDsk;
+    protected MenuItem sendGameBySerialPort;
     private BooleanProperty generationAllowedProperty = new SimpleBooleanProperty(false);
 
 
@@ -809,6 +810,26 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         return exportRescueEewriterToDsk;
     }
 
+    protected MenuItem getSendGameBySerialPortMenuItem() {
+        if (sendGameBySerialPort == null) {
+            sendGameBySerialPort = new MenuItem(LocaleUtil.i18n("sendGameBySerialPortMenuEntry"));
+
+            sendGameBySerialPort.setAccelerator(
+                    KeyCombination.keyCombination("SHORTCUT+1")
+            );
+            sendGameBySerialPort.disableProperty().bind(applicationContext
+                    .gameSelectedProperty().not());
+            sendGameBySerialPort.setOnAction(f -> {
+                try {
+                    RomSetUtil.sendSelectedGameBySerialPort(applicationContext);
+                } catch (Exception e) {
+                    LOGGER.error("Sending game by Serial Port", e);
+                }
+            });
+        }
+        return sendGameBySerialPort;
+    }
+
     private void exportExtraRom() {
         DirectoryAwareFileChooser chooser = applicationContext.getFileChooser();
         chooser.setTitle(LocaleUtil.i18n("exportExtraRomMenuEntry"));
@@ -925,7 +946,8 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 getExportPokesMenuItem(), getImportPokesMenuItem(),
                 getExportExtraRomMenuItem(),
                 getExportRescueEewriterToCdt(),
-                getExportRescueEewriterToDsk());
+                getExportRescueEewriterToDsk(),
+                getSendGameBySerialPortMenuItem());
 
         updateRomUsage();
         previewUpdateTimer.start();
@@ -949,7 +971,8 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 getImportPokesMenuItem(),
                 getExportExtraRomMenuItem(),
                 getExportRescueEewriterToCdt(),
-                getExportRescueEewriterToDsk());
+                getExportRescueEewriterToDsk(),
+                getSendGameBySerialPortMenuItem());
         applicationContext.getGameList().removeListener(updateImageListener);
         applicationContext.getGameList().removeListener(updateRomUsageListener);
         applicationContext = null;

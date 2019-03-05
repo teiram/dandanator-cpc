@@ -1,14 +1,28 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc;
 
+import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Constants;
+import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.MainApp;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.GameHeaderV1Serializer;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.view.SerialCopyController;
+import com.grelobites.romgenerator.model.Game;
+import com.grelobites.romgenerator.model.SnapshotGame;
+import com.grelobites.romgenerator.util.LocaleUtil;
+import com.grelobites.romgenerator.util.SerialPortConfiguration;
 import com.grelobites.romgenerator.util.Util;
+import com.grelobites.romgenerator.util.Z80Opcode;
 import com.grelobites.romgenerator.util.compress.zx7.Zx7InputStream;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import jssc.SerialPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Optional;
@@ -24,8 +38,42 @@ public class RomSetUtil {
     private static final int BLOCK_COUNT = 16;
     private static final String BLOCK_NAME_PREFIX = "block";
     private static final String MULTILOADER_SIGNATURE = "MLD";
+    private static final int SEND_BUFFER_SIZE = 2048;
+    private static Stage serialCopyStage;
+    private static Pane serialCopyPane;
+    private static SerialCopyController serialCopyController;
 
+    private static SerialCopyController getSerialCopyController() {
+        if (serialCopyController == null) {
+            serialCopyController = new SerialCopyController();
+        }
+        return serialCopyController;
+    }
 
+    private static Pane getSerialCopyPane() throws IOException {
+        if (serialCopyPane == null) {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("view/serialCopy.fxml"));
+            loader.setResources(LocaleUtil.getBundle());
+            loader.setController(getSerialCopyController());
+            serialCopyPane = loader.load();
+        }
+        return serialCopyPane;
+    }
+
+    private static Stage getSerialCopyStage(ApplicationContext context) throws IOException {
+        if (serialCopyStage == null) {
+            serialCopyStage = new Stage();
+            Scene scene = new Scene(getSerialCopyPane());
+            scene.getStylesheets().add(Constants.getThemeResourceUrl());
+            serialCopyStage.setScene(scene);
+            serialCopyStage.setTitle("");
+            serialCopyStage.initModality(Modality.APPLICATION_MODAL);
+            serialCopyStage.initOwner(context.getApplicationStage().getOwner());
+            serialCopyStage.setResizable(false);
+        }
+        return serialCopyStage;
+    }
     private static Optional<InputStream> getRomScreenResource(ByteBuffer buffer, int slot) {
         buffer.position(Constants.SLOT_SIZE * slot);
         byte[] magic = new byte[3];
@@ -95,6 +143,104 @@ public class RomSetUtil {
         return name != null &&
                 name.length() <= DandanatorCpcConstants.POKE_EFFECTIVE_NAME_SIZE &&
                 isPrintableAscii(name);
+    }
+
+    private static byte[] getGameChunk(Game game) {
+        byte[] chunk = new byte[DandanatorCpcConstants.GAME_CHUNK_SIZE];
+        if (game instanceof SnapshotGame) {
+            System.arraycopy(game.getSlot(DandanatorCpcConstants.GAME_CHUNK_SLOT),
+                    Constants.SLOT_SIZE - DandanatorCpcConstants.GAME_CHUNK_SIZE,
+                    chunk, 0, DandanatorCpcConstants.GAME_CHUNK_SIZE);
+        }
+        return chunk;
+    }
+
+    /*
+        POP BC
+        LD SP, nnnn ---> o 4000 u 8000, el sitio contrario a donde vaya la pantalla
+        LD HL, C000
+        LD DE, destino pantalla, 8000 y 4000
+        PUSH DE
+        PUSH BC
+        LD BC,4000
+        LDIR
+    ----
+        PUSH IY
+        LD IY,0
+        LD B,0
+        FDFD
+        LD (IY),B
+        POP IY
+        RET
+     */
+    protected static void dumpGameLaunchCode(OutputStream os, SnapshotGame game) throws IOException {
+         ByteBuffer launchCode = ByteBuffer.allocate(23);
+        if (game.getScreenSlot() != 3) {
+            launchCode.put(Z80Opcode.POP_BC);
+            launchCode.put(Z80Opcode.LD_SP_NN(game.getScreenSlot() == 1 ? 0x8000 : 0x4000));
+            launchCode.put(Z80Opcode.LD_HL_NN(0xC000));
+            launchCode.put(Z80Opcode.LD_DE_NN(game.getScreenSlot() * Constants.SLOT_SIZE));
+            launchCode.put(Z80Opcode.PUSH_DE);
+            launchCode.put(Z80Opcode.PUSH_BC);
+            launchCode.put(Z80Opcode.LD_BC_NN(0x4000));
+            launchCode.put(Z80Opcode.LDIR);
+        }
+        launchCode.put(Z80Opcode.PUSH_IY);
+        launchCode.put(Z80Opcode.LD_IY_NN(0));
+        launchCode.put(Z80Opcode.LD_B_N(0));
+        launchCode.put(Z80Opcode.DANDANATOR_PREFIX);
+        launchCode.put(Z80Opcode.LD_IY_B);
+        launchCode.put(Z80Opcode.POP_IY);
+        launchCode.put(Z80Opcode.RET);
+        os.write(launchCode.array());
+    }
+
+    private static void sendBySerialPort(byte[] data) {
+        SerialPort serialPort = new SerialPort(
+                EepromWriterConfiguration.getInstance().getSerialPort()
+        );
+        try {
+            serialPort.openPort();
+            SerialPortConfiguration.MODE_115200.apply(serialPort);
+
+            int sentBytesCount = 0;
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            byte[] sendBuffer = new byte[SEND_BUFFER_SIZE];
+            while (sentBytesCount < data.length) {
+                int count = bis.read(sendBuffer);
+                LOGGER.debug("Sending block of " + count + " bytes");
+                if (count < SEND_BUFFER_SIZE) {
+                    serialPort.writeBytes(Arrays.copyOfRange(sendBuffer, 0, count));
+                } else {
+                    serialPort.writeBytes(sendBuffer);
+                }
+                sentBytesCount += count;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Setting up serial port", e);
+        } finally {
+            try {
+                serialPort.closePort();
+            } catch (Exception e) {
+                LOGGER.error("Closing serial port", e);
+            }
+        }
+    }
+
+
+    public static void sendSelectedGameBySerialPort(ApplicationContext context) throws IOException {
+        SnapshotGame game = (SnapshotGame) context.getSelectedGame();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        GameHeaderV1Serializer.serialize(game, bos);    // 90 bytes
+        bos.write(game.getType().typeId());             // 1 byte
+        bos.write(getGameChunk(game));                  // 32 byte
+        bos.write(Constants.B_00);                      // 1 byte
+        bos.write(Constants.B_00);                      // 1 byte
+        bos.write(0); //Upper and lower active roms.    1 byte
+        bos.write(game.getCurrentRasterInterrupt());    // 1 byte
+        dumpGameLaunchCode(bos, game);                  // 23 bytes. 150 bytes
+        bos.write(game.getSlot(game.getScreenSlot()));
+        sendBySerialPort(bos.toByteArray());
     }
 
 }

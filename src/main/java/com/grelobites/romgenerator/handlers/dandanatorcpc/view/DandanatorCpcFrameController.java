@@ -1,7 +1,6 @@
 package com.grelobites.romgenerator.handlers.dandanatorcpc.view;
 
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.MainApp;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.*;

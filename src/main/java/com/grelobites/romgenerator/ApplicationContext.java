@@ -180,6 +180,10 @@ public class ApplicationContext {
         return selectedGame;
     }
 
+    public Game getSelectedGame() {
+        return selectedGame.get();
+    }
+
     public void setSelectedGameProperty(ReadOnlyObjectProperty<Game> selectedGameProperty) {
         selectedGame = selectedGameProperty;
         gameSelected.bind(selectedGame.isNotNull());
