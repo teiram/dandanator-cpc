@@ -40,6 +40,8 @@ public class Constants {
 
     public static final byte[] ZEROED_SLOT = new byte[SLOT_SIZE];
 
+    private static final String USB_LAUNCHCODE_HEADER_RESOURCE = "dandanator-cpc/usb-launchcode-header.bin";
+
     public static final byte B_01 = 1;
 	public static final byte B_00 = 0;
     public static final byte B_FF = -1;
@@ -52,6 +54,8 @@ public class Constants {
     private static byte[] ICONS;
     private static byte[] RESCUE_LOADER;
     private static byte[] RESCUE_EEWRITER;
+    private static byte[] USB_LAUNCHCODE_HEADER;
+
 
     private static String THEME_RESOURCE_URL;
 
@@ -123,6 +127,15 @@ public class Constants {
                             .getResourceAsStream(RESCUE_LOADER_RESOURCE));
         }
         return RESCUE_LOADER;
+    }
+
+    public static byte[] getUsbLaunchcodeHeader() throws IOException {
+        if (USB_LAUNCHCODE_HEADER == null) {
+            USB_LAUNCHCODE_HEADER = Util.fromInputStream(
+                    DandanatorCpcConstants.class.getClassLoader()
+                            .getResourceAsStream(USB_LAUNCHCODE_HEADER_RESOURCE));
+        }
+        return USB_LAUNCHCODE_HEADER;
     }
 
     public static byte[] getRescueEewriter() throws IOException {

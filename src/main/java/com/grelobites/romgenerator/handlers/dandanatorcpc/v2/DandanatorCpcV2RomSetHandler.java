@@ -229,16 +229,6 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         os.write(asNullTerminatedByteArray(gameName, DandanatorCpcConstants.GAMENAME_SIZE));
     }
 
-    private static byte[] getGameChunk(Game game) {
-        byte[] chunk = new byte[DandanatorCpcConstants.GAME_CHUNK_SIZE];
-        if (game instanceof SnapshotGame) {
-            System.arraycopy(game.getSlot(DandanatorCpcConstants.GAME_CHUNK_SLOT),
-                    Constants.SLOT_SIZE - DandanatorCpcConstants.GAME_CHUNK_SIZE,
-                chunk, 0, DandanatorCpcConstants.GAME_CHUNK_SIZE);
-        }
-        return chunk;
-    }
-
     private int getGameType(Game game) {
         int value = game.getType().typeId();
         if (game instanceof SnapshotGame) {
@@ -265,7 +255,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                                Offsets offsets) throws IOException {
         os.write(getPaddedGameHeader(game));
         os.write(game.getType().typeId());
-        os.write(getGameChunk(game));
+        os.write(RomSetUtil.getGameChunk(game));
         os.write(isGameCompressed(game) ? Constants.B_01 : Constants.B_00);
         os.write(isGameScreenHold(game) ? Constants.B_01 : Constants.B_00);
         os.write(0); //Upper and lower active roms. Unused in V2
@@ -820,18 +810,26 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             );
             sendGameBySerialPort.disableProperty().bind(applicationContext
                     .gameSelectedProperty().not()
+                    .or(Bindings.createBooleanBinding(() ->
+                            applicationContext.getSelectedGame() instanceof SnapshotGame,
+                            applicationContext.selectedGameProperty()).not())
                 .or(EepromWriterConfiguration.getInstance().serialPortProperty().isEmpty()));
-            sendGameBySerialPort.setOnAction(f -> {
-                try {
-                    RomSetUtil.sendSelectedGameBySerialPort(applicationContext);
-                } catch (Exception e) {
-                    DialogUtil.buildErrorAlert(
-                            LocaleUtil.i18n("sendGameError"),
-                            LocaleUtil.i18n("sendGameErrorHeader"),
-                            e.getMessage());
-                    LOGGER.error("Sending game by Serial Port", e);
-                }
-            });
+            sendGameBySerialPort.setOnAction(f ->
+                    applicationContext.addBackgroundTask(() -> {
+                        try {
+                            SerialGameUploader uploader = new SerialGameUploader(
+                                (SnapshotGame) applicationContext.getSelectedGame(),
+                                EepromWriterConfiguration.getInstance().getSerialPort());
+                            uploader.run();
+                        } catch (Exception e) {
+                            DialogUtil.buildErrorAlert(
+                                LocaleUtil.i18n("sendGameError"),
+                                LocaleUtil.i18n("sendGameErrorHeader"),
+                                e.getMessage());
+                            LOGGER.error("Sending game by Serial Port", e);
+                        }
+                        return OperationResult.successResult();
+                    }));
         }
         return sendGameBySerialPort;
     }

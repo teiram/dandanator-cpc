@@ -19,6 +19,7 @@ public class Z80Opcode {
     public static final byte INC_HL = (byte) 0x23;      // INC HL
     public static final byte DEC_SP = (byte) 0x3B;      // DEC SP
     public static final byte POP_BC = (byte) 0xC1;      // POP BC
+    public static final byte POP_AF = (byte) 0xF1;      // POP AF
 
     public static final byte LD_IX_NN_0 = (byte) 0xDD;       // LD IX, (nn)
     public static final byte LD_IX_NN_1 = (byte) 0x2A;
