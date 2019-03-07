@@ -125,33 +125,21 @@ public class SerialGameUploader implements Runnable {
     public void run() {
         try {
             initSerialPort();
-            ByteArrayOutputStream firstBlock = new ByteArrayOutputStream();
-            int blocksSent = 0;
-            //Send screen + launch code
-            prepareFirstBlock(firstBlock);
-            send(firstBlock.toByteArray());
-            blocksSent++;
-            //Start listening for commands
-            serialPort.openPort();
-            SerialPortConfiguration.MODE_57600.apply(serialPort);
-            while (blocksSent < 4) {
+
+            int slotToSend = 0;
+            while (slotToSend < 4) {
+                SerialPortConfiguration.MODE_57600.apply(serialPort);
                 byte[] command = serialPort.readBytes(1, 5000);
-                switch (Byte.toUnsignedInt(command[0])) {
-                    case 32:
-                        send(game.getSlot(0));
-                        blocksSent++;
-                        break;
-                    case 33:
-                        send(game.getSlot(1));
-                        blocksSent++;
-                        break;
-                    case 34:
-                        send(game.getSlot(2));
-                        blocksSent++;
-                        break;
-                    default:
-                        LOGGER.warn("Unexpected command {}", Util.dumpAsHexString(command));
+                LOGGER.debug("Got command bytes {}", Util.dumpAsHexString(command));
+                if (slotToSend == 0) {
+                    ByteArrayOutputStream firstBlock = new ByteArrayOutputStream();
+                    //Send screen + launch code
+                    prepareFirstBlock(firstBlock);
+                    send(firstBlock.toByteArray());
+                } else {
+                    send(game.getSlot(slotToSend));
                 }
+                slotToSend++;
             }
         } catch (Exception e) {
             LOGGER.error("Transferring Game", e);
