@@ -11,6 +11,7 @@ import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.util.*;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandler;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
+import com.grelobites.romgenerator.view.util.DialogUtil;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -818,11 +819,16 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                     KeyCombination.keyCombination("SHORTCUT+1")
             );
             sendGameBySerialPort.disableProperty().bind(applicationContext
-                    .gameSelectedProperty().not());
+                    .gameSelectedProperty().not()
+                .or(EepromWriterConfiguration.getInstance().serialPortProperty().isEmpty()));
             sendGameBySerialPort.setOnAction(f -> {
                 try {
                     RomSetUtil.sendSelectedGameBySerialPort(applicationContext);
                 } catch (Exception e) {
+                    DialogUtil.buildErrorAlert(
+                            LocaleUtil.i18n("sendGameError"),
+                            LocaleUtil.i18n("sendGameErrorHeader"),
+                            e.getMessage());
                     LOGGER.error("Sending game by Serial Port", e);
                 }
             });

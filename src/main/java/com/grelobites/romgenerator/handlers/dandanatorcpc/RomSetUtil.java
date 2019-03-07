@@ -7,6 +7,7 @@ import com.grelobites.romgenerator.MainApp;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.GameHeaderV1Serializer;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.view.SerialCopyController;
 import com.grelobites.romgenerator.model.Game;
+import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.SerialPortConfiguration;
@@ -39,41 +40,7 @@ public class RomSetUtil {
     private static final String BLOCK_NAME_PREFIX = "block";
     private static final String MULTILOADER_SIGNATURE = "MLD";
     private static final int SEND_BUFFER_SIZE = 2048;
-    private static Stage serialCopyStage;
-    private static Pane serialCopyPane;
-    private static SerialCopyController serialCopyController;
 
-    private static SerialCopyController getSerialCopyController() {
-        if (serialCopyController == null) {
-            serialCopyController = new SerialCopyController();
-        }
-        return serialCopyController;
-    }
-
-    private static Pane getSerialCopyPane() throws IOException {
-        if (serialCopyPane == null) {
-            FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(MainApp.class.getResource("view/serialCopy.fxml"));
-            loader.setResources(LocaleUtil.getBundle());
-            loader.setController(getSerialCopyController());
-            serialCopyPane = loader.load();
-        }
-        return serialCopyPane;
-    }
-
-    private static Stage getSerialCopyStage(ApplicationContext context) throws IOException {
-        if (serialCopyStage == null) {
-            serialCopyStage = new Stage();
-            Scene scene = new Scene(getSerialCopyPane());
-            scene.getStylesheets().add(Constants.getThemeResourceUrl());
-            serialCopyStage.setScene(scene);
-            serialCopyStage.setTitle("");
-            serialCopyStage.initModality(Modality.APPLICATION_MODAL);
-            serialCopyStage.initOwner(context.getApplicationStage().getOwner());
-            serialCopyStage.setResizable(false);
-        }
-        return serialCopyStage;
-    }
     private static Optional<InputStream> getRomScreenResource(ByteBuffer buffer, int slot) {
         buffer.position(Constants.SLOT_SIZE * slot);
         byte[] magic = new byte[3];
@@ -172,9 +139,41 @@ public class RomSetUtil {
         LD (IY),B
         POP IY
         RET
+
+        * Nuevo *
+        * Code3rd:
+			LD SP, 0000						; SP Value
+			LD BC, 0000						; AF Value
+			PUSH BC
+			POP AF
+			LD BC, 0000						; PC Value
+			PUSH BC
+			LD BC, 0000						; BC Value
+			LD DE, 0000						; DE Value
+			LD HL, 0000						; HL Value
+			LD IX, 0000						; IX Value
+			LD IY, 0000						; IY Value
+			DI 								; DI or EI according to IFF0
+			RET
+EndCode3rd:
+         LD SP, 0000      ; SP Value
+   LD BC, 0000      ; AF Value
+   PUSH BC
+   POP AF
+   LD BC, 0000      ; PC Value
+   PUSH BC
+   LD BC, 0000      ; BC Value
+   LD DE, 0000      ; DE Value
+   LD HL, 0000      ; HL Value
+   LD IX, 0000      ; IX Value
+   LD IY, 0000      ; IY Value
+   DI         ; DI or EI according to IFF0
+   RET
+        *********
      */
     protected static void dumpGameLaunchCode(OutputStream os, SnapshotGame game) throws IOException {
-         ByteBuffer launchCode = ByteBuffer.allocate(23);
+         ByteBuffer launchCode = ByteBuffer.allocate(33);
+         /*
         if (game.getScreenSlot() != 3) {
             launchCode.put(Z80Opcode.POP_BC);
             launchCode.put(Z80Opcode.LD_SP_NN(game.getScreenSlot() == 1 ? 0x8000 : 0x4000));
@@ -192,6 +191,14 @@ public class RomSetUtil {
         launchCode.put(Z80Opcode.LD_IY_B);
         launchCode.put(Z80Opcode.POP_IY);
         launchCode.put(Z80Opcode.RET);
+        */
+         GameHeader header = game.getGameHeader();
+         launchCode.put(Z80Opcode.LD_SP_NN(header.getSp()));
+         launchCode.put(Z80Opcode.LD_BC_NN(header.getBcRegister()));
+         launchCode.put(Z80Opcode.PUSH_BC);
+         //launchCode.put(Z80Opcode.POP_AF);
+
+
         os.write(launchCode.array());
     }
 
@@ -238,8 +245,13 @@ public class RomSetUtil {
         bos.write(Constants.B_00);                      // 1 byte
         bos.write(0); //Upper and lower active roms.    1 byte
         bos.write(game.getCurrentRasterInterrupt());    // 1 byte
-        dumpGameLaunchCode(bos, game);                  // 23 bytes. 150 bytes
+        dumpGameLaunchCode(bos, game);                  // 33 bytes. 160 bytes
         bos.write(game.getSlot(game.getScreenSlot()));
+        /*
+        try (FileOutputStream fos = new FileOutputStream("output/data.bin")) {
+            fos.write(bos.toByteArray());
+        }
+        */
         sendBySerialPort(bos.toByteArray());
     }
 

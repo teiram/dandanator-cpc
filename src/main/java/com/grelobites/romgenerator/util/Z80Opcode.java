@@ -43,6 +43,7 @@ public class Z80Opcode {
     public static final byte[] PUSH_IY = new byte[]{(byte) 0xFD, (byte) 0xE5};
     public static final byte[] POP_IY = new byte[]{(byte) 0xFD, (byte) 0xE1};
     public static final byte[] LD_IY_B = new byte[]{(byte) 0xFD, (byte) 0x70, (byte) 0x00};
+    public static final byte[] LD_IY_C = new byte[]{(byte) 0xFD, (byte) 0x71, (byte) 0x00};
 
     public static final byte[] DANDANATOR_PREFIX = new byte[]{(byte) 0xFD, (byte) 0xFD};
 
