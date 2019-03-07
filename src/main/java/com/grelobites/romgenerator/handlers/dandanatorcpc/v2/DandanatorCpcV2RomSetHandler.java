@@ -808,8 +808,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             sendGameBySerialPort.setAccelerator(
                     KeyCombination.keyCombination("SHORTCUT+1")
             );
-            sendGameBySerialPort.disableProperty().bind(applicationContext
-                    .gameSelectedProperty().not()
+            sendGameBySerialPort.disableProperty().bind(
+                    applicationContext.currentPageProperty().isEqualTo(1)
+                    .or(applicationContext.gameSelectedProperty().not())
                     .or(Bindings.createBooleanBinding(() ->
                             applicationContext.getSelectedGame() instanceof SnapshotGame,
                             applicationContext.selectedGameProperty()).not())
