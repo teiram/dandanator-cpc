@@ -6,6 +6,7 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.GameHeaderV1Seriali
 import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import jssc.SerialPort;
+import jssc.SerialPortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,26 @@ public class SerialGameUploader implements Runnable {
         if (serialPort == null) {
             serialPort = new SerialPort(serialPortName);
         }
+        if (!serialPort.isOpened()) {
+            try {
+                serialPort.openPort();
+            } catch (SerialPortException spe) {
+                LOGGER.error("Opening serial port", spe);
+                throw new RuntimeException("Opening serial port", spe);
+            }
+        }
+    }
+
+    private void closeSerialPort() {
+        if (serialPort != null) {
+            if (serialPort.isOpened()) {
+                try {
+                    serialPort.closePort();
+                } catch (SerialPortException spe) {
+                    LOGGER.warn("Closing serial port", spe);
+                }
+            }
+        }
     }
 
     /*
@@ -63,7 +84,6 @@ public class SerialGameUploader implements Runnable {
     private void send(byte[] data) {
         LOGGER.debug("Sending block of data with length {}", data.length);
         try {
-            serialPort.openPort();
             SerialPortConfiguration.MODE_115200.apply(serialPort);
 
             int sentBytesCount = 0;
@@ -80,13 +100,7 @@ public class SerialGameUploader implements Runnable {
                 sentBytesCount += count;
             }
         } catch (Exception e) {
-            throw new RuntimeException("During game direct send", e);
-        } finally {
-            try {
-                serialPort.closePort();
-            } catch (Exception e) {
-                LOGGER.error("Closing serial port", e);
-            }
+            throw new RuntimeException("Game Uploader", e);
         }
     }
 
@@ -142,6 +156,8 @@ public class SerialGameUploader implements Runnable {
         } catch (Exception e) {
             LOGGER.error("Transferring Game", e);
             throw new RuntimeException("Game transfer", e);
+        } finally {
+            closeSerialPort();
         }
     }
 }
