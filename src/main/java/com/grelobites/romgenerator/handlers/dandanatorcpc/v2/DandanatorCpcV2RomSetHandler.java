@@ -806,7 +806,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             sendGameBySerialPort = new MenuItem(LocaleUtil.i18n("sendGameBySerialPortMenuEntry"));
 
             sendGameBySerialPort.setAccelerator(
-                    KeyCombination.keyCombination("SHORTCUT+1")
+                    KeyCombination.keyCombination("SHORTCUT+S")
             );
             sendGameBySerialPort.disableProperty().bind(
                     applicationContext.currentPageProperty().isEqualTo(1)
