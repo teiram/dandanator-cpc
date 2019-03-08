@@ -10,10 +10,7 @@ import jssc.SerialPortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -65,7 +62,7 @@ public class SerialGameUploader implements Runnable {
         ByteBuffer launchCode = ByteBuffer.allocate(LAUNCH_CODE_TRAILER_SIZE);
         GameHeader header = game.getGameHeader();
         launchCode.put(Z80Opcode.LD_SP_NN(header.getSp()));
-        launchCode.put(Z80Opcode.LD_BC_NN(header.getBcRegister()));
+        launchCode.put(Z80Opcode.LD_BC_NN(header.getAfRegister()));
         launchCode.put(Z80Opcode.PUSH_BC);
         launchCode.put(Z80Opcode.POP_AF);
         launchCode.put(Z80Opcode.LD_BC_NN(header.getPc()));
@@ -128,22 +125,24 @@ public class SerialGameUploader implements Runnable {
 
             int slotToSend = 0;
             while (slotToSend < 4) {
+                Thread.sleep(500);
                 SerialPortConfiguration.MODE_57600.apply(serialPort);
-                byte[] command = serialPort.readBytes(1, 5000);
+                byte[] command = serialPort.readBytes(1, slotToSend == 0 ? 10000: 5000);
                 LOGGER.debug("Got command bytes {}", Util.dumpAsHexString(command));
+                LOGGER.debug("Sending slot  {}", slotToSend == 0 ? "screen + code" : slotToSend - 1);
                 if (slotToSend == 0) {
                     ByteArrayOutputStream firstBlock = new ByteArrayOutputStream();
                     //Send screen + launch code
                     prepareFirstBlock(firstBlock);
                     send(firstBlock.toByteArray());
                 } else {
-                    send(game.getSlot(slotToSend));
+                    send(game.getSlot(slotToSend - 1));
                 }
                 slotToSend++;
             }
         } catch (Exception e) {
             LOGGER.error("Transferring Game", e);
-            throw new RuntimeException("Game transfer", e);
+            throw new RuntimeException(e.getMessage(), e);
         } finally {
             closeSerialPort();
         }

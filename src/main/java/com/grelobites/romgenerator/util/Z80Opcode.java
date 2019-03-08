@@ -21,16 +21,28 @@ public class Z80Opcode {
     public static final byte POP_BC = (byte) 0xC1;      // POP BC
     public static final byte POP_AF = (byte) 0xF1;      // POP AF
 
-    public static final byte LD_IX_NN_0 = (byte) 0xDD;       // LD IX, (nn)
-    public static final byte LD_IX_NN_1 = (byte) 0x2A;
+    public static final byte LD_SP_NN = (byte) 0x31;      // LD SP, nn
 
-    public static final byte LD_IY_NN_0 = (byte) 0xFD;       // LD IY, (nn)
+    public static final byte LD_IX__NN__0 = (byte) 0xDD;       // LD IX, (nn)
+    public static final byte LD_IX__NN__1 = (byte) 0x2A;
+
+    public static final byte LD_IX_NN_0 = (byte) 0xDD;       // LD IX, nn
+    public static final byte LD_IX_NN_1 = (byte) 0x21;
+
+    public static final byte LD_IY__NN__0 = (byte) 0xFD;       // LD IY, (nn)
+    public static final byte LD_IY__NN__1 = (byte) 0x2A;
+
+    public static final byte LD_IY_NN_0 = (byte) 0xFD;       // LD IY, nn
     public static final byte LD_IY_NN_1 = (byte) 0x21;
 
-    public static final byte LD_SP_NN_0 = (byte) 0xED;      // LD SP, (nn)
-    public static final byte LD_SP_NN_1 = (byte) 0x7B;
 
-    public static final byte LD_HL_NN = (byte) 0x2A;
+    public static final byte LD_SP__NN__0 = (byte) 0xED;      // LD SP, (nn)
+    public static final byte LD_SP__NN__1 = (byte) 0x7B;
+
+
+    public static final byte LD_HL_NN = (byte) 0x21;
+    public static final byte LD_HL__NN = (byte) 0x2A;
+
     public static final byte LD_DE_NN = (byte) 0x11;
     public static final byte LD_BC_NN = (byte) 0x01;
 
@@ -59,6 +71,14 @@ public class Z80Opcode {
     public static byte[] LD_HL_NN(int addr) {
         byte[] code = new byte[3];
         code[0] = LD_HL_NN;
+        code[1] = lowByte(addr);
+        code[2] = highByte(addr);
+        return code;
+    }
+
+    public static byte[] LD_HL__NN(int addr) {
+        byte[] code = new byte[3];
+        code[0] = LD_HL__NN;
         code[1] = lowByte(addr);
         code[2] = highByte(addr);
         return code;
@@ -96,6 +116,15 @@ public class Z80Opcode {
         return code;
     }
 
+    public static byte[] LD_IX__NN(int addr) {
+        byte[] code = new byte[4];
+        code[0] = LD_IX__NN__0;
+        code[1] = LD_IX__NN__1;
+        code[2] = lowByte(addr);
+        code[3] = highByte(addr);
+        return code;
+    }
+
     public static byte[] LD_IY_NN(int addr) {
         byte[] code = new byte[4];
         code[0] = LD_IY_NN_0;
@@ -105,10 +134,27 @@ public class Z80Opcode {
         return code;
     }
 
-    public static byte[] LD_SP_NN(int addr) {
+    public static byte[] LD_IY__NN(int addr) {
         byte[] code = new byte[4];
-        code[0] = LD_SP_NN_0;
-        code[1] = LD_SP_NN_1;
+        code[0] = LD_IY__NN__0;
+        code[1] = LD_IY__NN__1;
+        code[2] = lowByte(addr);
+        code[3] = highByte(addr);
+        return code;
+    }
+
+    public static byte[] LD_SP_NN(int addr) {
+        byte[] code = new byte[3];
+        code[0] = LD_SP_NN;
+        code[1] = lowByte(addr);
+        code[2] = highByte(addr);
+        return code;
+    }
+
+    public static byte[] LD_SP__NN_(int addr) {
+        byte[] code = new byte[4];
+        code[0] = LD_SP__NN__0;
+        code[1] = LD_SP__NN__1;
         code[2] = lowByte(addr);
         code[3] = highByte(addr);
         return code;

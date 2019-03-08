@@ -155,8 +155,8 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             SnapshotGame snapshotGame = (SnapshotGame) game;
 
             int baseAddress = V2Constants.GAME_STRUCT_OFFSET + V2Constants.GAME_STRUCT_SIZE * index;
-            os.write(Z80Opcode.LD_IX_NN(baseAddress + GameHeaderOffsets.IX_OFFSET));
-            os.write(Z80Opcode.LD_HL_NN(baseAddress + GameHeaderOffsets.HL_OFFSET));
+            os.write(Z80Opcode.LD_IX__NN(baseAddress + GameHeaderOffsets.IX_OFFSET));
+            os.write(Z80Opcode.LD_HL__NN(baseAddress + GameHeaderOffsets.HL_OFFSET));
             boolean interruptDisable = snapshotGame.getGameHeader()
                     .getIff0() == 0;
 
@@ -822,14 +822,13 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                                 (SnapshotGame) applicationContext.getSelectedGame(),
                                 EepromWriterConfiguration.getInstance().getSerialPort());
                             uploader.run();
+                            return OperationResult.successResult();
                         } catch (Exception e) {
-                            DialogUtil.buildErrorAlert(
-                                LocaleUtil.i18n("sendGameError"),
-                                LocaleUtil.i18n("sendGameErrorHeader"),
-                                e.getMessage());
-                            LOGGER.error("Sending game by Serial Port", e);
+                            return OperationResult.errorWithDetailResult(
+                                    LocaleUtil.i18n("sendGameError"),
+                                    LocaleUtil.i18n("sendGameErrorHeader"),
+                                    e.getMessage());
                         }
-                        return OperationResult.successResult();
                     }));
         }
         return sendGameBySerialPort;
