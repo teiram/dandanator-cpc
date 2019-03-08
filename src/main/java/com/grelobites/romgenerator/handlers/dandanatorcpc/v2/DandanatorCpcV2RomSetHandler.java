@@ -633,8 +633,19 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.setPen(CpcColor.SEAGREEN);
         screen.printLine(versionInfo, line, 0);
 
+        /*
         screen.setPen(CpcColor.WHITE);
         screen.printLine("L. Loader", line, 15);
+        */
+        screen.setPen(CpcColor.SEAGREEN);
+        screen.printLine("L", line, 8);
+        screen.setPen(CpcColor.WHITE);
+        screen.printLine("oader", line, 9);
+        screen.setPen(CpcColor.SEAGREEN);
+        screen.printLine("U", line, 19);
+        screen.setPen(CpcColor.WHITE);
+        screen.printLine("SB Game", line, 20);
+
         if (numPages > 1) {
             String pageInfo = String.format("%d/%d", page, numPages);
             int pos = 30;
@@ -806,7 +817,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             sendGameBySerialPort = new MenuItem(LocaleUtil.i18n("sendGameBySerialPortMenuEntry"));
 
             sendGameBySerialPort.setAccelerator(
-                    KeyCombination.keyCombination("SHORTCUT+S")
+                    KeyCombination.keyCombination("SHORTCUT+U")
             );
             sendGameBySerialPort.disableProperty().bind(
                     applicationContext.currentPageProperty().isEqualTo(1)
