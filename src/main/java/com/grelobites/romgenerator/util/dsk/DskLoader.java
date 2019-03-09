@@ -99,30 +99,30 @@ public class DskLoader extends BaseEmulator {
         return null;
     }
 
-    public Game loadDsk(InputStream dskFile) throws IOException {
+    private Game loadFromDskAndCommand(DskContainer container, String command) {
         long compensation = 0;
-        //Guess what is inside the disk
-        DskContainer container = DskContainer.fromInputStream(dskFile);
-        String command = guessBootstrapCommand(container);
         if (command != null) {
-            LOGGER.info("Guesses bootstrap command as: {}", command);
-            //Wait for the computer to initialize
+            LOGGER.info("Run command is: {}", command);
+            //Wait for the computer to initialize (2 seconds)
             for (int i = 0; i < 2 * FRAMES_PER_SECOND; i++) {
                 compensation = executeFrame(compensation);
             }
+            //Attach the disk to the controller
             nec765.attachDskContainer(0, container);
             LOGGER.debug("CPC Initialized. Now to run loader");
             //Run the guessed command
             enterCommand(command);
-            //Attach the disk to the controller
+
+            boolean keyboardInput = false;
             while (!executionAborted) {
                 compensation = executeFrame(compensation);
                 if ((clock.getTstates() - lastDiskAccessTstates) > DISK_ACCESS_TIMEOUT_TS) {
                     LOGGER.info("Execution timeout due to disk access inactivity with FDC statistics {}",
                             nec765.getStatistics());
-                    if (nec765.getStatistics().getBytesRead() < DISK_READ_THRESHOLD) {
+                    if (nec765.getStatistics().getBytesRead() < DISK_READ_THRESHOLD && !keyboardInput) {
                         LOGGER.info("Trying to force load resume with keyboard input");
                         enterCommand("1");
+                        keyboardInput = true;
                     } else {
                         executionAborted = true;
                     }
@@ -131,36 +131,14 @@ public class DskLoader extends BaseEmulator {
         }
         return getSnapshotGame();
     }
+    public Game loadDsk(InputStream dskFile) throws IOException {
+        DskContainer container = DskContainer.fromInputStream(dskFile);
+        String command = guessBootstrapCommand(container);
+        return loadFromDskAndCommand(container, command);
+    }
 
     public Game loadBas(DskContainer container, String name) throws IOException {
-        long compensation = 0;
-        //Guess what is inside the disk
         String command = getRunCommandForName(name);
-        if (command != null) {
-            LOGGER.info("Guesses bootstrap command as: {}", command);
-            //Wait for the computer to initialize
-            for (int i = 0; i < 2 * FRAMES_PER_SECOND; i++) {
-                compensation = executeFrame(compensation);
-            }
-            nec765.attachDskContainer(0, container);
-            LOGGER.debug("CPC Initialized. Now to run loader");
-            //Run the guessed command
-            enterCommand(command);
-            //Attach the disk to the controller
-            while (!executionAborted) {
-                compensation = executeFrame(compensation);
-                if ((clock.getTstates() - lastDiskAccessTstates) > DISK_ACCESS_TIMEOUT_TS) {
-                    LOGGER.info("Execution timeout due to disk access inactivity with FDC statistics {}",
-                            nec765.getStatistics());
-                    if (nec765.getStatistics().getBytesRead() < DISK_READ_THRESHOLD) {
-                        LOGGER.info("Trying to force load resume with keyboard input");
-                        enterCommand("1");
-                    } else {
-                        executionAborted = true;
-                    }
-                }
-            }
-        }
-        return getSnapshotGame();
+        return loadFromDskAndCommand(container, command);
     }
 }
