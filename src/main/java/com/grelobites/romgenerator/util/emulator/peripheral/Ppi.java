@@ -243,8 +243,9 @@ public class Ppi {
     }
 
     public void controlOutput(int value) {
-        controlCurrentValue = value;
         if ((value & 0x80) != 0) {
+            //Save value only when bit7 ==1 (Relevant for SNA)
+            controlCurrentValue = value;
             portACurrentValue = portBCurrentValue = portCCurrentValue = 0;
             portAInputDirection = (value & 0x10) != 0;
         } else {
