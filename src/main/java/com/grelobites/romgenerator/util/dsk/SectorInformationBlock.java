@@ -50,6 +50,11 @@ public class SectorInformationBlock {
             return this;
         }
 
+        public Builder withPhysicalPosition(int physicalPosition) {
+            block.physicalPosition = physicalPosition;
+            return this;
+        }
+
         public SectorInformationBlock build() {
             return block;
         }

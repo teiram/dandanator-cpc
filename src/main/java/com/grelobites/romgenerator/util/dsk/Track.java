@@ -32,4 +32,11 @@ public class Track {
     public TrackInformationBlock getInformation() {
         return trackInformationBlock;
     }
+
+    @Override
+    public String toString() {
+        return "Track{" +
+                "trackInformationBlock=" + trackInformationBlock +
+                '}';
+    }
 }

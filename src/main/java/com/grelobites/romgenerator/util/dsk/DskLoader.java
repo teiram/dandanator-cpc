@@ -57,8 +57,12 @@ public class DskLoader extends BaseEmulator {
         return candidates;
     }
 
+    private static String getRunCommandForName(String name) {
+        return String.format(RUN_COMMAND_TEMPLATE, name.trim());
+    }
+
     private static String getRunCommandForArchive(Archive archive) {
-        return String.format(RUN_COMMAND_TEMPLATE, archive.getName().trim());
+        return getRunCommandForName(archive.getName());
     }
 
     private static String guessBootstrapCommand(DskContainer container) throws IOException {
@@ -128,4 +132,35 @@ public class DskLoader extends BaseEmulator {
         return getSnapshotGame();
     }
 
+    public Game loadBas(DskContainer container, String name) throws IOException {
+        long compensation = 0;
+        //Guess what is inside the disk
+        String command = getRunCommandForName(name);
+        if (command != null) {
+            LOGGER.info("Guesses bootstrap command as: {}", command);
+            //Wait for the computer to initialize
+            for (int i = 0; i < 2 * FRAMES_PER_SECOND; i++) {
+                compensation = executeFrame(compensation);
+            }
+            nec765.attachDskContainer(0, container);
+            LOGGER.debug("CPC Initialized. Now to run loader");
+            //Run the guessed command
+            enterCommand(command);
+            //Attach the disk to the controller
+            while (!executionAborted) {
+                compensation = executeFrame(compensation);
+                if ((clock.getTstates() - lastDiskAccessTstates) > DISK_ACCESS_TIMEOUT_TS) {
+                    LOGGER.info("Execution timeout due to disk access inactivity with FDC statistics {}",
+                            nec765.getStatistics());
+                    if (nec765.getStatistics().getBytesRead() < DISK_READ_THRESHOLD) {
+                        LOGGER.info("Trying to force load resume with keyboard input");
+                        enterCommand("1");
+                    } else {
+                        executionAborted = true;
+                    }
+                }
+            }
+        }
+        return getSnapshotGame();
+    }
 }

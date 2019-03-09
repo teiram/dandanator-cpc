@@ -7,7 +7,8 @@ public enum GameImageType {
     ROM(RomGameImageLoader.class, "rom"),
     MLD(MldGameImageLoader.class, "mld"),
     CDT(CdtGameImageLoader.class, "cdt"),
-    DSK(DskGameImageLoader.class, "dsk");
+    DSK(DskGameImageLoader.class, "dsk"),
+    BAS(BasGameImageLoader.class, "bas");
 
     private Class<? extends GameImageLoader> generator;
     private String[] supportedExtensions;

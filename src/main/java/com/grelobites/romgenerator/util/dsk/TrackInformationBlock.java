@@ -65,6 +65,7 @@ public class TrackInformationBlock {
                         .withSectorSize(block.sectorSize)
                         .withSide(block.sideNumber)
                         .withTrack(block.trackNumber)
+                        .withPhysicalPosition(i)
                         .build();
             }
             block.sectorInformationList = sectorInfos;
