@@ -255,24 +255,24 @@ public class BaseEmulator implements Z80operations {
     @Override
     public int inPort(int port) {
         clock.addTstates(4); // 4 clocks to read byte from bus
-        if (hasDiskCapability && ((port & 0xFFFF) == 0xFB7F)) {
+        if (hasDiskCapability && ((port & 0x0581) == 0x0101)) {
             lastDiskAccessTstates = clock.getTstates();
             return nec765.readDataRegister();
-        } else if (hasDiskCapability && ((port & 0xFFFF) == 0xFB7E)) {
+        } else if (hasDiskCapability && ((port & 0x0581) == 0x0100)) {
             lastDiskAccessTstates = clock.getTstates();
             return nec765.readStatusRegister();
-        } else if ((port & 0xFF00) == 0xBE00) {
+        } else if ((port & 0x4300) == 0x0200) {
             //LOGGER.debug("CRTC Read Status");
             return crtc.onReadStatusRegisterOperation();
-        } else if ((port & 0xFF00) == 0xBF00) {
+        } else if ((port & 0x4300) == 0x0300) {
             //LOGGER.debug("CRTC Read Data");
             return crtc.onReadRegisterOperation();
-        } else if ((port & 0xFF00) == 0xF400) {
+        } else if ((port & 0x0B00) == 0x0000) {
             //LOGGER.debug("Ppi PortA (PSG)");
             return ppi.portAInput();
-        } else if ((port & 0xFF00) == 0xF500) {
+        } else if ((port & 0x0B00) == 0x0100) {
             return ppi.portBInput();
-        } else if ((port & 0xFF00) == 0xF600) {
+        } else if ((port & 0x0B00) == 0x0200) {
             return ppi.portCInput();
         } else {
             LOGGER.debug("Unhandled I/O IN Operation on port {}. Z80 Status: {}",
@@ -286,10 +286,10 @@ public class BaseEmulator implements Z80operations {
     @Override
     public void outPort(int port, int value) {
         clock.addTstates(4); // 4 clocks to write byte to bus
-        if (hasDiskCapability && ((port & 0xFFFF) == 0xFA7E)) {
+        if (hasDiskCapability && ((port & 0x0580) == 0x0000)) {
             lastDiskAccessTstates = clock.getTstates();
             nec765.writeControlRegister(value);
-        } else if (hasDiskCapability && ((port & 0xFFFF) == 0xFB7F)) {
+        } else if (hasDiskCapability && ((port & 0x0581) == 0x0101)) {
             lastDiskAccessTstates = clock.getTstates();
             nec765.writeDataRegister(value);
         } else if ((port & 0xC000) == 0x4000) {
@@ -297,26 +297,26 @@ public class BaseEmulator implements Z80operations {
             //      String.format("%04x", port), String.format("%02x", value));
             //gateArray.onPortWriteOperation(port & 0xff);
             gateArray.onPortWriteOperation( value & 0xff);
-        } else if ((port & 0xFF00) == 0xBC00) {
+        } else if ((port & 0x4300) == 0x0000) {
             //LOGGER.debug("CRTC register index selection");
             crtc.onSelectRegisterOperation(value & 0xff);
-        } else if ((port & 0xFF00) == 0xBD00) {
+        } else if ((port & 0x4300) == 0x0100) {
             //LOGGER.debug("CRTC register data selection");
             crtc.onWriteRegisterOperation(value & 0xff);
-        } else if ((port & 0xFF00) == 0xF400) {
+        } else if ((port & 0x0B00) == 0x0000) {
             //LOGGER.debug("Ppi PortA OUT");
             ppi.portAOutput(value & 0xff);
-        } else if ((port & 0xFF00) == 0xF500) {
+        } else if ((port & 0x0B00) == 0x0100) {
             //LOGGER.warn("Ppi Port B OUT");
-        } else if ((port & 0xFF00) == 0xF600) {
+        } else if ((port & 0x0B00) == 0x0200) {
             //LOGGER.debug("Ppi Port C OUT");
             ppi.portCOutput(value & 0xff);
-        } else if ((port & 0xFF00) == 0xF700) {
+        } else if ((port & 0x0B00) == 0x0300) {
             //LOGGER.debug("Ppi Control Port OUT: {}, {}", String.format("0x%04x", port), String.format("0x%02x", value & 0xff));
             ppi.controlOutput(value & 0xff);
-        } else if ((port & 0xF800) == 0xF800) {
+        } else if ((port & 0x04FC) == 0x00FC) {
             LOGGER.debug("Peripheral Soft Reset");
-        } else if ((port & 0xFF00) == 0xDF00) {
+        } else if ((port & 0x2000) == 0x0000) {
             LOGGER.debug("Upper ROM {} selected", value & 0xff);
             memory.setUpperRomNumber(value & 0xff);
         } else {
