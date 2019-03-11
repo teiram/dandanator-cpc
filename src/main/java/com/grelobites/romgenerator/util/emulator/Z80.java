@@ -1377,11 +1377,12 @@ public class Z80 {
         }
 
         //Some instructions have tail t-states that are used here to acknowledge the interrupt
+
         if (!noDelayFlag) {
             //If no such instruction precedes the interrupt ack, 2 t-states are needed (rounded to 4 in CPC)
             clock.addTstates(4);
-            noDelayFlag = false;
         }
+        noDelayFlag = false;
 
         if (interruptAckListener != null) {
             interruptAckListener.onInterruptAck(clock.getTstates());
@@ -2761,6 +2762,7 @@ public class Z80 {
                 break;
             case 0xF3:              /* DI           4 t-states      */
                 ffIFF1 = ffIFF2 = false;
+                LOGGER.debug("------------------> Disabling Interrupts");
                 break;
             case 0xF4:              /* CALL P,nn    12/20 t-states  */
                 memptr = Z80opsImpl.peek16(regPC);
@@ -2808,6 +2810,7 @@ public class Z80 {
             case 0xFB:              /* EI           4 t-states      */
                 ffIFF1 = ffIFF2 = true;
                 pendingEI = true;
+                LOGGER.debug("------------------> Enabling Interrupts");
                 break;
             case 0xFC:              /* CALL M,nn    12/20 t-states  */
                 memptr = Z80opsImpl.peek16(regPC);
