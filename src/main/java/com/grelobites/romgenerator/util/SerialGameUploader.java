@@ -20,8 +20,8 @@ public class SerialGameUploader implements Runnable {
     private static final int LAUNCH_CODE_TRAILER_SIZE = 34;
     private static final byte[] LAUNCHER_DATA = new byte[]{(byte) 0x00, (byte) 0xC0, (byte) 0x00};
     private static final int SEND_BUFFER_SIZE = 2048;
-    private static final int[] SLOT_SEQUENCE_64 = new int[]{3, 0, 1, 2};
-    private static final int[] SLOT_SEQUENCE_128 = new int[]{3, 4, 5, 6, 7, 0, 1, 2};
+    private static final int[] SLOT_SEQUENCE_64 = new int[]{-1, 0, 1, 2};
+    private static final int[] SLOT_SEQUENCE_128 = new int[]{-1, 4, 5, 6, 7, 0, 1, 2};
 
     private String serialPortName;
     private SerialPort serialPort;
@@ -132,8 +132,8 @@ public class SerialGameUploader implements Runnable {
                 SerialPortConfiguration.MODE_57600.apply(serialPort);
                 byte[] command = serialPort.readBytes(1, slotToSend == 0 ? 10000: 5000);
                 LOGGER.debug("Got command bytes {}", Util.dumpAsHexString(command));
-                LOGGER.debug("Sending slot  {}", slotToSend == 0 ? "screen + code" : slotToSend);
-                if (slotToSend == 0) {
+                LOGGER.debug("Sending slot  {}", slotToSend == -1 ? "screen + code" : slotToSend);
+                if (slotToSend == -1) {
                     ByteArrayOutputStream firstBlock = new ByteArrayOutputStream();
                     //Send screen + launch code
                     prepareFirstBlock(firstBlock);
