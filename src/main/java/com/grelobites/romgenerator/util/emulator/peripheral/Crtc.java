@@ -152,20 +152,28 @@ public class Crtc {
         return value != 0 ? value : 16;
     }
 
+    public int getVisibleHeight() {
+        return crtcRegisterData[REGISTER_VERT_DISPLAYED];
+    }
+
+    public int getVisibleWidth() {
+        return crtcRegisterData[REGISTER_HORIZ_DISPLAYED];
+    }
+
     public int getVSyncLength() {
         return (crtcRegisterData[REGISTER_SYNC_WIDTHS] >>> 4) & 0x0f;
     }
 
-    private int getScreenPage() {
+    public int getScreenPage() {
         return (crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0x30) << 10;
     }
 
-    private int getScreenOffset() {
+    public int getScreenOffset() {
         return (((crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0x3) << 8) |
                 (crtcRegisterData[REGISTER_DISPLAY_START_ADDR_LO] & 0xff)) << 4;
     }
 
-    private int getScreenSize() {
+    public int getScreenSize() {
         return (crtcRegisterData[REGISTER_DISPLAY_START_ADDR_HI] & 0xC0) == 0xC0 ?
                 32768 : 16384;
     }

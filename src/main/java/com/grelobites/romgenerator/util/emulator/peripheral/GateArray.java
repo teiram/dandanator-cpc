@@ -13,6 +13,7 @@ public class GateArray {
     private static final Logger LOGGER = LoggerFactory.getLogger(GateArray.class);
     private static final int BANK_SIZE = 0x4000;
     private static final int BORDER_PALETTE_INDEX = 16;
+    private static final int SCREEN_MODE_MASK = 0x03;
     private static final int[][] MEMORY_CONFIGURATIONS = new int[][] {
             {0, 1, 2, 3},
             {0, 1, 2, 7},
@@ -141,6 +142,10 @@ public class GateArray {
 
     public void setRamBankingRegister(int value) {
         this.ramBankingRegister = value & 0xff;
+    }
+
+    public int getScreenMode() {
+        return screenModeAndRomConfigurationRegister & SCREEN_MODE_MASK;
     }
 
     private static int decodeSelectedPen(int value) {
