@@ -83,7 +83,7 @@ public class ImageUtil {
         int width = getWidth(crtcDisplayData);
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
-        LOGGER.debug("Rendering image in mode 0 with height={}, width={}, xBorderSize={}, " +
+        LOGGER.trace("Rendering image in mode 0 with height={}, width={}, xBorderSize={}, " +
                         "yBorderSize={}",
                 height, width, xBorderSize, yBorderSize);
 
@@ -113,7 +113,7 @@ public class ImageUtil {
 	    int width = getWidth(crtcDisplayData);
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
-        LOGGER.debug("Rendering image in mode 1 with height={}, width={}, xBorderSize={}, " +
+        LOGGER.trace("Rendering image in mode 1 with height={}, width={}, xBorderSize={}, " +
                         "yBorderSize={}",
                 height, width, xBorderSize, yBorderSize);
 
@@ -145,7 +145,7 @@ public class ImageUtil {
         int width = getWidth(crtcDisplayData);
         int xBorderSize = getXBorderSize(crtcDisplayData);
         int yBorderSize = getYBorderSize(crtcDisplayData);
-        LOGGER.debug("Rendering image in mode 2 with height={}, width={}, xBorderSize={}, "
+        LOGGER.trace("Rendering image in mode 2 with height={}, width={}, xBorderSize={}, "
                 + "yBorderSize={}",
                 height, width, xBorderSize, yBorderSize);
 
@@ -199,7 +199,7 @@ public class ImageUtil {
                                                         byte[] slot,
                                                         CrtcDisplayData crtcDisplayData,
                                                         byte[] palette) {
-        LOGGER.debug("scrLoader with screenMode {}, crtcDisplayData {}", screenMode, crtcDisplayData);
+        LOGGER.trace("scrLoader with screenMode {}, crtcDisplayData {}", screenMode, crtcDisplayData);
         PixelWriter writer = image.getPixelWriter();
         fillBackground(image, writer, CpcColor.hardIndexedArgb(palette[16]));
         switch (screenMode) {
