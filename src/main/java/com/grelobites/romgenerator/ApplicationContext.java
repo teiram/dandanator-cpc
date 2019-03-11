@@ -41,6 +41,7 @@ public class ApplicationContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationContext.class);
     private static final String APPLICATION_TITLE = "ROM Generator";
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger(0);
+    private static ApplicationContext applicationContextInstance;
 
     Stage applicationStage;
     private Pane romSetHandlerInfoPane;
@@ -48,6 +49,7 @@ public class ApplicationContext {
     private ReadOnlyObjectProperty<Game> selectedGame;
     private BooleanProperty gameSelected;
     private ImageView menuPreview;
+    private ImageView gamePreview;
     private StringProperty romUsageDetail;
     private DoubleProperty romUsage;
     private IntegerProperty backgroundTaskCount;
@@ -77,7 +79,14 @@ public class ApplicationContext {
     private final Map<Integer, Future<OperationResult>> runningTasks =
             new ConcurrentHashMap<>();
 
-    public ApplicationContext() {
+    public static ApplicationContext getInstance() {
+        if (applicationContextInstance == null) {
+            applicationContextInstance = new ApplicationContext();
+        }
+        return applicationContextInstance;
+    }
+
+    private ApplicationContext() {
         this.gameList = FXCollections.observableArrayList(Game::getObservable);
         this.gameSelected = new SimpleBooleanProperty(false);
         this.romUsage = new SimpleDoubleProperty();
@@ -149,6 +158,14 @@ public class ApplicationContext {
 
     public void setMenuPreview(ImageView menuPreview) {
         this.menuPreview = menuPreview;
+    }
+
+    public ImageView getGamePreview() {
+        return gamePreview;
+    }
+
+    public void setGamePreview(ImageView gamePreview) {
+        this.gamePreview = gamePreview;
     }
 
     public Pane getRomSetHandlerInfoPane() {

@@ -321,7 +321,7 @@ public class MainApp extends Application {
 
 	private void initRootLayout() {
 		try {
-		    applicationContext = new ApplicationContext();
+		    applicationContext = ApplicationContext.getInstance();
             primaryStage.titleProperty().bind(applicationContext.applicationTitleProperty());
             primaryStage.setOnCloseRequest(e -> Platform.exit());
             BorderPane mainPane = new BorderPane();

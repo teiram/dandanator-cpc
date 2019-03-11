@@ -1,10 +1,8 @@
 package com.grelobites.romgenerator.util.emulator;
 
-import com.grelobites.romgenerator.model.GameHeader;
-import com.grelobites.romgenerator.model.GameType;
-import com.grelobites.romgenerator.model.HardwareMode;
-import com.grelobites.romgenerator.model.SnapshotGame;
+import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.util.Counter;
+import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.emulator.peripheral.CpcMemory;
 import com.grelobites.romgenerator.util.emulator.peripheral.Crtc;
 import com.grelobites.romgenerator.util.emulator.peripheral.CrtcType;
@@ -13,6 +11,8 @@ import com.grelobites.romgenerator.util.emulator.peripheral.KeyboardCode;
 import com.grelobites.romgenerator.util.emulator.peripheral.Ppi;
 import com.grelobites.romgenerator.util.emulator.peripheral.fdc.Nec765;
 import com.grelobites.romgenerator.util.emulator.resources.LoaderResources;
+import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -421,6 +421,20 @@ public class BaseEmulator implements Z80operations {
     @Override
     public void breakpoint() {
         LOGGER.debug("Breakpoint reached!!");
+    }
+
+    protected Image getScreenshot() {
+            return ImageUtil.scrLoader(
+                    ImageUtil.newScreenshot(),
+                    gateArray.getScreenMode(),
+                    memory.getRamBank(crtc.getScreenPage()),
+                    CrtcDisplayData.newBuilder()
+                            .withDisplayOffset(crtc.getScreenOffset())
+                            .withVisibleHeight(crtc.getVisibleHeight())
+                            .withVisibleWidth(crtc.getVisibleWidth())
+                            .build(),
+                    gateArray.getPalette());
+
     }
 
 }

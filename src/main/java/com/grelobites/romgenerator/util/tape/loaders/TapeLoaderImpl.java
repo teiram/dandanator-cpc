@@ -1,5 +1,6 @@
 package com.grelobites.romgenerator.util.tape.loaders;
 
+import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.EmulatorConfiguration;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.HardwareMode;
@@ -13,6 +14,9 @@ import com.grelobites.romgenerator.util.tape.TapeEntryPoint;
 import com.grelobites.romgenerator.util.tape.TapeFinishedException;
 import com.grelobites.romgenerator.util.tape.TapeLoader;
 import com.grelobites.romgenerator.util.tape.CdtTapePlayer;
+import javafx.application.Platform;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,12 +63,21 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         return true;
     }
 
+    private void setGamePreview(Image screenshot) {
+        Platform.runLater(() -> ApplicationContext.getInstance().getGamePreview()
+                .setImage(screenshot));
+    }
+
     @Override
     public Game loadTape(InputStream tapeFile) throws IOException {
         long compensation = 0;
         tapePlayer.insert(tapeFile);
+
+        ApplicationContext context = ApplicationContext.getInstance();
+        Image savedPreview = context.getGamePreview().getImage();
         loadSnapshot(loaderResources.snaLoader());
 
+        setGamePreview(getScreenshot());
         //Define different listeners to detect emulation stop conditions
         final GateArrayChangeListener paletteGateArrayChangeListener = (f, v) -> {
             if (configuration.isTestPaletteChanges() && f == GateArrayFunction.PALETTE_DATA_FN) {
@@ -86,6 +99,7 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
             }
             return true;
         };
+
         final PsgFunctionListener psgFunctionListener = (f) -> {
             if (isTapeNearEndPosition()) {
                 if (configuration.isTestPsgAccess() && f == PsgFunction.WRITE) {
@@ -122,7 +136,6 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         }
         LOGGER.info("Motor is on!");
 
-
         ppi.addMotorStateChangeListener(motorStateChangeListener);
         crtc.addChangeListener(crtcChangeListener);
         ppi.addPsgFunctionListener(psgFunctionListener);
@@ -138,10 +151,14 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         int framesWithoutTapeMovement = 0;
         int currentTapePosition = tapePlayer.getCurrentTapePosition();
         boolean stopOnTapeStalled = false;
+        int frameIndex = 0;
         gateArray.addChangeListener(paletteGateArrayChangeListener);
         try {
             while (!tapePlayer.isEOT() && !stopOnTapeStalled && !executionAborted) {
                 compensation = executeFrame(this::isTapeNearEndPosition, compensation);
+                if (++frameIndex % 50 == 0) {
+                    setGamePreview(getScreenshot());
+                }
                 if (tapePlayer.getCurrentTapePosition() == currentTapePosition) {
                     framesWithoutTapeMovement++;
                     if (framesWithoutTapeMovement >= MAX_FRAMES_WITHOUT_TAPE_MOVEMENT) {
@@ -192,6 +209,8 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         LOGGER.debug("Saving Snapshot with PC in {}, inRAM: {}",
                 String.format("0x%04x", z80.getRegPC()),
                 memory.isAddressInRam(z80.getRegPC()));
+        context.getGamePreview().setImage(savedPreview);
+
         return getSnapshotGame();
     }
 

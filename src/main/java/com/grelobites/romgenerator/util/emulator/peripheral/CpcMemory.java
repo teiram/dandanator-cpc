@@ -95,6 +95,10 @@ public class CpcMemory implements Memory {
         }
     }
 
+    public byte[] getRamBank(int address) {
+        return ramBanks[address / BANK_SIZE];
+    }
+
     private void loadRom(byte[] source, byte[] destination) {
         System.arraycopy(source, 0, destination, 0, BANK_SIZE);
     }

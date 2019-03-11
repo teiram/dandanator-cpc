@@ -856,7 +856,7 @@ public class CdtTapePlayer implements ClockTimeoutListener {
             }
             */
             //It helps 1942 in 6128 mode (and maybe others like Agent Orange)
-            clockTimeout.append(5000);
+            //clockTimeout.append(5000);
             clock.addClockTimeout(clockTimeout);
             playing = true;
         }

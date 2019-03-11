@@ -184,6 +184,7 @@ public class MainAppController {
 
         applicationContext.setRomSetHandlerInfoPane(romSetHandlerInfoPane);
         applicationContext.setMenuPreview(menuPreview);
+        applicationContext.setGamePreview(gamePreview);
         applicationContext.setSelectedGameProperty(gameTable.getSelectionModel().selectedItemProperty());
         applicationContext.setCurrentPageProperty(menuPagination.currentPageIndexProperty());
         gameRenderer = GameRendererFactory.getDefaultRenderer();
