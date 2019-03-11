@@ -49,9 +49,12 @@ public class DandanatorCpcV2Importer implements DandanatorCpcImporter {
                 return OperationResult.successResult();
             });
 
-            is.safeSkip(Constants.SLOT_SIZE * DandanatorCpcConstants.GAME_SLOTS - is.position());
-            LOGGER.debug("Getting extraRom with offset {}", is.position());
-            byte[] extraRom = is.getAsByteArray(Constants.SLOT_SIZE);
+            byte[] extraRom = null;
+            if (slotZero.getExtraRomPresent()) {
+                is.safeSkip(Constants.SLOT_SIZE * DandanatorCpcConstants.GAME_SLOTS - is.position());
+                LOGGER.debug("Getting extraRom with offset {}", is.position());
+                extraRom = is.getAsByteArray(Constants.SLOT_SIZE);
+            }
 
             //Update preferences only if everything was OK
             Configuration globalConfiguration = Configuration.getInstance();
@@ -66,8 +69,10 @@ public class DandanatorCpcV2Importer implements DandanatorCpcImporter {
             globalConfiguration.setBackgroundImagePath(Constants.ROMSET_PROVIDED);
             globalConfiguration.setIncludeExtraRom(slotZero.getExtraRomPresent());
             globalConfiguration.setEnforceFollowRom(slotZero.getEnforceFollowRom());
-            dandanatorCpcConfiguration.setExtraRomPath(Constants.ROMSET_PROVIDED);
-            dandanatorCpcConfiguration.setExtraRom(extraRom);
+            if (slotZero.getExtraRomPresent()) {
+                dandanatorCpcConfiguration.setExtraRomPath(Constants.ROMSET_PROVIDED);
+                dandanatorCpcConfiguration.setExtraRom(extraRom);
+            }
 
             dandanatorCpcConfiguration.setExtraRomMessage(slotZero.getExtraRomMessage());
             dandanatorCpcConfiguration.setTogglePokesMessage(slotZero.getTogglePokesMessage());
