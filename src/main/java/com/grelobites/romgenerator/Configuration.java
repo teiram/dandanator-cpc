@@ -30,7 +30,9 @@ public class Configuration {
     public static final String INTERNAL_CHARSET_PREFIX= "internal://";
     private static final String DEFAULT_MODE = RomSetHandlerType.DDNTR_V2.name();
     private static final String DEFAULT_TAPELOADER_TARGET = HardwareMode.HW_CPC464.name();
+    private static final String LAST_USED_DIRECTORY_PROPERTY = "lastUsedDirectory";
 
+    private String lastUsedDirectory;
     byte[] charSet;
     byte[] backgroundImage;
 
@@ -260,6 +262,15 @@ public class Configuration {
         this.enforceFollowRom.set(enforceFollowRom);
     }
 
+    public String getLastUsedDirectory() {
+        return lastUsedDirectory;
+    }
+
+    public void setLastUsedDirectory(String lastUsedDirectory) {
+        this.lastUsedDirectory = lastUsedDirectory;
+        persistConfigurationValue(LAST_USED_DIRECTORY_PROPERTY, lastUsedDirectory);
+    }
+
     public static Preferences getApplicationPreferences() {
         return Preferences.userNodeForPackage(Configuration.class);
     }
@@ -280,6 +291,7 @@ public class Configuration {
         Preferences p = getApplicationPreferences();
         configuration.tapeLoaderTarget.set(p.get(TAPELOADERTARGET_PROPERTY,
                 DEFAULT_TAPELOADER_TARGET));
+        configuration.setLastUsedDirectory(p.get(LAST_USED_DIRECTORY_PROPERTY, ""));
         return configuration;
     }
 
