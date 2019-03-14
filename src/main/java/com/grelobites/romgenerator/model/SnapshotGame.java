@@ -147,10 +147,10 @@ public class SnapshotGame extends BaseGame implements RamGame {
     }
 
     private int getScreenPage() {
-        LOGGER.debug("Screen page is {}", String.format("%04x", (gameHeader.getCrtcRegisterData()
-                [CrtcRegisters.DISPLAY_START_ADDR_HI] & 0x30) << 10));
-        return (gameHeader.getCrtcRegisterData()
+        int screenPage = (gameHeader.getCrtcRegisterData()
                 [CrtcRegisters.DISPLAY_START_ADDR_HI] & 0x30) << 10;
+        LOGGER.debug("Screen page is {}", String.format("%04x", screenPage));
+        return screenPage;
     }
 
     public Image getScreenshot() {
