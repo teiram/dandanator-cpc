@@ -21,10 +21,10 @@ Java8 and Maven are needed. Just execute:
 
 An executable jar with all the dependencies bundled in will be generated in the following location:
 
-    dandanator-cpc/target/dandanator-cpc-2.1-jar-with-dependencies.jar
+    dandanator-cpc/target/dandanator-cpc-2.2-jar-with-dependencies.jar
 
 that can be executed with the following invocation:
 
-	java -jar target/dandanator-cpc-2.1-jar-with-dependencies.jar
+	java -jar target/dandanator-cpc-2.2-jar-with-dependencies.jar
 
 In most modern operating systems it should be also possible to execute the application by just double clicking on the jar file.
