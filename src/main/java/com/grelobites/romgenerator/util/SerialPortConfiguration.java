@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public enum SerialPortConfiguration {
-    MODE_115200(SerialPort.BAUDRATE_115200,
+    MODE_115200(114000, //Due to 464 clock jitter
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_2,
             SerialPort.PARITY_NONE),
@@ -14,7 +14,6 @@ public enum SerialPortConfiguration {
             SerialPort.DATABITS_8,
             SerialPort.STOPBITS_2,
             SerialPort.PARITY_NONE);
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SerialPortConfiguration.class);
 
     public int baudrate;
