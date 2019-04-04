@@ -200,17 +200,21 @@ public class SerialBlockService {
             LOGGER.error("Initializing Serial port", e);
             throw new RuntimeException(e);
         }
-        state = State.RUNNING;
-        dandanatorReady = false;
-        ignoreSyncRequest = false;
-        while (state == State.RUNNING) {
-            try {
-                handleIncomingData(serialPort.readBytes(1, 1000));
-            } catch (SerialPortTimeoutException spte) {
-            } catch (Exception e) {
-                LOGGER.error("Trying to read from serial port", e);
-                state = State.STOPPING;
+        try {
+            state = State.RUNNING;
+            dandanatorReady = false;
+            ignoreSyncRequest = false;
+            while (state == State.RUNNING) {
+                try {
+                    handleIncomingData(serialPort.readBytes(1, 1000));
+                } catch (SerialPortTimeoutException spte) {
+                } catch (Exception e) {
+                    LOGGER.error("Trying to read from serial port", e);
+                    state = State.STOPPING;
+                }
             }
+        } finally {
+            close();
         }
         LOGGER.debug("Exiting SerialListener service thread");
         state = State.STOPPED;
