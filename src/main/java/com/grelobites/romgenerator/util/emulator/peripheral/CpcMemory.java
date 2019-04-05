@@ -43,7 +43,8 @@ public class CpcMemory implements Memory {
                     romBanks : ramBanks;
             return target[bankSlot];
         } catch (Exception e) {
-            LOGGER.error("Getting bank slot for address {}, write {}", String.format("0x%04X", address), write);
+            LOGGER.error("Getting bank slot for address {}, write {}, gateArray {}",
+                    String.format("0x%04X", address), write, gateArray);
             throw e;
         }
     }
