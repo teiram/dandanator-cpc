@@ -42,6 +42,14 @@ public class Constants {
 
     private static final String USB_LAUNCHCODE_HEADER_RESOURCE = "dandanator-cpc/usb-launchcode-header.bin";
 
+
+    public static final String MOJONOS_V1 = "f265a4f066bfcf01183e37332d71f1a4";
+    public static final String MOJONOS_SCR_RESOURCE = "images/mojonos.scr";
+
+    public static final String[][] KNOWN_ROMS = {
+            {MOJONOS_V1, MOJONOS_SCR_RESOURCE}
+    };
+
     public static final byte B_01 = 1;
 	public static final byte B_00 = 0;
     public static final byte B_FF = -1;
@@ -164,5 +172,6 @@ public class Constants {
         }
         return THEME_RESOURCE_URL;
     }
+
 
 }

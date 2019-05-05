@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -109,6 +110,18 @@ public class RomSetUtil {
         return chunk;
     }
 
-
+    public static Optional<InputStream> getKnownRomScreenResource(File file) {
+        String md5 = Util.getMD5(file);
+        try {
+            for (String[] candidate : Constants.KNOWN_ROMS) {
+                if (candidate[0].equals(md5)) {
+                    return Optional.of(Constants.getScreenFromResource(candidate[1]));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Error getting screen resource for file {}", file);
+        }
+        return Optional.empty();
+    }
 
 }

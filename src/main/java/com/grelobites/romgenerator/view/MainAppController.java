@@ -3,6 +3,8 @@ package com.grelobites.romgenerator.view;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
+import com.grelobites.romgenerator.PlayerConfiguration;
+import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.model.SnapshotGame;
@@ -101,7 +103,39 @@ public class MainAppController {
         return getApplicationContext().getRomSetHandler();
     }
 
+    private boolean specialRomSetMode = false;
+
+    private boolean interceptSpecialRomSet(List<File> files) {
+        LOGGER.debug("interceptSpecialRomSet " + files);
+        Optional<InputStream> screenResource;
+        if (files.size() == 1 &&
+                (screenResource = RomSetUtil.getKnownRomScreenResource(files.get(0))).isPresent()) {
+            PlayerConfiguration.getInstance()
+                    .setCustomRomSetPath(files.get(0).getPath());
+            applicationContext.getGameList().clear();
+            menuPagination.setCurrentPageIndex(1);
+            try {
+                gameRenderer.loadImage(0, screenResource.get());
+                specialRomSetMode = true;
+                return true;
+            } catch (Exception e) {
+                LOGGER.error("Loading known rom screen", e);
+                return false;
+            }
+        } else {
+            if (specialRomSetMode == true) {
+                gameRenderer.previewGame(null);
+                menuPagination.setCurrentPageIndex(0);
+                PlayerConfiguration.getInstance()
+                        .setCustomRomSetPath(null);
+                specialRomSetMode = false;
+            }
+            return false;
+        }
+    }
+
     private void addGamesFromFiles(List<File> files) {
+        if (!interceptSpecialRomSet(files)) {
             files.forEach(file ->
                     applicationContext.addBackgroundTask(() -> {
                         Optional<Game> gameOptional = GameUtil.createGameFromFile(file);
@@ -127,6 +161,7 @@ public class MainAppController {
                         }
                         return OperationResult.successResult();
                     }));
+        }
 
     }
 
