@@ -52,10 +52,7 @@ public class PositionAwareInputStream extends InputStream {
     }
 
     public byte[] getAsByteArray(int length) throws IOException {
-        byte[] result = new byte[length];
-        this.read(result, 0, length);
-
-        return result;
+        return Util.fromInputStream(this, length);
     }
 
     public int getAsLittleEndian() throws IOException {
