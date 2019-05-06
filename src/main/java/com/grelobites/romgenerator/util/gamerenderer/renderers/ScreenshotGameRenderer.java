@@ -90,4 +90,10 @@ public class ScreenshotGameRenderer extends PassiveGameRendererBase implements G
         targetView.setImage(ImageUtil.scrLoader(
                 ImageUtil.newScreenshot(), 1, resource));
     }
+
+    @Override
+    public void loadImage(int mode, InputStream resource) throws IOException {
+        targetView.setImage(ImageUtil.scrLoader(
+                ImageUtil.newScreenshot(), mode, resource));
+    }
 }

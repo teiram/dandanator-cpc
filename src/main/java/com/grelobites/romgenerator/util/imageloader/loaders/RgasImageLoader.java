@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 public class RgasImageLoader implements ImageLoader {
@@ -38,7 +39,7 @@ public class RgasImageLoader implements ImageLoader {
     @Override
     public boolean supportsFile(File file) {
         try (FileInputStream fis = new FileInputStream(file)) {
-            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fis), RgasFile.class);
+            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fis, StandardCharsets.UTF_8), RgasFile.class);
             if (rgasFile != null) {
                 if (rgasFile.getMode() == 0 && getSuitableImage(rgasFile).isPresent()) {
                     return true;
@@ -90,7 +91,7 @@ public class RgasImageLoader implements ImageLoader {
     @Override
     public byte[] asByteArray(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file)) {
-            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fis), RgasFile.class);
+            RgasFile rgasFile = gson.fromJson(new InputStreamReader(fis, StandardCharsets.UTF_8), RgasFile.class);
             if (rgasFile != null) {
                 return getSuitableImage(rgasFile)
                         .map(i -> rgasToByteArray(i, rgasFile.getInks()))

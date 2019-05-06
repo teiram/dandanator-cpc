@@ -1,5 +1,11 @@
 package com.grelobites.romgenerator.model;
 
+import com.grelobites.romgenerator.util.Util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+
 public class CrtcDisplayData {
     private static final int DEFAULT_CRTC_WIDTH = 40;
     private static final int DEFAULT_CRTC_HEIGHT = 25;
@@ -39,6 +45,15 @@ public class CrtcDisplayData {
 
     public static Builder newBuilder() {
         return new Builder();
+    }
+
+    public static CrtcDisplayData fromInputStream(InputStream is) throws IOException {
+        ByteBuffer buffer = ByteBuffer.wrap(Util.fromInputStream(is, 4));
+        return CrtcDisplayData.newBuilder()
+                .withVisibleWidth(Integer.valueOf(buffer.get()).byteValue())
+                .withVisibleHeight(Integer.valueOf(buffer.get()).byteValue())
+                .withDisplayOffset(Integer.valueOf(buffer.getShort()).shortValue())
+                .build();
     }
 
     public int getVisibleWidth() {

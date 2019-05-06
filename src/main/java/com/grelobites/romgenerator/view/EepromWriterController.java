@@ -307,19 +307,27 @@ public class EepromWriterController {
 
         DandanatorCpcConfiguration.getInstance().extraRomPathProperty()
                 .addListener(e -> {
-                    serialBlockService.resetRomset();
+                    if (serialBlockService != null) {
+                        serialBlockService.resetRomset();
+                    }
                 });
 
         Configuration.getInstance().backgroundImagePathProperty().addListener(e -> {
-            serialBlockService.resetRomset();;
+            if (serialBlockService != null) {
+                serialBlockService.resetRomset();
+            }
         });
 
         configuration.customRomSetPathProperty().addListener(e -> {
-            serialBlockService.resetRomset();
+            if (serialBlockService != null) {
+                serialBlockService.resetRomset();
+            }
         });
 
         if (configuration.getSerialPort() != null) {
-            startSerialBlockService(configuration.getSerialPort());
+            if (serialBlockService != null) {
+                startSerialBlockService(configuration.getSerialPort());
+            }
         }
 
         overallProgress.progressProperty().bind(Bindings.createDoubleBinding(() ->

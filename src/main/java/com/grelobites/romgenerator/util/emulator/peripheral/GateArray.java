@@ -28,7 +28,7 @@ public class GateArray {
     private Integer ramBankingRegister;
     private int screenModeAndRomConfigurationRegister;
     private int selectedPen;
-
+    private boolean ramBanking;
     private Set<GateArrayChangeListener> gateArrayChangeListeners = new HashSet<>();
 
     public static Builder newBuilder() {
@@ -54,12 +54,13 @@ public class GateArray {
         }
 
         public Builder withCpc464DefaultValues() {
-            gateArray.ramBankingRegister = null;
+            gateArray.ramBanking = false;
             gateArray.screenModeAndRomConfigurationRegister = 0;
             return this;
         }
 
         public Builder withCpc6128DefaultValues() {
+            gateArray.ramBanking = true;
             gateArray.ramBankingRegister = 1;
             gateArray.screenModeAndRomConfigurationRegister = 0;
             return this;
@@ -104,7 +105,7 @@ public class GateArray {
     }
 
     public boolean hasRamBanking() {
-        return ramBankingRegister != null;
+        return ramBanking;
     }
 
     public boolean isInterruptGenerationDelayed() {
@@ -141,7 +142,11 @@ public class GateArray {
     }
 
     public void setRamBankingRegister(int value) {
-        this.ramBankingRegister = value & 0xff;
+        if (ramBanking) {
+            this.ramBankingRegister = value & 0xff;
+        } else {
+            LOGGER.info("Ignoring attempt to set RAM bank on a computer with no RAM banking");
+        }
     }
 
     public int getScreenMode() {
@@ -177,7 +182,7 @@ public class GateArray {
                     screenModeAndRomConfigurationRegister = value;
                     break;
                 case RAM_BANKING_FN:
-                    ramBankingRegister = value != 0 ? value : null;
+                    setRamBankingRegister(value);
                     break;
             }
         } else {

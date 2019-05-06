@@ -15,4 +15,5 @@ public interface GameRenderer {
     void resume();
     void previewGame(Game game);
     void loadImage(InputStream resource) throws IOException;
+    void loadImage(int mode, InputStream resource) throws IOException;
 }
