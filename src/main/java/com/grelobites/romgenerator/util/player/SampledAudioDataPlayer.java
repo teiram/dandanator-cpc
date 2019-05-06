@@ -1,7 +1,7 @@
 package com.grelobites.romgenerator.util.player;
 
 import com.grelobites.romgenerator.ApplicationContext;
-import com.grelobites.romgenerator.PlayerConfiguration;
+import com.grelobites.romgenerator.EepromWriterConfiguration;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -52,18 +52,7 @@ public class SampledAudioDataPlayer extends AudioDataPlayerSupport implements Da
     }
 
     private Mixer getMixer() {
-        String mixerName = PlayerConfiguration.getInstance()
-                .getAudioMixerName();
         Mixer.Info[] mixerInfos =  AudioSystem.getMixerInfo();
-        if (mixerName != null) {
-            for (Mixer.Info mixerInfo : mixerInfos) {
-                LOGGER.debug("Mixer " + mixerInfo);
-                if (mixerInfo.getName().equals(mixerName)) {
-                    return AudioSystem.getMixer(mixerInfo);
-                }
-            }
-            LOGGER.warn("Unable to find configured mixer " + mixerName + ". Using default mixer " + mixerInfos[0]);
-        }
         return AudioSystem.getMixer(mixerInfos[0]);
     }
 

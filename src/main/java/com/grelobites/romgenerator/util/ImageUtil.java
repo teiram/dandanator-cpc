@@ -180,11 +180,12 @@ public class ImageUtil {
                                                         int screenMode,
                                                         InputStream data)
     throws IOException {
-	    return scrLoader(image, screenMode,
-                Util.fromInputStream(data, Constants.CPC_SCREEN_SIZE),
-                CrtcDisplayData.DEFAULT_VALUE,
-                Util.fromInputStream(data, Constants.CPC_PALETTE_SIZE));
-
+	    byte[] imageData = Util.fromInputStream(data, Constants.CPC_SCREEN_SIZE);
+	    byte[] paletteData = Util.fromInputStream(data, Constants.CPC_PALETTE_SIZE);
+	    LOGGER.debug("Is there still data available: {}", data.available());
+	    CrtcDisplayData displayData = (data.available() > 0) ?
+                CrtcDisplayData.fromInputStream(data) : CrtcDisplayData.DEFAULT_VALUE;
+	    return scrLoader(image, screenMode, imageData, displayData, paletteData);
     }
 
 	private static void fillBackground(WritableImage image, PixelWriter writer, int color) {
@@ -199,7 +200,7 @@ public class ImageUtil {
                                                         byte[] slot,
                                                         CrtcDisplayData crtcDisplayData,
                                                         byte[] palette) {
-        LOGGER.trace("scrLoader with screenMode {}, crtcDisplayData {}", screenMode, crtcDisplayData);
+        LOGGER.debug("scrLoader with screenMode {}, crtcDisplayData {}", screenMode, crtcDisplayData);
         PixelWriter writer = image.getPixelWriter();
         fillBackground(image, writer, CpcColor.hardIndexedArgb(palette[16]));
         switch (screenMode) {

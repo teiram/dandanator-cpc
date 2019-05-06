@@ -2,10 +2,8 @@ package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.EepromWriterConfiguration;
-import com.grelobites.romgenerator.PlayerConfiguration;
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.Util;
-import com.grelobites.romgenerator.util.eewriter.SerialPortInterfaces;
 import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -49,7 +47,7 @@ public class EepromWriterConfigurationController {
 
     private void updateCustomRomSetPath(File romsetFile) {
         if (isReadableFile(romsetFile) && romsetFile.length() == 32 * Constants.SLOT_SIZE) {
-            PlayerConfiguration.getInstance().setCustomRomSetPath(romsetFile.getAbsolutePath());
+            EepromWriterConfiguration.getInstance().setCustomRomSetPath(romsetFile.getAbsolutePath());
         } else {
             throw new IllegalArgumentException("Invalid ROMSet file provided");
         }

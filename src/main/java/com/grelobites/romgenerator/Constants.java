@@ -46,8 +46,12 @@ public class Constants {
     public static final String MOJONOS_V1 = "f265a4f066bfcf01183e37332d71f1a4";
     public static final String MOJONOS_SCR_RESOURCE = "images/mojonos.scr";
 
+    public static final String R4MHZ_V1 = "aa120d9043fc3aaa70b4994abf803403";
+    public static final String R4MHZ_SCR_RESOURCE = "images/4mhz.scr";
+
     public static final String[][] KNOWN_ROMS = {
-            {MOJONOS_V1, MOJONOS_SCR_RESOURCE}
+            {MOJONOS_V1, MOJONOS_SCR_RESOURCE},
+            {R4MHZ_V1, R4MHZ_SCR_RESOURCE}
     };
 
     public static final byte B_01 = 1;

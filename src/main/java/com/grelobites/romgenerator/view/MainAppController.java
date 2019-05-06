@@ -3,7 +3,7 @@ package com.grelobites.romgenerator.view;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.PlayerConfiguration;
+import com.grelobites.romgenerator.EepromWriterConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameType;
@@ -110,7 +110,7 @@ public class MainAppController {
         Optional<InputStream> screenResource;
         if (files.size() == 1 &&
                 (screenResource = RomSetUtil.getKnownRomScreenResource(files.get(0))).isPresent()) {
-            PlayerConfiguration.getInstance()
+            EepromWriterConfiguration.getInstance()
                     .setCustomRomSetPath(files.get(0).getPath());
             applicationContext.getGameList().clear();
             menuPagination.setCurrentPageIndex(1);
@@ -126,7 +126,7 @@ public class MainAppController {
             if (specialRomSetMode == true) {
                 gameRenderer.previewGame(null);
                 menuPagination.setCurrentPageIndex(0);
-                PlayerConfiguration.getInstance()
+                EepromWriterConfiguration.getInstance()
                         .setCustomRomSetPath(null);
                 specialRomSetMode = false;
             }
