@@ -246,6 +246,16 @@ public class ImageUtil {
         return image;
     }
 
+    public static void trimAsMenuBackground(byte[] screen) {
+        for (int y = getHeight(CrtcDisplayData.DEFAULT_VALUE) - 1; y >= 64; y--) {
+            int lineAddress = (((y / 8) * getWidth(CrtcDisplayData.DEFAULT_VALUE)) +
+                    ((y % 8) * 2048));
+            for (int x = getWidth(CrtcDisplayData.DEFAULT_VALUE) - 1; x >= 0; x--) {
+                screen[lineAddress + x] = 0;
+            }
+        }
+    }
+
     public static byte[] embeddedPalette(byte[] screen) {
 	    if (screen.length == Constants.CPC_SCREEN_SIZE) {
             return Arrays.copyOfRange(screen, 16384 - 17, 16384);

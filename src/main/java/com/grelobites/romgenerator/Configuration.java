@@ -2,6 +2,7 @@ package com.grelobites.romgenerator;
 
 import com.grelobites.romgenerator.model.HardwareMode;
 import com.grelobites.romgenerator.util.CharSetFactory;
+import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.RamGameCompressor;
 import com.grelobites.romgenerator.util.imageloader.ImageLoader;
 import com.grelobites.romgenerator.util.imageloader.ImageType;
@@ -132,6 +133,7 @@ public class Configuration {
                     Optional<ImageLoader> loader = ImageType.imageLoader(imageFile);
                     if (loader.isPresent()) {
                         backgroundImage = loader.get().asByteArray(imageFile);
+                        ImageUtil.trimAsMenuBackground(backgroundImage);
                     } else {
                         backgroundImage = Constants.getDefaultMenuScreen();
                     }
