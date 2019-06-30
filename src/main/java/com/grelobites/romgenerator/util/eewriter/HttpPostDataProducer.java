@@ -1,10 +1,6 @@
 package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.EepromWriterConfiguration;
-import com.grelobites.romgenerator.util.Util;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,21 +11,13 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
 
-public class HttpPostDataProducer implements DataProducer {
+public class HttpPostDataProducer extends DataProducerSupport implements DataProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpPostDataProducer.class);
-    private static EepromWriterConfiguration configuration = EepromWriterConfiguration
-            .getInstance();
     private static final int SEND_BUFFER_SIZE = 1024;
 
-    private int id;
     private URLConnection connection;
-    private Runnable onFinalization;
-    private Runnable onDataSent;
-    private DoubleProperty progressProperty;
-    private byte[] data;
 
     private void init(String url) {
-        progressProperty = new SimpleDoubleProperty(0.0);
         try {
             connection = new URL(url).openConnection();
         } catch (Exception e) {
@@ -38,30 +26,15 @@ public class HttpPostDataProducer implements DataProducer {
         }
     }
 
-
     public HttpPostDataProducer(String url, int block, byte[] data) {
-        this.id = block;
+        super(block, data);
         init(url);
         setupBlockData(block, data);
     }
 
     public HttpPostDataProducer(String url, byte[] rawData) {
-        this.id = 0;
+        super(rawData);
         init(url);
-        data = rawData;
-    }
-
-    @Override
-    public int id() {
-        return id;
-    }
-
-    private void setupBlockData(int block, byte[] buffer) {
-        int blockSize = configuration.getBlockSize();
-        data = new byte[blockSize + 3];
-        System.arraycopy(buffer, 0, data, 0, blockSize);
-        data[blockSize] = Integer.valueOf(block).byteValue();
-        Util.writeAsLittleEndian(data, blockSize + 1, Util.getBlockCrc16(data, blockSize + 1));
     }
 
     @Override
@@ -99,21 +72,6 @@ public class HttpPostDataProducer implements DataProducer {
         } finally {
             Platform.runLater(onFinalization);
         }
-    }
-
-    @Override
-    public void onFinalization(Runnable onFinalization) {
-        this.onFinalization = onFinalization;
-    }
-
-    @Override
-    public void onDataChunkSent(Runnable onDataSent) {
-        this.onDataSent = onDataSent;
-    }
-
-    @Override
-    public DoubleProperty progressProperty() {
-        return progressProperty;
     }
 
 }
