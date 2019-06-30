@@ -12,7 +12,7 @@ public interface DataProducer {
 
     void onFinalization(Runnable onFinalization);
 
-    void onDataSent(Runnable onDataSent);
+    void onDataChunkSent(Runnable onDataChunkSent);
     
     DoubleProperty progressProperty();
 

@@ -8,9 +8,7 @@ import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfigura
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.OperationResult;
 import com.grelobites.romgenerator.util.Util;
-import com.grelobites.romgenerator.util.eewriter.DataProducer;
-import com.grelobites.romgenerator.util.eewriter.SerialBlockService;
-import com.grelobites.romgenerator.util.eewriter.SerialDataProducer;
+import com.grelobites.romgenerator.util.eewriter.*;
 import com.grelobites.romgenerator.util.player.SampledAudioDataPlayer;
 import javafx.animation.FadeTransition;
 import javafx.beans.InvalidationListener;
@@ -75,11 +73,9 @@ public class EepromWriterController {
 
     private BooleanProperty usbRescueSending;
 
-    private byte[] romsetByteArray;
-
     private IntegerProperty currentBlock;
 
-    private SerialBlockService serialBlockService;
+    private BlockService blockService;
 
     private ObjectProperty<SampledAudioDataPlayer> rescuePlayer;
 
@@ -89,36 +85,31 @@ public class EepromWriterController {
 
     public void onPageLeave() {
         LOGGER.debug("Executing PlayerController onPageLeave");
-        if (configuration.getSerialPort() != null) {
-            stopSerialBlockService();
-        }
+        stopBlockService();
     }
 
     public void onPageEnter() {
-        if (configuration.getSerialPort() != null) {
-            startSerialBlockService(configuration.getSerialPort());
-        }
+        startBlockService();
     }
 
     public ApplicationContext getApplicationContext() {
         return applicationContext;
     }
 
-    private void startSerialBlockService(String serialPort) {
-        LOGGER.debug("Initializing Serial Consumer");
-        if (serialBlockService != null) {
-            stopSerialBlockService();
+    private void startBlockService() {
+        if (blockService != null) {
+            stopBlockService();
         }
-        serialBlockService = new SerialBlockService(this);
-        serialBlockService.setOnDataReceived(this::ledAnimationOnDataReceived);
-        serialBlockService.start(serialPort);
+        blockService = BlockServiceFactory.getBlockService(this, configuration);
+        blockService.setOnDataReceived(this::ledAnimationOnDataReceived);
+        blockService.start();
     }
 
-    private void stopSerialBlockService() {
+    private void stopBlockService() {
         LOGGER.debug("Resetting Serial Consumer");
-        if (serialBlockService != null) {
-            serialBlockService.stop();
-            serialBlockService.close();
+        if (blockService != null) {
+            blockService.stop();
+            blockService.close();
         }
     }
 
@@ -180,7 +171,7 @@ public class EepromWriterController {
 
     public void bindDataProducer(DataProducer producer) {
         LOGGER.debug("Binding data producer " + producer);
-        producer.onDataSent(this::ledAnimationOnDataSent);
+        producer.onDataChunkSent(this::ledAnimationOnDataSent);
         producer.onFinalization(this::onEndOfMedia);
         blockProgress.progressProperty().bind(producer.progressProperty());
         currentBlock.set(producer.id());
@@ -220,8 +211,7 @@ public class EepromWriterController {
                 LOGGER.debug("Got rescue eewriter of size {}", eewriter.length);
                 System.arraycopy(eewriter, 0, data, 0,
                         Math.min(eewriter.length, Constants.RESCUE_EEWRITER_SIZE));
-                DataProducer producer = new SerialDataProducer(serialBlockService.serialPort(),
-                        Util.reverseByteArray(data));
+                DataProducer producer = blockService.getDataProducer(Util.reverseByteArray(data));
                 bindDataProducer(producer);
                 asyncSend(producer);
             } else {
@@ -302,31 +292,31 @@ public class EepromWriterController {
 
         //React to changes in the game list
         applicationContext.getGameList().addListener((InvalidationListener) e -> {
-            serialBlockService.resetRomset();
+            blockService.resetRomset();
         });
 
         DandanatorCpcConfiguration.getInstance().extraRomPathProperty()
                 .addListener(e -> {
-                    if (serialBlockService != null) {
-                        serialBlockService.resetRomset();
+                    if (blockService != null) {
+                        blockService.resetRomset();
                     }
                 });
 
         Configuration.getInstance().backgroundImagePathProperty().addListener(e -> {
-            if (serialBlockService != null) {
-                serialBlockService.resetRomset();
+            if (blockService != null) {
+                blockService.resetRomset();
             }
         });
 
         configuration.customRomSetPathProperty().addListener(e -> {
-            if (serialBlockService != null) {
-                serialBlockService.resetRomset();
+            if (blockService != null) {
+                blockService.resetRomset();
             }
         });
 
         if (configuration.getSerialPort() != null) {
-            if (serialBlockService != null) {
-                startSerialBlockService(configuration.getSerialPort());
+            if (blockService != null) {
+                startBlockService();
             }
         }
 
@@ -339,10 +329,10 @@ public class EepromWriterController {
 
         configuration.serialPortProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue != null) {
-                stopSerialBlockService();
+                stopBlockService();
             }
             if (newValue != null) {
-                startSerialBlockService(newValue);
+                startBlockService();
             }
         });
 

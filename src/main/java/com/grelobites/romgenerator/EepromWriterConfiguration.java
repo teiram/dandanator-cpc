@@ -1,9 +1,7 @@
 package com.grelobites.romgenerator;
 
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import com.grelobites.romgenerator.util.eewriter.BlockServiceType;
+import javafx.beans.property.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +19,13 @@ public class EepromWriterConfiguration {
     private static final String SERIALPORT_PROPERTY = "serialPort";
     private static final int DEFAULT_BLOCKSIZE = 0x4000;
 
+    private static final String DEFAULT_HTTP_URL = "http://dandanator.local";
+
     private StringProperty serialPort;
     private StringProperty customRomSetPath;
+    private StringProperty httpUrl;
     private IntegerProperty blockSize;
+    private ObjectProperty<BlockServiceType> blockServiceType;
 
     private static EepromWriterConfiguration INSTANCE;
 
@@ -31,7 +33,8 @@ public class EepromWriterConfiguration {
         serialPort = new SimpleStringProperty(null);
         customRomSetPath = new SimpleStringProperty(null);
         blockSize = new SimpleIntegerProperty(DEFAULT_BLOCKSIZE);
-
+        blockServiceType = new SimpleObjectProperty<>(BlockServiceType.SERIAL);
+        httpUrl = new SimpleStringProperty(DEFAULT_HTTP_URL);
         serialPort.addListener((observable, oldValue, newValue) -> persistConfigurationValue(
                 SERIALPORT_PROPERTY, newValue));
     }
@@ -89,6 +92,30 @@ public class EepromWriterConfiguration {
 
     public void setBlockSize(int blockSize) {
         this.blockSize.set(blockSize);
+    }
+
+    public BlockServiceType getBlockServiceType() {
+        return blockServiceType.get();
+    }
+
+    public ObjectProperty<BlockServiceType> blockServiceTypeProperty() {
+        return blockServiceType;
+    }
+
+    public void setBlockServiceType(BlockServiceType blockServiceType) {
+        this.blockServiceType.set(blockServiceType);
+    }
+
+    public String getHttpUrl() {
+        return httpUrl.get();
+    }
+
+    public StringProperty httpUrlProperty() {
+        return httpUrl;
+    }
+
+    public void setHttpUrl(String httpUrl) {
+        this.httpUrl.set(httpUrl);
     }
 
     public static Preferences getApplicationPreferences() {

@@ -1,80 +1,33 @@
 package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.EepromWriterConfiguration;
-import com.grelobites.romgenerator.util.OperationResult;
 import com.grelobites.romgenerator.util.SerialPortConfiguration;
-import com.grelobites.romgenerator.util.SerialPortUtils;
-import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.view.EepromWriterController;
 import javafx.application.Platform;
 import jssc.SerialPort;
-import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.Future;
 
-public class SerialBlockService {
+public class SerialBlockService extends BlockServiceSupport implements BlockService  {
     private static final Logger LOGGER = LoggerFactory.getLogger(SerialBlockService.class);
-    private static final String SERVICE_THREAD_NAME = "SerialBlockService";
     private SerialPort serialPort;
-    private Thread serviceThread;
-    private Runnable onDataReceived;
-    private final EepromWriterController controller;
     private boolean dandanatorReady = false;
     private boolean ignoreSyncRequest = false;
     private SerialPortConfiguration sendSerialPortConfiguration = SerialPortConfiguration.MODE_57600;
-    private byte[] romsetByteArray;
     private static final int MARK_SYNC_57600 = 0x55;
     private static final int MARK_SYNC_115200 = 0xF0;
     private static final int MARK_EOC = 0xAA;
 
-    private enum State {
-        STOPPED,
-        RUNNING,
-        STOPPING
-    }
-    private State state = State.STOPPED;
-
-    public SerialBlockService(EepromWriterController controller) {
-        this.controller = controller;
-    }
-
-    public void setOnDataReceived(Runnable onDataReceived) {
-        this.onDataReceived = onDataReceived;
-    }
-
-    public void resetRomset() {
-        this.romsetByteArray = null;
-    }
-
-    public void start(String serialPort) {
+    public SerialBlockService(EepromWriterController controller, EepromWriterConfiguration configuration) {
+        super(controller);
         LOGGER.debug("Creating serial port on {}", serialPort);
-        this.serialPort =  new SerialPort(serialPort);
-        this.serviceThread = new Thread(null, this::run, SERVICE_THREAD_NAME);
-        this.serviceThread.setDaemon(true);
-        this.serviceThread.start();
+        this.serialPort = new SerialPort(configuration.getSerialPort());
     }
 
-    public void stop() {
-        if (state == State.RUNNING) {
-            state = State.STOPPING;
-            while (state != State.STOPPED) {
-                try {
-                    serviceThread.join();
-                } catch (InterruptedException e) {
-                    LOGGER.debug("Interrupted while waiting for Serial listener to stop", e);
-                }
-            }
-        }
-    }
-
+    @Override
     public void close() {
         if (serialPort != null) {
             if (serialPort.isOpened()) {
@@ -102,33 +55,12 @@ public class SerialBlockService {
         }
     }
 
-    private Optional<byte[]> getRomsetByteArray() {
-        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
-        ApplicationContext applicationContext = controller.getApplicationContext();
-        try {
-            if (romsetByteArray == null) {
-                if (configuration.getCustomRomSetPath() != null) {
-                    try (FileInputStream fis = new FileInputStream(configuration.getCustomRomSetPath())) {
-                        romsetByteArray = Util.fromInputStream(fis);
-                    }
-                } else {
-                    if (applicationContext.getRomSetHandler().generationAllowedProperty().get()) {
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        applicationContext.getRomSetHandler().exportRomSet(bos);
-                        romsetByteArray = bos.toByteArray();
-                    } else {
-                        LOGGER.info("Generation of romset byte array currently unavailable");
-                    }
-                }
-            }
-            return Optional.ofNullable(romsetByteArray);
-        } catch (IOException ioe) {
-            LOGGER.error("Trying to get Romset byte array", ioe);
-            return Optional.empty();
-        }
+    @Override
+    public DataProducer getDataProducer(byte[] data) {
+        return new SerialDataProducer(serialPort, data);
     }
 
-    private Optional<DataProducer> getRomsetDataProducer(int slot) {
+    private Optional<DataProducer> getBlockDataProducer(int slot) {
         int blockSize = EepromWriterConfiguration.getInstance().getBlockSize();
         byte[] buffer = new byte[blockSize];
         Optional<byte[]> romsetByteArray = getRomsetByteArray();
@@ -139,6 +71,7 @@ public class SerialBlockService {
             return Optional.empty();
         }
     }
+
     private void handleIncomingData(byte[] data) {
         if (data.length > 0) {
             if (onDataReceived != null) {
@@ -150,7 +83,7 @@ public class SerialBlockService {
                     if (dandanatorReady) {
                         LOGGER.debug("Block {} Requested by serial port", value);
                         try {
-                            Optional<DataProducer> dataProducer = getRomsetDataProducer(value);
+                            Optional<DataProducer> dataProducer = getBlockDataProducer(value);
                             if (dataProducer.isPresent()) {
                                 Platform.runLater(() ->
                                         controller.bindDataProducer(dataProducer.get()));
@@ -173,8 +106,7 @@ public class SerialBlockService {
                 } else if (value == MARK_EOC) {
                     LOGGER.debug("Received end of communications message");
                     dandanatorReady = false;
-                    Platform.runLater(() ->
-                            controller.onCommunicationClosed());
+                    Platform.runLater(controller::onCommunicationClosed);
                 } else if (value == MARK_SYNC_57600) {
                     LOGGER.debug("Received 57600 SYNC");
                     syncAck();
@@ -220,7 +152,4 @@ public class SerialBlockService {
         state = State.STOPPED;
     }
 
-    public SerialPort serialPort() {
-        return serialPort;
-    }
 }
