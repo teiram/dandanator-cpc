@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public class HttpBlockService extends BlockServiceSupport implements BlockService  {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpBlockService.class);
+    private static final int DELAY_BETWEEN_REQUESTS = 5000;
 
     private String url;
 
@@ -57,7 +58,7 @@ public class HttpBlockService extends BlockServiceSupport implements BlockServic
             while (state == State.RUNNING) {
                 try {
                     handleIncomingData();
-                    Thread.sleep(5000);
+                    Thread.sleep(DELAY_BETWEEN_REQUESTS);
                 } catch (Exception e) {
                     LOGGER.error("In Http request", e);
                     state = State.STOPPING;
@@ -66,7 +67,7 @@ public class HttpBlockService extends BlockServiceSupport implements BlockServic
         } finally {
             close();
         }
-        LOGGER.debug("Exiting HttpBlockService thread");
+        LOGGER.debug("Exiting HttpBlockService service thread");
         state = State.STOPPED;
     }
 
