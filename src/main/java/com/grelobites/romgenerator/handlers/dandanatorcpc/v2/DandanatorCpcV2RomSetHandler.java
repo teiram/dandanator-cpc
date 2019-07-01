@@ -3,7 +3,7 @@ package com.grelobites.romgenerator.handlers.dandanatorcpc.v2;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.*;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.v1.GameHeaderV1Serializer;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.view.DandanatorCpcFrameController;
@@ -11,7 +11,6 @@ import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.util.*;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandler;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
-import com.grelobites.romgenerator.view.util.DialogUtil;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -126,13 +125,13 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     private static byte[] getEepromLoaderCode() throws IOException {
-        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
+        LoaderConfiguration configuration = LoaderConfiguration.getInstance();
         byte[] eewriter = Util.fromInputStream(configuration.getRomsetLoaderStream());
         return Util.compress(eewriter);
     }
 
     private static byte[] getEepromLoaderScreen() throws IOException {
-        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
+        LoaderConfiguration configuration = LoaderConfiguration.getInstance();
         byte[] screen = Util.fromInputStream(configuration.getScreenStream());
         return RomSetUtil.getCompressedScreen(screen);
     }
@@ -825,13 +824,13 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                     .or(Bindings.createBooleanBinding(() ->
                             applicationContext.getSelectedGame() instanceof SnapshotGame,
                             applicationContext.selectedGameProperty()).not())
-                .or(EepromWriterConfiguration.getInstance().serialPortProperty().isEmpty()));
+                .or(LoaderConfiguration.getInstance().serialPortProperty().isEmpty()));
             sendGameBySerialPort.setOnAction(f ->
                     applicationContext.addBackgroundTask(() -> {
                         try {
                             SerialGameUploader uploader = new SerialGameUploader(
                                 (SnapshotGame) applicationContext.getSelectedGame(),
-                                EepromWriterConfiguration.getInstance().getSerialPort());
+                                LoaderConfiguration.getInstance().getSerialPort());
                             uploader.run();
                             return OperationResult.successResult();
                         } catch (Exception e) {

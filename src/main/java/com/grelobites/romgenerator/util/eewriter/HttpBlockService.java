@@ -1,8 +1,8 @@
 package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.util.Util;
-import com.grelobites.romgenerator.view.EepromWriterController;
+import com.grelobites.romgenerator.view.LoaderController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +17,7 @@ public class HttpBlockService extends BlockServiceSupport implements BlockServic
 
     private String url;
 
-    public HttpBlockService(EepromWriterController controller, EepromWriterConfiguration configuration) {
+    public HttpBlockService(LoaderController controller, LoaderConfiguration configuration) {
         super(controller);
         this.url = configuration.getHttpUrl();
     }
@@ -29,7 +29,7 @@ public class HttpBlockService extends BlockServiceSupport implements BlockServic
     }
 
     private Optional<DataProducer> getBlockDataProducer(int slot) {
-        int blockSize = EepromWriterConfiguration.getInstance().getBlockSize();
+        int blockSize = LoaderConfiguration.getInstance().getBlockSize();
         byte[] buffer = new byte[blockSize];
         Optional<byte[]> romsetByteArray = getRomsetByteArray();
         if (romsetByteArray.isPresent()) {

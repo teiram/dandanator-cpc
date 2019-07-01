@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.prefs.Preferences;
 
-public class EepromWriterConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EepromWriterConfiguration.class);
+public class LoaderConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoaderConfiguration.class);
 
     private static final String DEFAULT_LOADER_BINARY = "/eewriter/eewriter.bin";
     private static final String ROMSET_LOADER_BINARY = "/eewriter/romset-eewriter.bin";
@@ -27,9 +27,9 @@ public class EepromWriterConfiguration {
     private IntegerProperty blockSize;
     private ObjectProperty<BlockServiceType> blockServiceType;
 
-    private static EepromWriterConfiguration INSTANCE;
+    private static LoaderConfiguration INSTANCE;
 
-    private EepromWriterConfiguration() {
+    private LoaderConfiguration() {
         serialPort = new SimpleStringProperty(null);
         customRomSetPath = new SimpleStringProperty(null);
         blockSize = new SimpleIntegerProperty(DEFAULT_BLOCKSIZE);
@@ -39,7 +39,7 @@ public class EepromWriterConfiguration {
                 SERIALPORT_PROPERTY, newValue));
     }
 
-    public static EepromWriterConfiguration getInstance() {
+    public static LoaderConfiguration getInstance() {
         if (INSTANCE == null) {
             INSTANCE =  newInstance();
         }
@@ -47,15 +47,15 @@ public class EepromWriterConfiguration {
     }
 
     public InputStream getLoaderStream() throws IOException {
-        return EepromWriterConfiguration.class.getResourceAsStream(DEFAULT_LOADER_BINARY);
+        return LoaderConfiguration.class.getResourceAsStream(DEFAULT_LOADER_BINARY);
     }
 
     public InputStream getRomsetLoaderStream() throws IOException {
-        return EepromWriterConfiguration.class.getResourceAsStream(ROMSET_LOADER_BINARY);
+        return LoaderConfiguration.class.getResourceAsStream(ROMSET_LOADER_BINARY);
     }
 
     public InputStream getScreenStream() throws IOException {
-        return EepromWriterConfiguration.class.getResourceAsStream(SCREEN_RESOURCE);
+        return LoaderConfiguration.class.getResourceAsStream(SCREEN_RESOURCE);
     }
 
     public String getSerialPort() {
@@ -119,7 +119,7 @@ public class EepromWriterConfiguration {
     }
 
     public static Preferences getApplicationPreferences() {
-        return Preferences.userNodeForPackage(EepromWriterConfiguration.class);
+        return Preferences.userNodeForPackage(LoaderConfiguration.class);
     }
 
     public static void persistConfigurationValue(String key, String value) {
@@ -132,14 +132,14 @@ public class EepromWriterConfiguration {
         }
     }
 
-    private static EepromWriterConfiguration setFromPreferences(EepromWriterConfiguration configuration) {
+    private static LoaderConfiguration setFromPreferences(LoaderConfiguration configuration) {
         Preferences p = getApplicationPreferences();
         configuration.serialPort.set(p.get(SERIALPORT_PROPERTY, null));
         return configuration;
     }
 
-    synchronized private static EepromWriterConfiguration newInstance() {
-        final EepromWriterConfiguration configuration = new EepromWriterConfiguration();
+    synchronized private static LoaderConfiguration newInstance() {
+        final LoaderConfiguration configuration = new LoaderConfiguration();
         return setFromPreferences(configuration);
     }
 }

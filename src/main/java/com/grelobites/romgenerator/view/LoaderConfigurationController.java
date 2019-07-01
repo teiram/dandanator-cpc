@@ -1,17 +1,16 @@
 package com.grelobites.romgenerator.view;
 
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.Util;
+import com.grelobites.romgenerator.util.eewriter.BlockServiceType;
 import com.grelobites.romgenerator.view.util.DialogUtil;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 import org.slf4j.Logger;
@@ -19,12 +18,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.function.Consumer;
 
 
-public class EepromWriterConfigurationController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EepromWriterConfigurationController.class);
+public class LoaderConfigurationController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoaderConfigurationController.class);
 
     @FXML
     private ComboBox<String> serialPort;
@@ -41,13 +39,22 @@ public class EepromWriterConfigurationController {
     @FXML
     private Button resetCustomRomSetPathButton;
 
+    @FXML
+    private RadioButton serialBlockService;
+
+    @FXML
+    private RadioButton httpBlockService;
+
+    @FXML
+    private TextField httpUrl;
+
     private boolean isReadableFile(File file) {
         return file.canRead() && file.isFile();
     }
 
     private void updateCustomRomSetPath(File romsetFile) {
         if (isReadableFile(romsetFile) && romsetFile.length() == 32 * Constants.SLOT_SIZE) {
-            EepromWriterConfiguration.getInstance().setCustomRomSetPath(romsetFile.getAbsolutePath());
+            LoaderConfiguration.getInstance().setCustomRomSetPath(romsetFile.getAbsolutePath());
         } else {
             throw new IllegalArgumentException("Invalid ROMSet file provided");
         }
@@ -117,7 +124,7 @@ public class EepromWriterConfigurationController {
 
     @FXML
     private void initialize() throws IOException {
-        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
+        LoaderConfiguration configuration = LoaderConfiguration.getInstance();
 
         setupFileBasedParameter(changeCustomRomSetPathButton,
                 LocaleUtil.i18n("useCustomRomSet"),
@@ -146,5 +153,19 @@ public class EepromWriterConfigurationController {
             serialPort.getSelectionModel().clearSelection();
             configuration.setSerialPort(null);
         }
+
+        serialBlockService.setSelected(configuration.getBlockServiceType() == BlockServiceType.SERIAL);
+        serialPort.setDisable(configuration.getBlockServiceType() == BlockServiceType.HTTP);
+        refreshSerialPorts.setDisable(configuration.getBlockServiceType() == BlockServiceType.HTTP);
+        httpUrl.setDisable(configuration.getBlockServiceType() == BlockServiceType.SERIAL);
+
+        serialBlockService.selectedProperty().addListener((object, oldValue, newValue) -> {
+            serialPort.setDisable(!newValue);
+            refreshSerialPorts.setDisable(!newValue);
+            httpUrl.setDisable(newValue);
+            configuration.setBlockServiceType(newValue ? BlockServiceType.SERIAL : BlockServiceType.HTTP);
+        });
+
+        httpUrl.textProperty().bindBidirectional(configuration.httpUrlProperty());
     }
 }

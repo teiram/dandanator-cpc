@@ -78,7 +78,7 @@ public class Constants {
 
     private static PreferencesProvider eepromwriterPreferences = new PreferencesProvider(
             LocaleUtil.i18n("loader"),
-            "/com/grelobites/romgenerator/view/eepromwriterconfiguration.fxml",
+            "/com/grelobites/romgenerator/view/loaderconfiguration.fxml",
             PreferencesProvider.PRECEDENCE_OTHER);
 
     /*

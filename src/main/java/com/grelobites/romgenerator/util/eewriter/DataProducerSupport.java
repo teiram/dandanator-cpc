@@ -1,6 +1,6 @@
 package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.util.Util;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 public class DataProducerSupport {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProducerSupport.class);
-    private static EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
+    private static LoaderConfiguration configuration = LoaderConfiguration.getInstance();
 
     protected int id;
     protected Runnable onFinalization;

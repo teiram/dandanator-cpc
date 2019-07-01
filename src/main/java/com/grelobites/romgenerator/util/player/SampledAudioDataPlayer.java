@@ -1,7 +1,6 @@
 package com.grelobites.romgenerator.util.player;
 
 import com.grelobites.romgenerator.ApplicationContext;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;

@@ -1,8 +1,8 @@
 package com.grelobites.romgenerator.util.eewriter;
 
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.util.SerialPortConfiguration;
-import com.grelobites.romgenerator.view.EepromWriterController;
+import com.grelobites.romgenerator.view.LoaderController;
 import javafx.application.Platform;
 import jssc.SerialPort;
 import jssc.SerialPortTimeoutException;
@@ -21,7 +21,7 @@ public class SerialBlockService extends BlockServiceSupport implements BlockServ
     private static final int MARK_SYNC_115200 = 0xF0;
     private static final int MARK_EOC = 0xAA;
 
-    public SerialBlockService(EepromWriterController controller, EepromWriterConfiguration configuration) {
+    public SerialBlockService(LoaderController controller, LoaderConfiguration configuration) {
         super(controller);
         LOGGER.debug("Creating serial port on {}", serialPort);
         this.serialPort = new SerialPort(configuration.getSerialPort());
@@ -61,7 +61,7 @@ public class SerialBlockService extends BlockServiceSupport implements BlockServ
     }
 
     private Optional<DataProducer> getBlockDataProducer(int slot) {
-        int blockSize = EepromWriterConfiguration.getInstance().getBlockSize();
+        int blockSize = LoaderConfiguration.getInstance().getBlockSize();
         byte[] buffer = new byte[blockSize];
         Optional<byte[]> romsetByteArray = getRomsetByteArray();
         if (romsetByteArray.isPresent()) {

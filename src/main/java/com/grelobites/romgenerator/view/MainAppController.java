@@ -3,7 +3,7 @@ package com.grelobites.romgenerator.view;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.RomSetUtil;
 import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameType;
@@ -22,7 +22,6 @@ import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
@@ -32,7 +31,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
 import javafx.util.StringConverter;
@@ -89,7 +87,7 @@ public class MainAppController {
     private Pane romSetHandlerInfoPane;
 
     private Pane eepromWriterPane;
-    private EepromWriterController eepromWriterController;
+    private LoaderController loaderController;
 
     public MainAppController(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -110,7 +108,7 @@ public class MainAppController {
         Optional<InputStream> screenResource;
         if (files.size() == 1 &&
                 (screenResource = RomSetUtil.getKnownRomScreenResource(files.get(0))).isPresent()) {
-            EepromWriterConfiguration.getInstance()
+            LoaderConfiguration.getInstance()
                     .setCustomRomSetPath(files.get(0).getPath());
             applicationContext.getGameList().clear();
             menuPagination.setCurrentPageIndex(1);
@@ -126,7 +124,7 @@ public class MainAppController {
             if (specialRomSetMode == true) {
                 gameRenderer.previewGame(null);
                 menuPagination.setCurrentPageIndex(0);
-                EepromWriterConfiguration.getInstance()
+                LoaderConfiguration.getInstance()
                         .setCustomRomSetPath(null);
                 specialRomSetMode = false;
             }
@@ -203,13 +201,13 @@ public class MainAppController {
         menuPagination.setPageFactory((index) -> {
             switch (index) {
                 case 0:
-                    if (eepromWriterController != null) {
-                        eepromWriterController.onPageLeave();
+                    if (loaderController != null) {
+                        loaderController.onPageLeave();
                     }
                     return menuPreview;
                 case 1:
-                    if (eepromWriterController != null) {
-                        eepromWriterController.onPageEnter();
+                    if (loaderController != null) {
+                        loaderController.onPageEnter();
                     }
                     return getEepromWriterPane();
                 default:
@@ -451,18 +449,18 @@ public class MainAppController {
         }
     }
 
-    private EepromWriterController getEepromWriterController(ApplicationContext applicationContext) {
-        if (eepromWriterController == null) {
-            eepromWriterController = new EepromWriterController(applicationContext);
+    private LoaderController getEepromWriterController(ApplicationContext applicationContext) {
+        if (loaderController == null) {
+            loaderController = new LoaderController(applicationContext);
         }
-        return eepromWriterController;
+        return loaderController;
     }
 
     private Pane getEepromWriterPane() {
         try {
             if (eepromWriterPane == null) {
                 FXMLLoader loader = new FXMLLoader();
-                loader.setLocation(MainAppController.class.getResource("eepromwriter.fxml"));
+                loader.setLocation(MainAppController.class.getResource("loader.fxml"));
                 loader.setController(getEepromWriterController(applicationContext));
                 loader.setResources(LocaleUtil.getBundle());
                 eepromWriterPane = loader.load();

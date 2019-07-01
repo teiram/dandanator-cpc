@@ -3,7 +3,7 @@ package com.grelobites.romgenerator.view;
 import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConfiguration;
 import com.grelobites.romgenerator.util.LocaleUtil;
 import com.grelobites.romgenerator.util.OperationResult;
@@ -30,15 +30,15 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.Future;
 
-public class EepromWriterController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EepromWriterController.class);
+public class LoaderController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoaderController.class);
 
     private static final String PLAY_BUTTON_STYLE = "button-send";
     private static final String STOP_BUTTON_STYLE = "button-stop";
     private static final int ROMSET_SIZE = Constants.SLOT_SIZE * 32;
 
     private static final String UNDEFINED_STRING = "--";
-    private static EepromWriterConfiguration configuration = EepromWriterConfiguration
+    private static LoaderConfiguration configuration = LoaderConfiguration
             .getInstance();
 
     @FXML
@@ -133,7 +133,7 @@ public class EepromWriterController {
         ft.play();
     }
 
-    public EepromWriterController(ApplicationContext applicationContext) {
+    public LoaderController(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         playing = new SimpleBooleanProperty(false);
         rescuePlaying = new SimpleBooleanProperty(false);

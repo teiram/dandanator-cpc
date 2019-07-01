@@ -1,9 +1,9 @@
 package com.grelobites.romgenerator.util.eewriter;
 
 import com.grelobites.romgenerator.ApplicationContext;
-import com.grelobites.romgenerator.EepromWriterConfiguration;
+import com.grelobites.romgenerator.LoaderConfiguration;
 import com.grelobites.romgenerator.util.Util;
-import com.grelobites.romgenerator.view.EepromWriterController;
+import com.grelobites.romgenerator.view.LoaderController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ public abstract class BlockServiceSupport {
 
     protected Thread serviceThread;
     protected Runnable onDataReceived;
-    protected final EepromWriterController controller;
+    protected final LoaderController controller;
     protected byte[] romsetByteArray;
 
     protected enum State {
@@ -28,7 +28,7 @@ public abstract class BlockServiceSupport {
     }
     protected State state = State.STOPPED;
 
-    public BlockServiceSupport(EepromWriterController controller) {
+    public BlockServiceSupport(LoaderController controller) {
         this.controller = controller;
     }
 
@@ -62,7 +62,7 @@ public abstract class BlockServiceSupport {
     }
 
     protected Optional<byte[]> getRomsetByteArray() {
-        EepromWriterConfiguration configuration = EepromWriterConfiguration.getInstance();
+        LoaderConfiguration configuration = LoaderConfiguration.getInstance();
         ApplicationContext applicationContext = controller.getApplicationContext();
         try {
             if (romsetByteArray == null) {
