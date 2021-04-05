@@ -35,6 +35,7 @@ public class GameMapperV2 implements GameMapper {
     private List<GameBlock> blocks = new ArrayList<>();
     private TrainerList trainerList = new TrainerList(null);
     private int trainerCount;
+    private boolean autoboot;
     private Game game;
 
     private GameMapperV2(SlotZeroV2 slotZero) {
@@ -182,6 +183,7 @@ public class GameMapperV2 implements GameMapper {
                     if (isGameCompressed) {
                         snapshotGame.setCompressedData(getGameCompressedData());
                     }
+                    snapshotGame.setAutoboot(autoboot);
                     game = snapshotGame;
                     break;
                 case RAM128_MLD:
@@ -190,6 +192,7 @@ public class GameMapperV2 implements GameMapper {
                     Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(gameSlots);
                     if (mldInfo.isPresent()) {
                         game = new MLDGame(mldInfo.get(), gameSlots);
+                        game.setAutoboot(autoboot);
                     } else {
                         LOGGER.error("Unable to restore MLDGame from ROMSet. No MLDInfo found");
                     }
@@ -202,6 +205,14 @@ public class GameMapperV2 implements GameMapper {
         }
         LOGGER.debug("Game generated as " + game);
         return game;
+    }
+
+    public boolean isAutoboot() {
+        return autoboot;
+    }
+
+    public void setAutoboot(boolean autoboot) {
+        this.autoboot = autoboot;
     }
 
     @Override

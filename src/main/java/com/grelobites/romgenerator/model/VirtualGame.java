@@ -1,7 +1,9 @@
 package com.grelobites.romgenerator.model;
 
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -14,11 +16,13 @@ public class VirtualGame implements Game {
     protected GameType gameType;
     protected StringProperty name;
     protected IntegerProperty version;
+    protected BooleanProperty autobootProperty;
 
    public VirtualGame(GameType gameType, String name) {
         this.gameType = gameType;
         this.name = new SimpleStringProperty(name);
         this.version = new SimpleIntegerProperty();
+        this.autobootProperty = new SimpleBooleanProperty();
     }
 
     @Override
@@ -90,6 +94,20 @@ public class VirtualGame implements Game {
     @Override
     public int getSize() {
         return 0;
+    }
+
+    @Override
+    public boolean isAutoboot() {
+        return false;
+    }
+
+    @Override
+    public void setAutoboot(boolean autoboot) {
+    }
+
+    @Override
+    public BooleanProperty getAutobootProperty() {
+       return autobootProperty;
     }
 
     @Override

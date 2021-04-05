@@ -1,7 +1,10 @@
 package com.grelobites.romgenerator.model;
 
+import com.grelobites.romgenerator.ApplicationContext;
 import com.grelobites.romgenerator.Constants;
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import org.slf4j.Logger;
@@ -15,6 +18,7 @@ public class BaseGame {
 
 
 	protected StringProperty name;
+	protected BooleanProperty autoboot;
 	protected List<byte[]> data;
     protected GameType gameType;
     protected Integer size;
@@ -41,6 +45,16 @@ public class BaseGame {
 	    this.gameType = gameType;
         this.data = reduceZeroedSlots(data);
 		name = new SimpleStringProperty();
+		autoboot = new SimpleBooleanProperty(false);
+		autoboot.addListener((observable, oldValue, newValue) -> {
+		    if (newValue) {
+                ApplicationContext.getInstance().getGameList().forEach(g -> {
+                    if (g != this) {
+                        g.setAutoboot(false);
+                    }
+                });
+            }
+        });
 	}
 
 	public String getName() {
@@ -54,6 +68,22 @@ public class BaseGame {
 	public StringProperty nameProperty() {
 		return this.name;
 	}
+
+    public boolean isAutoboot() {
+        return autoboot.get();
+    }
+
+    public BooleanProperty autobootProperty() {
+        return autoboot;
+    }
+
+    public void setAutoboot(boolean autoboot) {
+        this.autoboot.set(autoboot);
+    }
+
+    public BooleanProperty getAutobootProperty() {
+        return autoboot;
+    }
 
     @Override
     public String toString() {
@@ -95,7 +125,7 @@ public class BaseGame {
     }
 
     public Observable[] getObservable() {
-        return new Observable[] {name};
+        return new Observable[] {name, autoboot};
     }
 
 }

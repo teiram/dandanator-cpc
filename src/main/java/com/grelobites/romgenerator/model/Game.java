@@ -41,4 +41,8 @@ public interface Game {
 
     List<byte[]> getData();
 
+    boolean isAutoboot();
+    void setAutoboot(boolean autoboot);
+    BooleanProperty getAutobootProperty();
+
 }

@@ -26,6 +26,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
@@ -66,6 +67,9 @@ public class MainAppController {
 
     @FXML
     private TableColumn<Game, String> nameColumn;
+
+    @FXML
+    private TableColumn<Game, Boolean> autobootColumn;
 
     @FXML
     private Button createRomButton;
@@ -320,6 +324,10 @@ public class MainAppController {
                     }
                 }));
 
+        autobootColumn.setCellValueFactory(
+                cellData -> cellData.getValue().getAutobootProperty());
+
+        autobootColumn.setCellFactory(tc -> new CheckBoxTableCell<>());
 
         gameTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> onGameSelection(oldValue, newValue));

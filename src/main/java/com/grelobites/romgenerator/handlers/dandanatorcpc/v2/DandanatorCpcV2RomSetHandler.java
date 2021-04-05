@@ -394,6 +394,16 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         return lastMldSaveSector;
     }
 
+    private static int getAutobootGameIndex(List<Game> games) {
+        int index = 0;
+        for (Game game: games) {
+            index++;
+            if (game.isAutoboot()) {
+                return index;
+            }
+        }
+        return 0;
+    }
     @Override
     public void exportRomSet(OutputStream stream) {
         try {
@@ -486,7 +496,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             LOGGER.debug("Dumped CBlocks table {}. Offset {}",
                     Util.dumpAsHexString(cBlocksTable.toByteArray()), os.size());
 
-            os.write(dmConfiguration.isAutoboot() ? 1 : 0);
+            int autobootIndex = getAutobootGameIndex(games);
+            LOGGER.debug("Autoboot value is {}", autobootIndex);
+            os.write(autobootIndex);
             LOGGER.debug("Dumped autoboot configuration. Offset: {}", os.size());
 
             Util.fillWithValue(os, (byte) 0, Constants.SLOT_SIZE - os.size());

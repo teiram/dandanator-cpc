@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +33,6 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
     private String launchGameMessage;
     private String selectPokesMessage;
     List<GameBlock> gameBlocks;
-    private Boolean autoboot;
 
     public SlotZeroV1(byte[] data) {
         super(data);
@@ -126,7 +124,6 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
         selectPokesMessage = Util.getNullTerminatedString(textDataStream, DandanatorCpcConstants.GAMENAME_SIZE);
 
         charSet = RomSetUtil.decodeCharset(encodedCharset);
-        autoboot = data[V1Constants.AUTOBOOT_OFFSET] == 0 ? false : true;
     }
 
     @Override
@@ -142,11 +139,6 @@ public class SlotZeroV1 extends SlotZeroBase implements SlotZero {
     @Override
     public byte[] getScreenPalette() {
         return screenPalette;
-    }
-
-    @Override
-    public boolean getAutoboot() {
-        return autoboot;
     }
 
     @Override

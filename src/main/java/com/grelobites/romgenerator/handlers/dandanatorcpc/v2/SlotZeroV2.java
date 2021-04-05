@@ -30,7 +30,6 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
     private String launchGameMessage;
     private String selectPokesMessage;
     List<GameBlock> gameBlocks;
-    private boolean autoboot;
     private boolean extraRomPresent;
     private boolean enforceFollowRom;
 
@@ -125,9 +124,18 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
 
         charSet = RomSetUtil.decodeCharset(encodedCharset);
 
-        autoboot = data[V2Constants.AUTOBOOT_OFFSET] == 0 ? false : true;
-        enforceFollowRom = data[V2Constants.ENFORCE_FOLLOWROM_OFFSET] == 0 ? false : true;
-        extraRomPresent = data[V2Constants.EXTRA_ROM_PRESENT_OFFSET] == 0 ? false : true;
+        int autoboot = data[V2Constants.AUTOBOOT_OFFSET];
+        LOGGER.debug("Autoboot read from romset is {}", autoboot);
+        if (autoboot > 0) {
+            if (gameMappers.size() >= autoboot) {
+                gameMappers.get(autoboot - 1).setAutoboot(true);
+            } else {
+                LOGGER.warn("Index for autoboot out of bounds. List size is {}", gameMappers.size());
+            }
+        }
+
+        enforceFollowRom = data[V2Constants.ENFORCE_FOLLOWROM_OFFSET] != 0;
+        extraRomPresent = data[V2Constants.EXTRA_ROM_PRESENT_OFFSET] != 0;
     }
 
     @Override
@@ -143,11 +151,6 @@ public class SlotZeroV2 extends SlotZeroBase implements SlotZero {
     @Override
     public byte[] getScreenPalette() {
         return screenPalette;
-    }
-
-    @Override
-    public boolean getAutoboot() {
-        return autoboot;
     }
 
     @Override

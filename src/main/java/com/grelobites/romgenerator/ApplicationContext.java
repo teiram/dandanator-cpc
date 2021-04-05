@@ -19,6 +19,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
@@ -94,6 +95,7 @@ public class ApplicationContext {
         this.backgroundTaskCount = new SimpleIntegerProperty();
         this.applicationTitle = new SimpleStringProperty();
         this.exportGameMenuEntryMessage = new SimpleStringProperty(LocaleUtil.i18n("exportGameMenuEntry"));
+
         updateApplicationTitle();
     }
 

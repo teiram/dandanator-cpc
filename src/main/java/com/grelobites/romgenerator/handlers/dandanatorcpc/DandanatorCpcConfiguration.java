@@ -33,7 +33,6 @@ public class DandanatorCpcConfiguration {
     private StringProperty extraRomMessage;
     private StringProperty launchGameMessage;
     private StringProperty selectPokesMessage;
-    private BooleanProperty autoboot;
 
 
     private byte[] dandanatorRom;
@@ -70,7 +69,6 @@ public class DandanatorCpcConfiguration {
         extraRomMessage = new SimpleStringProperty();
         launchGameMessage = new SimpleStringProperty();
         selectPokesMessage = new SimpleStringProperty();
-        autoboot = new SimpleBooleanProperty(false);
     }
 
     private static boolean validConfigurationValue(String value) {
@@ -177,18 +175,6 @@ public class DandanatorCpcConfiguration {
 
     public StringProperty extraRomMessageProperty() {
         return extraRomMessage;
-    }
-
-    public boolean isAutoboot() {
-        return autoboot.get();
-    }
-
-    public BooleanProperty autobootProperty() {
-        return autoboot;
-    }
-
-    public void setAutoboot(boolean autoboot) {
-        this.autoboot.set(autoboot);
     }
 
     public String getLaunchGameMessage() {

@@ -65,10 +65,6 @@ public interface SlotZero {
 
     boolean getDisableBorderEffect();
 
-    default boolean getAutoboot() {
-        return false;
-    }
-
     default boolean getExtraRomPresent() { return true; }
 
     default boolean getEnforceFollowRom() { return false; }

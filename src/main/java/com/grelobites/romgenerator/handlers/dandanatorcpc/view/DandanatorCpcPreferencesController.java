@@ -56,9 +56,6 @@ public class DandanatorCpcPreferencesController {
     @FXML
     private Button resetExtraRomButton;
 
-    @FXML
-    private CheckBox autoboot;
-
     private static String getRomFileName(String name) {
         int extensionLocation = name.lastIndexOf(".");
         return extensionLocation > 0 ? name.substring(0, extensionLocation) : name;
@@ -201,9 +198,6 @@ public class DandanatorCpcPreferencesController {
                 () -> {
                     extraRomMessage.setText(DandanatorCpcConstants.DEFAULT_EXTRAROMKEY_MESSAGE);
                 });
-
-        autoboot.selectedProperty().bindBidirectional(
-                DandanatorCpcConfiguration.getInstance().autobootProperty());
 
     }
 }

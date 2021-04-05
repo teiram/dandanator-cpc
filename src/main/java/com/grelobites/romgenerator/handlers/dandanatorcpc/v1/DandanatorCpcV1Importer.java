@@ -74,7 +74,6 @@ public class DandanatorCpcV1Importer implements DandanatorCpcImporter {
             dandanatorCpcConfiguration.setTogglePokesMessage(slotZero.getTogglePokesMessage());
             dandanatorCpcConfiguration.setLaunchGameMessage(slotZero.getLaunchGameMessage());
             dandanatorCpcConfiguration.setSelectPokesMessage(slotZero.getSelectPokesMessage());
-            dandanatorCpcConfiguration.setAutoboot(slotZero.getAutoboot());
         } catch (Exception e) {
             LOGGER.error("Importing RomSet", e);
         }

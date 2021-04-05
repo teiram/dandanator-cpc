@@ -45,7 +45,8 @@
          </tooltip></ProgressIndicator>
       <TableView fx:id="gameTable" editable="true" layoutX="5.0" layoutY="222.0" prefHeight="220.0" prefWidth="320.0" AnchorPane.leftAnchor="5.0">
         <columns>
-          <TableColumn fx:id="nameColumn" prefWidth="-1.0" text="%gameNameColumn" />
+          <TableColumn fx:id="nameColumn" prefWidth="222.0" resizable="false" text="%gameNameColumn" />
+            <TableColumn fx:id="autobootColumn" prefWidth="96.0" resizable="false" text="%gameAutobootColumn" />
         </columns>
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
