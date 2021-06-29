@@ -51,7 +51,7 @@ public class DandanatorCpcV2Importer implements DandanatorCpcImporter {
 
             byte[] extraRom = null;
             if (slotZero.getExtraRomPresent()) {
-                is.safeSkip(Constants.SLOT_SIZE * DandanatorCpcConstants.GAME_SLOTS - is.position());
+                is.safeSkip(Constants.SLOT_SIZE * (DandanatorCpcConstants.GAME_SLOTS - 1) - is.position());
                 LOGGER.debug("Getting extraRom with offset {}", is.position());
                 extraRom = is.getAsByteArray(Constants.SLOT_SIZE);
             }

@@ -207,7 +207,7 @@ public class SnapshotGame extends BaseGame implements RamGame {
 
 	@Override
     public Observable[] getObservable() {
-	    return new Observable[]{name, holdScreen, compressed, compressedSize, autoboot};
+	    return new Observable[]{name, holdScreen, compressed, compressedSize};
     }
 
     private class CompressingContext {
