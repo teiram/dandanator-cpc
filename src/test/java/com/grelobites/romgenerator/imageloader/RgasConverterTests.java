@@ -15,7 +15,7 @@ public class RgasConverterTests {
         RgasImageLoader imageLoader = new RgasImageLoader();
         File input = new File("src/test/resources/image/test.rgas");
         if (imageLoader.supportsFile(input)) {
-            try (FileOutputStream fos = new FileOutputStream("output/image.bin")) {
+            try (FileOutputStream fos = new FileOutputStream("image.bin")) {
                 fos.write(imageLoader.asByteArray(input));
             }
         } else {

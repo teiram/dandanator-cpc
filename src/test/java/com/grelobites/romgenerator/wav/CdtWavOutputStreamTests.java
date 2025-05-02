@@ -160,7 +160,7 @@ public class CdtWavOutputStreamTests {
     @Test
     public void lalaToWavTest() throws Exception {
         InputStream cdt = CdtWavOutputStreamTests.class.getResourceAsStream("/cdt/lala.cdt");
-        OutputStream output = new FileOutputStream(new File("output/lala.wav"));
+        OutputStream output = new FileOutputStream(new File("lala.wav"));
         CdtWavOutputStream converter = new CdtWavOutputStream(WavFormat.DEFAULT_FORMAT, cdt, output);
         converter.flush();
     }
@@ -168,7 +168,7 @@ public class CdtWavOutputStreamTests {
     @Test
     public void puzznicToWavTest() throws Exception {
         InputStream cdt = CdtWavOutputStreamTests.class.getResourceAsStream("/cdt/puzznic.cdt");
-        OutputStream output = new FileOutputStream(new File("output/puzznic.wav"));
+        OutputStream output = new FileOutputStream(new File("puzznic.wav"));
         CdtWavOutputStream converter = new CdtWavOutputStream(WavFormat.DEFAULT_FORMAT, cdt, output);
         converter.flush();
     }
@@ -207,7 +207,7 @@ public class CdtWavOutputStreamTests {
                 .withExecAddress(0x2000)
                 .withName("Lala Loader")
                 .build());
-        builder.dump(new FileOutputStream(new File("output/test.cdt")));
+        builder.dump(new FileOutputStream(new File("test.cdt")));
     }
 
     @Test

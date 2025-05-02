@@ -61,7 +61,7 @@ public class RescueDskTests {
             bos.write(trackInfo.toByteArray());
             bos.write(fsData, trackDataSize * i, trackDataSize);
         }
-        try (FileOutputStream fos = new FileOutputStream("output/rescue.dsk")) {
+        try (FileOutputStream fos = new FileOutputStream("rescue.dsk")) {
             fos.write(bos.toByteArray());
         }
     }

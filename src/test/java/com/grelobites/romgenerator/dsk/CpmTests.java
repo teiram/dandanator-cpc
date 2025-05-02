@@ -20,7 +20,7 @@ public class CpmTests {
         for (int i = 0; i < track0.getInformation().getSectorCount(); i++) {
             if (track0.getInformation().getSectorInformation(i).getSectorId() == 0x41) {
                 LOGGER.debug("Found boot sector at index {}", i);
-                try (FileOutputStream fos = new FileOutputStream("output/bootcpm.img")) {
+                try (FileOutputStream fos = new FileOutputStream("bootcpm.img")) {
                     fos.write(track0.getSectorData(i));
                 }
                 return;

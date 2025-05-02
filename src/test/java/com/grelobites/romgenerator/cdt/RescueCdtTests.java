@@ -18,7 +18,7 @@ public class RescueCdtTests {
                 .withExecAddress(0x6000)
                 .withName("RESCUE EEWRITER")
                 .build());
-        try (FileOutputStream fos = new FileOutputStream("output/rescue.cdt")) {
+        try (FileOutputStream fos = new FileOutputStream("rescue.cdt")) {
             builder.dump(fos);
         }
     }
