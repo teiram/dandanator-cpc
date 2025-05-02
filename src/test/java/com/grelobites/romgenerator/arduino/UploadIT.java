@@ -9,13 +9,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
-public class UploadTests {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UploadTests.class);
+public class UploadIT {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UploadIT.class);
     private static final String SERIAL_PORT = "/dev/ttyACM0";
 
     @Test
@@ -39,7 +37,7 @@ public class UploadTests {
         LOGGER.debug("Signature is {}", Arrays.toString(signature));
 
         List<Binary> binaries = HexUtil.toBinaryList(
-                UploadTests.class.getResourceAsStream("/hex/JTAGTest.hex"));
+                UploadIT.class.getResourceAsStream("/hex/JTAGTest.hex"));
 
         LOGGER.debug("Got {} binaries from hex stream", binaries.size());
         if (binaries.size() > 0) {
@@ -61,6 +59,6 @@ public class UploadTests {
                 SerialPort.PARITY_NONE);
 
         XsvfUploader uploader = new XsvfUploader(serialPort);
-        uploader.upload(UploadTests.class.getResourceAsStream("/xsvf/dan-fix.xsvf"));
+        uploader.upload(UploadIT.class.getResourceAsStream("/xsvf/dan-fix.xsvf"));
     }
 }

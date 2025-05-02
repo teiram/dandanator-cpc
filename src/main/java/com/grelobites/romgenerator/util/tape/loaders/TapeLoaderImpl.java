@@ -74,7 +74,8 @@ public class TapeLoaderImpl extends BaseEmulator implements TapeLoader {
         tapePlayer.insert(tapeFile);
 
         ApplicationContext context = ApplicationContext.getInstance();
-        Image savedPreview = context.getGamePreview().getImage();
+        Image savedPreview = context.getGamePreview() != null ?
+                context.getGamePreview().getImage() : null;
         loadSnapshot(loaderResources.snaLoader());
 
         setGamePreview(getScreenshot());

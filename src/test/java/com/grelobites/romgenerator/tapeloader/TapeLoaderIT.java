@@ -14,13 +14,13 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.File;
 
-public class TapeLoaderTests {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderTests.class);
+public class TapeLoaderIT {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TapeLoaderIT.class);
     @Test
     public void tapeLoadTest() throws Exception {
         TapeLoaderImpl loader = new TapeLoaderImpl(HardwareMode.HW_CPC464,
                 Cpc464LoaderResources.getInstance());
-        InputStream cdt = TapeLoaderTests.class.getResourceAsStream("/cdt/freddy1.cdt");
+        InputStream cdt = TapeLoaderIT.class.getResourceAsStream("/cdt/freddy1.cdt");
         Game game = loader.loadTape(cdt);
         new SNAGameImageLoader().save(game,
                 new FileOutputStream(new File("/home/mteira/Escritorio/test.sna")));

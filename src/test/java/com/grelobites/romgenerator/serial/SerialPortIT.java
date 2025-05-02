@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class SerialPortTests {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SerialPortTests.class);
+public class SerialPortIT {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SerialPortIT.class);
 
     private enum SerialPortConfiguration {
         MODE_115200(SerialPort.BAUDRATE_115200,
@@ -83,7 +83,7 @@ public class SerialPortTests {
         boolean ignoreSyncRequest = false;
         boolean dandanatorReady = false;
         byte[] romset = Util.fromInputStream(
-                SerialPortTests.class.getResourceAsStream("/romset/dandanator_2.0.rom"));
+                SerialPortIT.class.getResourceAsStream("/romset/dandanator_2.0.rom"));
         SerialPortConfiguration sendSerialPortConfiguration = SerialPortConfiguration.MODE_57600;
 
         while (!communicationFinished) {
