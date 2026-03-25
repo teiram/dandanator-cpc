@@ -7,8 +7,8 @@ public enum GameType {
     LOWER_UPPER_ROM(2, 32, "Lower and Upper ROM"),
     RAM64(4, 64, "64K"),
     RAM128(8, 128, "128K"),
-    RAM64_MLD(0x84, 64, "MLD 64K"),
-    RAM128_MLD(0x88, 128, "MLD 128K");
+    RAM64_MLD(0x84, 64, "MLA 64K"),
+    RAM128_MLD(0x88, 128, "MLA 128K");
 
     private static final int MLD_MASK = 0x80;
 
@@ -32,6 +32,10 @@ public enum GameType {
 
     public int sizeInKBytes() {
         return sizeInKBytes;
+    }
+
+    public boolean isMLD() {
+        return (typeId & 0x80) != 0;
     }
 
     public static GameType byTypeId(int id) {

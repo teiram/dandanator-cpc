@@ -106,6 +106,8 @@ public class RomSetUtil {
             System.arraycopy(game.getSlot(DandanatorCpcConstants.GAME_CHUNK_SLOT),
                     Constants.SLOT_SIZE - DandanatorCpcConstants.GAME_CHUNK_SIZE,
                     chunk, 0, DandanatorCpcConstants.GAME_CHUNK_SIZE);
+        } else {
+            Arrays.fill(chunk, Constants.B_FF);
         }
         return chunk;
     }

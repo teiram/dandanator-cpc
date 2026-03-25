@@ -139,7 +139,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
 
     private static byte[] getPaddedGameHeader(Game game) throws IOException {
         byte[] paddedHeader = new byte[V2Constants.GAME_HEADER_SIZE];
-        Arrays.fill(paddedHeader, Constants.B_00);
+        Arrays.fill(paddedHeader, Constants.B_FF);
         if (game instanceof SnapshotGame) {
             SnapshotGame snapshotGame = (SnapshotGame) game;
             ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -163,7 +163,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             os.write(interruptDisable ? Z80Opcode.DI : Z80Opcode.EI);
             os.write(Z80Opcode.RET);
         } else {
-            os.write(new byte[V2Constants.GAME_LAUNCHCODE_SIZE]);
+            byte[] emptyHeader = new byte[V2Constants.GAME_LAUNCHCODE_SIZE];
+            Arrays.fill(emptyHeader, Constants.B_FF);
+            os.write(emptyHeader);
         }
     }
 
@@ -182,36 +184,35 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
         //For MLD games we encode the number of slots in the first CBlock. The rest set to FF
         if (game instanceof MLDGame) {
-            int requiredSlots = game.getSlotCount(); //Since game.getSize() includes save space
-            int startOffset = offsets.forwardOffset - (requiredSlots * Constants.SLOT_SIZE);
-            LOGGER.debug("Writing MLD CBlock with offset {}", startOffset);
-            gameCBlocks.write(startOffset / Constants.SLOT_SIZE);
+            int requiredSlots = game.getSize() / Constants.SLOT_SIZE;
+            offsets.backwardsOffset -= game.getSize();
+            LOGGER.debug("Writing MLD CBlock with offset {}, requiredSlots {}", offsets.backwardsOffset, requiredSlots);
+            gameCBlocks.write(offsets.backwardsOffset / Constants.SLOT_SIZE);
             gameCBlocks.write(asLittleEndianWord(Constants.B_00));
             gameCBlocks.write(asLittleEndianWord(requiredSlots));
-            offsets.forwardOffset = startOffset;
         } else {
-        for (byte[] block: blocks) {
-            if (block != null) {
-                if (block.length < Constants.SLOT_SIZE) {
-                    LOGGER.debug("Writing compressed CBlock with offset {} and length {}", offsets.forwardOffset, block.length);
-                    gameCBlocks.write(offsets.forwardOffset / Constants.SLOT_SIZE);
-                    gameCBlocks.write(asLittleEndianWord(offsets.forwardOffset % Constants.SLOT_SIZE));
-                    gameCBlocks.write(asLittleEndianWord(block.length));
-                    offsets.forwardOffset += block.length;
-                } else if (block.length == Constants.SLOT_SIZE) {
-                    offsets.backwardsOffset -= Constants.SLOT_SIZE;
-                    LOGGER.debug("Writing uncompressed CBlock with offset {} and length {}", offsets.backwardsOffset, block.length);
-                    gameCBlocks.write(offsets.backwardsOffset / Constants.SLOT_SIZE);
-                    gameCBlocks.write(asLittleEndianWord(Constants.B_00)); //Blocks always at offset 0 (uncompressed)
-                    gameCBlocks.write(asLittleEndianWord(Constants.SLOT_SIZE));
+            for (byte[] block: blocks) {
+                if (block != null) {
+                    if (block.length < Constants.SLOT_SIZE) {
+                        LOGGER.debug("Writing compressed CBlock with offset {} and length {}", offsets.forwardOffset, block.length);
+                        gameCBlocks.write(offsets.forwardOffset / Constants.SLOT_SIZE);
+                        gameCBlocks.write(asLittleEndianWord(offsets.forwardOffset % Constants.SLOT_SIZE));
+                        gameCBlocks.write(asLittleEndianWord(block.length));
+                        offsets.forwardOffset += block.length;
+                    } else if (block.length == Constants.SLOT_SIZE) {
+                        offsets.backwardsOffset -= Constants.SLOT_SIZE;
+                        LOGGER.debug("Writing uncompressed CBlock with offset {} and length {}", offsets.backwardsOffset, block.length);
+                        gameCBlocks.write(offsets.backwardsOffset / Constants.SLOT_SIZE);
+                        gameCBlocks.write(asLittleEndianWord(Constants.B_00)); //Blocks always at offset 0 (uncompressed)
+                        gameCBlocks.write(asLittleEndianWord(Constants.SLOT_SIZE));
+                    } else {
+                        throw new IllegalStateException("Attempt to write a block exceeding " + Constants.SLOT_SIZE);
+                    }
                 } else {
-                    throw new IllegalStateException("Attempt to write a block exceeding " + Constants.SLOT_SIZE);
+                    LOGGER.debug("Writing empty CBlock");
+                    gameCBlocks.write(EMPTY_CBLOCK);
                 }
-            } else {
-                LOGGER.debug("Writing empty CBlock");
-                gameCBlocks.write(EMPTY_CBLOCK);
             }
-        }
         }
 
         //Fill the remaining space with 0xFF
@@ -222,9 +223,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
     }
 
     protected static void dumpGameName(OutputStream os, Game game, int index) throws IOException {
-        int gameSymbolCode = getGameSymbolCode(game);
+        int[] gameSymbolCodes = getGameSymbolCodes(game);
         String gameName = String.format("%1d%c%c%c%s", (index + 1) % DandanatorCpcConstants.SLOT_COUNT,
-                gameSymbolCode, gameSymbolCode + 1, gameSymbolCode + 2,
+                gameSymbolCodes[0], gameSymbolCodes[1], gameSymbolCodes[2],
                 game.getName());
         os.write(asNullTerminatedByteArray(gameName, DandanatorCpcConstants.GAMENAME_SIZE));
     }
@@ -342,8 +343,12 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             blocks = game.getData();
         }
         for (byte[] block : blocks) {
-            if (block != null && block.length == Constants.SLOT_SIZE) {
-                count++;
+            if (block != null) {
+                if (block.length == Constants.SLOT_SIZE) {
+                    count++;
+                } else if (block.length % Constants.SLOT_SIZE == 0) {
+                    count += block.length / Constants.SLOT_SIZE;
+                }
             }
         }
         return count;
@@ -353,6 +358,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         int value = 0;
         for (Game game: games) {
             value += gameUncompressedSlotCount(game);
+            LOGGER.debug("After adding uncompressed slots for game {}: {}", game.getName(), value);
         }
         LOGGER.debug("Total Number of uncompressed slots " + value);
         return value;
@@ -382,16 +388,12 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
-    private int dumpMLDGameData(OutputStream os, Game game, int lastMldSaveSector,
-                                int currentSlot) throws IOException {
+    private void dumpMLDGameData(OutputStream os, Game game, int currentSlot) throws IOException {
         MLDGame mldGame = (MLDGame) game;
-        mldGame.reallocate(currentSlot);
-        lastMldSaveSector = mldGame.allocateSaveSpace(lastMldSaveSector);
-
+        mldGame.relocate(currentSlot);
         for (int i = 0; i < game.getSlotCount(); i++) {
             os.write(game.getSlot(i));
         }
-        return lastMldSaveSector;
     }
 
     private static int getAutobootGameIndex(List<Game> games) {
@@ -512,19 +514,19 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 }
             }
 
-            int currentSlot = DandanatorCpcConstants.GAME_SLOTS + 1
-                    - getUncompressedSlotCount(games);
-
-            int lastMldSaveSector = (4 * currentSlot) - 1;
+            int currentSlot = DandanatorCpcConstants.GAME_SLOTS - getUncompressedSlotCount(games) + 1;
+            currentSlot -= getReservedSlots(configuration);
 
             ByteArrayOutputStream uncompressedStream = new ByteArrayOutputStream();
             for (int i = games.size() - 1; i >= 0; i--) {
                 Game game = games.get(i);
                 if (game instanceof MLDGame) {
-                    lastMldSaveSector = dumpMLDGameData(uncompressedStream, game,
-                            lastMldSaveSector, currentSlot);
+                    int gameSlots = game.getSize() / Constants.SLOT_SIZE;
+                    dumpMLDGameData(uncompressedStream, game, currentSlot);
+                    currentSlot += gameSlots;
                 } else {
                     dumpUncompressedGameData(uncompressedStream, game);
+                    currentSlot += gameUncompressedSlotCount(game);
                 }
             }
 
@@ -674,16 +676,20 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
-    private static int getGameSymbolCode(Game game) {
+    private static int[] getGameSymbolCodes(Game game) {
         switch (game.getType()) {
             case ROM:
-                return ExtendedCharSet.SYMBOL_ROM_0_CODE;
+                return ExtendedCharSet.SYMBOL_ROM_CODES;
             case RAM64:
-                return ExtendedCharSet.SYMBOL_64K_0_CODE;
+                return ExtendedCharSet.SYMBOL_64K_CODES;
             case RAM128:
-                return ExtendedCharSet.SYMBOL_128K_0_CODE;
+                return ExtendedCharSet.SYMBOL_128K_CODES;
+            case RAM64_MLD:
+                return ExtendedCharSet.SYMBOL_MLD64_CODES;
+            case RAM128_MLD:
+                return ExtendedCharSet.SYMBOL_MLD128_CODES;
             default:
-                return ExtendedCharSet.SYMBOL_64K_0_CODE;
+                return ExtendedCharSet.SYMBOL_64K_CODES;
         }
     }
 
@@ -693,7 +699,7 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         screen.deleteLine(line);
         screen.printLine(String.format("%1d", (index + 1) % DandanatorCpcConstants.SLOT_COUNT),
                 line, 0);
-        screen.printSymbol(getGameSymbolCode(game), line, 1);
+        screen.printSymbol(getGameSymbolCodes(game), line, 1);
         screen.printLine(
                 String.format("%s", game.getName()), line, 4);
     }

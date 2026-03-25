@@ -237,11 +237,23 @@ public class ApplicationContext {
         if (game != null) {
             DirectoryAwareFileChooser chooser = getFileChooser();
             chooser.setTitle(LocaleUtil.i18n("exportCurrentGame"));
-            chooser.setInitialFileName(game.getName() + ".sna");
+            if (game.getType() == GameType.ROM) {
+                chooser.setInitialFileName(game.getName() + ".rom");
+            } else if (game.getType().isMLD()) {
+                chooser.setInitialFileName(game.getName() + ".mla");
+            } else {
+                chooser.setInitialFileName(game.getName() + ".sna");
+            }
             final File saveFile = chooser.showSaveDialog(menuPreview.getScene().getWindow());
             if (saveFile != null) {
                 try {
-                    GameUtil.exportGameAsSNA(game, saveFile);
+                    if (game.getType() == GameType.ROM) {
+                        GameUtil.exportGameAsRom(game, saveFile);
+                    } else if (game.getType().isMLD()) {
+                        GameUtil.exportGameAsMLD(game, saveFile);
+                    } else {
+                        GameUtil.exportGameAsSNA(game, saveFile);
+                    }
                 } catch (IOException e) {
                     LOGGER.error("Exporting Game", e);
                 }

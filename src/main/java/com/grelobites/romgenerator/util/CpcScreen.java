@@ -188,10 +188,10 @@ public class CpcScreen extends WritableImage {
         }
     }
 
-    public void printSymbol(int code, int line, int column) {
-	    printIcon(code, line, column);
-	    printIcon(code + 1, line, column + 1);
-	    printIcon(code + 2, line, column + 2);
+    public void printSymbol(int [] codes, int line, int column) {
+		for (int code: codes) {
+			printIcon(code, line, column++);
+		}
     }
 	private void printPixelWithFactor(PixelWriter writer, int xpos, int ypos, int color) {
 		xpos *= xfactor;

@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
    <children>
         <TabPane fx:id="gameInfoTabPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="320.0" styleClass="infoTabPane">
             <tabs>
@@ -33,8 +33,8 @@
                         </TextField>
                                 <Label fx:id="gameType" layoutX="74.0" layoutY="45.0" text="RAM" />
                         <CheckBox fx:id="gameCompressedAttribute" layoutX="10.0" layoutY="117.0" mnemonicParsing="false" text="%gameCompressedProperty" />
-                        <Label fx:id="gameHardware" layoutX="217.0" layoutY="45.0" text="Unknown" />
-                        <Label layoutX="132.0" layoutY="45.0" text="%gameHwProperty" />
+                        <Label fx:id="gameHardware" layoutX="245.0" layoutY="45.0" text="Unknown" />
+                        <Label layoutX="155.0" layoutY="45.0" text="%gameHwProperty" />
                             </children>
                         </AnchorPane>
                     </content>

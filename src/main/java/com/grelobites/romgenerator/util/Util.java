@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -78,6 +79,16 @@ public class Util {
             LOGGER.warn("Unexpected number of bytes skipped from stream. Was: " + read + ", expected: " + remainder);
         }
         return new String(buffer, skip, index - skip);
+    }
+
+    public static String getNullTerminatedString(ByteBuffer byteBuffer, int maxLength) {
+        byte[] name = new byte[maxLength];
+        int nextByte;
+        int index = 0;
+        while (index < maxLength && (nextByte = (byteBuffer.get() & 0xff)) != 0x00) {
+            name[index++] = (byte) nextByte;
+        }
+        return new String(name, 0, index);
     }
 
     public static String stripSuffix(String value, String suffix) {

@@ -12,10 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class GameMapperV2 implements GameMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(GameMapperV2.class);
@@ -62,23 +59,18 @@ public class GameMapperV2 implements GameMapper {
         }
     }
 
-    private static void addMldGameSlots(PositionAwareInputStream is, GameMapperV2 mapper)
+    private static void addMldGameData(PositionAwareInputStream is, GameMapperV2 mapper)
             throws IOException {
         int initSlot = is.read();
         int start = is.getAsLittleEndian();
         int numBlocks = is.getAsLittleEndian();
         is.skip(5 * 7); //Skip the remaining 7 blocks
-        for (int i = 0; i < numBlocks; i++) {
-            GameBlock block = new GameBlock();
-            block.setInitSlot(initSlot++);
-            block.setSize(Constants.SLOT_SIZE);
-            block.setGameCompressed(false);
-            block.setCompressed(false);
-            if (block.getInitSlot() < INVALID_SLOT_ID) {
-                LOGGER.debug("Read block for game " + mapper.name + ": " + block);
-                mapper.getBlocks().add(block);
-            }
-        }
+        GameBlock block = new GameBlock();
+        block.setInitSlot(initSlot);
+        block.setSize(Constants.SLOT_SIZE * numBlocks);
+        block.setGameCompressed(false);
+        block.setCompressed(false);
+        mapper.getBlocks().add(block);
     }
 
     public static GameMapperV2 fromRomSet(PositionAwareInputStream is, SlotZeroV2 slotZero) throws IOException {
@@ -100,7 +92,7 @@ public class GameMapperV2 implements GameMapper {
         is.skip(1); //Active ROMS
         is.skip(V2Constants.GAME_LAUNCHCODE_SIZE);
         if (GameType.isMLD(mapper.gameType)) {
-            addMldGameSlots(is, mapper);
+            addMldGameData(is, mapper);
         } else {
             addGameSlots(is, mapper);
         }
@@ -133,17 +125,10 @@ public class GameMapperV2 implements GameMapper {
         return gameSlots;
     }
 
-    private List<byte[]> getMLDGameSlots() {
-        List<byte[]> gameSlots = new ArrayList<>();
-        for (int index = 0; index < blocks.size(); index++) {
-            GameBlock block = blocks.get(index);
-            int slots = block.size / Constants.SLOT_SIZE;
-            for (int slot = 0; slot < slots; slot++) {
-                LOGGER.debug("Adding game slot for game " + name + ": " + block);
-                gameSlots.add(Arrays.copyOfRange(block.data, slot * Constants.SLOT_SIZE, (slot + 1) * Constants.SLOT_SIZE));
-            }
-        }
-        return gameSlots;
+    private byte[] getMLDGameData() {
+        //MLA games have only one block
+        GameBlock block = blocks.get(0);
+        return Arrays.copyOf(block.data, block.data.length);
     }
 
     private List<byte[]> getGameCompressedData() {
@@ -188,10 +173,10 @@ public class GameMapperV2 implements GameMapper {
                     break;
                 case RAM128_MLD:
                 case RAM64_MLD:
-                    List<byte[]> gameSlots = getMLDGameSlots();
-                    Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(gameSlots);
+                    byte[] gameData = getMLDGameData();
+                    Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(Collections.singletonList(gameData));
                     if (mldInfo.isPresent()) {
-                        game = new MLDGame(mldInfo.get(), gameSlots);
+                        game = new MLDGame(mldInfo.get(), gameData);
                         game.setAutoboot(autoboot);
                     } else {
                         LOGGER.error("Unable to restore MLDGame from ROMSet. No MLDInfo found");

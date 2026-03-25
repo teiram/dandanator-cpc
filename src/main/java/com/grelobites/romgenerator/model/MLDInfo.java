@@ -11,9 +11,8 @@ import java.util.Optional;
 public class MLDInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(MLDInfo.class);
 
-    private static final String MLD_SIGNATURE = "MLD";
+    private static final String MLD_SIGNATURE = "MLA";
     public static final int MLD_HEADER_OFFSET = 16362;
-    public static final int MLD_ALLOCATED_SECTORS_OFFSET = MLD_HEADER_OFFSET + 3;
     private static final int MLD_SIGNATURE_OFFSET = 16380;
     private static final int MLD_HEADER_SIZE = 22;
     public static final int MLD_DEFAULT_SCREENMODE = 0;
@@ -21,7 +20,6 @@ public class MLDInfo {
     private int headerSlot;
     private int baseSlot;
     private int mldType;
-    private int requiredSectors;
     private int tableOffset;
     private int tableRowSize;
     private int tableRows;
@@ -29,6 +27,8 @@ public class MLDInfo {
     private int compressedScreenOffset;
     private int compressedScreenSize;
     private int mldVersion;
+
+    private int mldPokeAddress;
 
     public int getMldType() {
         return mldType;
@@ -60,14 +60,6 @@ public class MLDInfo {
 
     public void setCompressedScreenSize(int compressedScreenSize) {
         this.compressedScreenSize = compressedScreenSize;
-    }
-
-    public int getRequiredSectors() {
-        return requiredSectors;
-    }
-
-    public void setRequiredSectors(int requiredSectors) {
-        this.requiredSectors = requiredSectors;
     }
 
     public int getTableOffset() {
@@ -110,6 +102,14 @@ public class MLDInfo {
         this.mldVersion = mldVersion;
     }
 
+    public int getMldPokeAddress() {
+        return mldPokeAddress;
+    }
+
+    public void setMldPokeAddress(int mldPokeAddress) {
+        this.mldPokeAddress = mldPokeAddress;
+    }
+
     public GameType getGameType() {
         return GameType.byTypeId((mldType));
     }
@@ -139,16 +139,17 @@ public class MLDInfo {
             ByteBuffer buffer = ByteBuffer.wrap(data, MLD_HEADER_OFFSET, MLD_HEADER_SIZE);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             MLDInfo mldInfo = new MLDInfo();
-            mldInfo.setBaseSlot(Byte.valueOf(buffer.get()).intValue());
-            mldInfo.setMldType(Byte.valueOf(buffer.get()).intValue());
-            mldInfo.setRequiredSectors(Byte.valueOf(buffer.get()).intValue());
-            buffer.getInt(); //Skip four bytes
-            mldInfo.setTableOffset(Short.valueOf(buffer.getShort()).intValue());
-            mldInfo.setTableRowSize(Short.valueOf(buffer.getShort()).intValue());
-            mldInfo.setTableRows(Short.valueOf(buffer.getShort()).intValue());
-            mldInfo.setRowSlotOffset(Byte.valueOf(buffer.get()).intValue());
-            mldInfo.setCompressedScreenOffset(Short.valueOf(buffer.getShort()).intValue());
-            mldInfo.setCompressedScreenSize(Short.valueOf(buffer.getShort()).intValue());
+            mldInfo.setBaseSlot(buffer.get() & 0xff);
+            mldInfo.setMldType(buffer.get() & 0xff);
+            mldInfo.setMldPokeAddress(buffer.getShort() & 0xffff);
+            buffer.get();
+            buffer.getShort(); //Skip five bytes
+            mldInfo.setTableOffset(buffer.getShort() & 0xffff);
+            mldInfo.setTableRowSize(buffer.getShort() & 0xffff);
+            mldInfo.setTableRows(buffer.getShort() & 0xffff);
+            mldInfo.setRowSlotOffset(buffer.get() & 0xff);
+            mldInfo.setCompressedScreenOffset(buffer.getShort() & 0xffff);
+            mldInfo.setCompressedScreenSize(buffer.getShort() & 0xffff);
             LOGGER.debug("MLDInfo is {}", mldInfo);
             return Optional.of(mldInfo);
         } else {
@@ -157,7 +158,7 @@ public class MLDInfo {
     }
 
     public static Optional<MLDInfo> fromGameByteArray(List<byte[]> data) {
-        LOGGER.debug("Analizing game with " + data.size() + " slots");
+        LOGGER.debug("Analyzing game with " + data.size() + " slots");
         for (int i = 0; i < data.size(); i++) {
             Optional<MLDInfo> mldInfoOpt = fromGameSlotByteArray(data.get(i));
             if (mldInfoOpt.isPresent()) {
@@ -172,8 +173,8 @@ public class MLDInfo {
     public String toString() {
         return "MLDInfo{" +
                 "mldType=" + Integer.toHexString(mldType & 0xFF) +
-                ", requiredSectors=" + requiredSectors +
-                ", tableOffset=" + tableOffset +
+                ", mldPokeAddress=0x" + Integer.toHexString(mldPokeAddress) +
+                ", tableOffset=0x" + Integer.toHexString(tableOffset) +
                 ", tableRowSize=" + tableRowSize +
                 ", tableRows=" + tableRows +
                 ", rowSlotOffset=" + rowSlotOffset +

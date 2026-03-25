@@ -302,7 +302,9 @@ public class EepromWriterController {
 
         //React to changes in the game list
         applicationContext.getGameList().addListener((InvalidationListener) e -> {
-            serialBlockService.resetRomset();
+            if (serialBlockService != null) {
+                serialBlockService.resetRomset();
+            }
         });
 
         DandanatorCpcConfiguration.getInstance().extraRomPathProperty()

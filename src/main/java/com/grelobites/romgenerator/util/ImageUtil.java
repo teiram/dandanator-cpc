@@ -248,9 +248,21 @@ public class ImageUtil {
 
     public static byte[] embeddedPalette(byte[] screen) {
 	    if (screen.length == Constants.CPC_SCREEN_SIZE) {
-            return Arrays.copyOfRange(screen, 16384 - 17, 16384);
+            return Arrays.copyOfRange(screen, 16384 - Constants.CPC_PALETTE_SIZE, 16384);
         } else {
 	        throw new IllegalArgumentException("Screen of invalid size " + screen.length);
+        }
+    }
+
+    public static byte[] embeddedPaletteMLD(byte[] screen) {
+        if (screen.length == Constants.CPC_SCREEN_SIZE + Constants.CPC_PALETTE_SIZE) {
+            byte[] palette = new byte[Constants.CPC_PALETTE_SIZE];
+            for (int i = 0; i < Constants.CPC_PALETTE_SIZE; i++) {
+                palette[i] = screen[Constants.CPC_SCREEN_SIZE + Constants.CPC_PALETTE_SIZE - i - 1];
+            }
+            return palette;
+        } else {
+            throw new IllegalArgumentException("Screen of invalid size " + screen.length);
         }
     }
 }

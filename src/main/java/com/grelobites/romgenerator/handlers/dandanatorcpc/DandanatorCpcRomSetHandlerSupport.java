@@ -5,10 +5,7 @@ import com.grelobites.romgenerator.Configuration;
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.DandanatorCpcImporter;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.model.SlotZero;
-import com.grelobites.romgenerator.model.Game;
-import com.grelobites.romgenerator.model.Poke;
-import com.grelobites.romgenerator.model.PokeViewable;
-import com.grelobites.romgenerator.model.SnapshotGame;
+import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.util.GameUtil;
 import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.LocaleUtil;
@@ -58,32 +55,37 @@ public class DandanatorCpcRomSetHandlerSupport {
         return result;
     }
 
-    protected static int getGamePokeCount(Game game) {
+    private static Optional<TrainerList> getGameTrainerList(Game game) {
         if (game instanceof SnapshotGame) {
-            return ((SnapshotGame) game).getTrainerList().getChildren().size();
+            return Optional.of(((SnapshotGame) game).getTrainerList());
+        } else if (game instanceof MLDGame) {
+            return Optional.of(((MLDGame) game).getTrainerList());
         } else {
-            return 0;
+            return Optional.empty();
         }
+    }
+    protected static int getGamePokeCount(Game game) {
+        return getGameTrainerList(game).map(f -> f.getChildren().size()).orElse(0);
     }
 
     protected static int pokeRequiredSize(Game game) {
-        if (game instanceof SnapshotGame) {
-            SnapshotGame snapshotGame = (SnapshotGame) game;
+        Optional<TrainerList> trainerList = getGameTrainerList(game);
+        if (trainerList.isPresent()) {
             int headerSize = 25; //Fixed size required per trainer (Poke count(1) + name(24))
             //Sum of all the addressValues * 3 (address(2) + value(1))
-            int size = snapshotGame.getTrainerList().getChildren().stream()
+            int size = trainerList.get().getChildren().stream()
                     .map(p -> p.getChildren().size() * 3).reduce(0, (a, b) -> a + b);
-            return size + headerSize * snapshotGame.getTrainerList().getChildren().size();
+            return size + headerSize * trainerList.get().getChildren().size();
         } else {
             return 0;
         }
     }
 
     protected static void dumpGamePokeData(OutputStream os, Game game) throws IOException {
-        if (game instanceof SnapshotGame) {
-            SnapshotGame snapshotGame = (SnapshotGame) game;
+        Optional<TrainerList> trainerList = getGameTrainerList(game);
+        if (trainerList.isPresent()) {
             int index = 1;
-            for (PokeViewable trainer : snapshotGame.getTrainerList().getChildren()) {
+            for (PokeViewable trainer : trainerList.get().getChildren()) {
                 os.write((byte) trainer.getChildren().size());
                 os.write(asNullTerminatedByteArray(String.format("%d. %s",
                         index++, trainer.getViewRepresentation()), 24));

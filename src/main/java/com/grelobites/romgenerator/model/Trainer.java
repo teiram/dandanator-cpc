@@ -38,7 +38,7 @@ public class Trainer implements PokeViewable {
     }
 
     @Override
-    public SnapshotGame getOwner() {
+    public Game getOwner() {
         return parent.getOwner();
     }
 

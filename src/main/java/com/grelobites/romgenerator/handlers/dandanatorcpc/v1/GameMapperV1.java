@@ -191,7 +191,7 @@ public class GameMapperV1 implements GameMapper {
                     List<byte[]> gameSlots = getMLDGameSlots();
                     Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(gameSlots);
                     if (mldInfo.isPresent()) {
-                        game = new MLDGame(mldInfo.get(), gameSlots);
+                        game = new MLDGame(mldInfo.get(), gameSlots.get(0));
                     } else {
                         LOGGER.error("Unable to restore MLDGame from ROMSet. No MLDInfo found");
                     }

@@ -323,6 +323,8 @@ public class DandanatorCpcFrameController {
                 gameCompressedAttribute.selectedProperty().unbindBidirectional(snapshotGame.compressedProperty());
                 pokeView.setRoot(null);
                 gameCompressedAttribute.selectedProperty().removeListener(getCurrentGameCompressedChangeListener());
+            } else if (game instanceof MLDGame) {
+                pokeView.setRoot(null);
             }
         }
     }
@@ -350,6 +352,10 @@ public class DandanatorCpcFrameController {
                     compressedSize.textProperty().bind(getGameSizeProperty(game).asString());
                 });
                 snapshotGame.compressedProperty().addListener(getCurrentGameCompressedChangeListener());
+            } else if (game instanceof MLDGame) {
+                MLDGame mldGame = (MLDGame) game;
+                pokeView.setRoot(new RecursiveTreeItem<>(mldGame.getTrainerList(), PokeViewable::getChildren,
+                        this::computePokeChange));
             }
         }
     }
@@ -389,6 +395,13 @@ public class DandanatorCpcFrameController {
                         removeAllGamePokesButton.setDisable(false);
                     } else {
                         removeAllGamePokesButton.setDisable(true);
+                    }
+                } else if (newGame instanceof MLDGame) {
+                    MLDGame mldGame = (MLDGame) newGame;
+                    if (mldGame.getTrainerList() != null) {
+                        pokesTab.setDisable(false);
+                        removeAllGamePokesButton.setDisable(true);
+                        addPokeButton.setDisable(true);
                     }
                 } else {
                     pokesTab.setDisable(true);

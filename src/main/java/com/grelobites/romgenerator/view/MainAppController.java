@@ -443,8 +443,8 @@ public class MainAppController {
     private void updateExportGameMenuEntryMessage(Game selectedGame) {
         applicationContext.setExportGameMenuEntryMessage(
                 selectedGame == null ? LocaleUtil.i18n("exportGameMenuEntry") :
-                selectedGame.getType() == GameType.ROM ?
-                    LocaleUtil.i18n("exportGameAsRomMenuEntry") :
+                selectedGame.getType() == GameType.ROM ? LocaleUtil.i18n("exportGameAsRomMenuEntry") :
+                        selectedGame.getType().isMLD() ? LocaleUtil.i18n("exportGameAsMLDMenuEntry") :
                     LocaleUtil.i18n("exportGameAsSNAMenuEntry"));
     }
 
