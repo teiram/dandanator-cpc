@@ -8,8 +8,8 @@ import com.grelobites.romgenerator.model.Game;
 import com.grelobites.romgenerator.model.GameHeader;
 import com.grelobites.romgenerator.model.GameType;
 import com.grelobites.romgenerator.model.HardwareMode;
-import com.grelobites.romgenerator.model.MLDGame;
-import com.grelobites.romgenerator.model.MLDInfo;
+import com.grelobites.romgenerator.model.MLAGame;
+import com.grelobites.romgenerator.model.MLAInfo;
 import com.grelobites.romgenerator.model.RomGame;
 import com.grelobites.romgenerator.model.SnapshotGame;
 import com.grelobites.romgenerator.model.TrainerList;
@@ -67,7 +67,7 @@ public class GameMapperV1 implements GameMapper {
         }
     }
 
-    private static void addMldGameSlots(PositionAwareInputStream is, GameMapperV1 mapper)
+    private static void addMlaGameSlots(PositionAwareInputStream is, GameMapperV1 mapper)
             throws IOException {
         int initSlot = is.read();
         int start = is.getAsLittleEndian();
@@ -101,8 +101,8 @@ public class GameMapperV1 implements GameMapper {
 
         is.skip(2); //Active ROMS
         is.skip(V1Constants.GAME_LAUNCHCODE_SIZE);
-        if (GameType.isMLD(mapper.gameType)) {
-            addMldGameSlots(is, mapper);
+        if (GameType.isMLA(mapper.gameType)) {
+            addMlaGameSlots(is, mapper);
         } else {
             addGameSlots(is, mapper);
         }
@@ -135,7 +135,7 @@ public class GameMapperV1 implements GameMapper {
         return gameSlots;
     }
 
-    private List<byte[]> getMLDGameSlots() {
+    private List<byte[]> getMLAGameSlots() {
         List<byte[]> gameSlots = new ArrayList<>();
         for (int index = 0; index < blocks.size(); index++) {
             GameBlock block = blocks.get(index);
@@ -186,14 +186,14 @@ public class GameMapperV1 implements GameMapper {
                     }
                     game = snapshotGame;
                     break;
-                case RAM128_MLD:
-                case RAM64_MLD:
-                    List<byte[]> gameSlots = getMLDGameSlots();
-                    Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(gameSlots);
-                    if (mldInfo.isPresent()) {
-                        game = new MLDGame(mldInfo.get(), gameSlots.get(0));
+                case RAM128_MLA:
+                case RAM64_MLA:
+                    List<byte[]> gameSlots = getMLAGameSlots();
+                    Optional<MLAInfo> mlaInfo = MLAInfo.fromGameByteArray(gameSlots);
+                    if (mlaInfo.isPresent()) {
+                        game = new MLAGame(mlaInfo.get(), gameSlots.get(0));
                     } else {
-                        LOGGER.error("Unable to restore MLDGame from ROMSet. No MLDInfo found");
+                        LOGGER.error("Unable to restore MLAGame from ROMSet. No MLAInfo found");
                     }
                     break;
                 default:

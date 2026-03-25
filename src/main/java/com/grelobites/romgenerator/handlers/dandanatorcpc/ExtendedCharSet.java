@@ -14,8 +14,8 @@ public class ExtendedCharSet {
     public static final int[] SYMBOL_ROM_CODES = {BASE_SYMBOLS_CODE + 6, BASE_SYMBOLS_CODE + 7, BASE_SYMBOLS_CODE + 8};
     public static final int SYMBOL_LEFT_ARROW_CODE = BASE_SYMBOLS_CODE + 9;
     public static final int SYMBOL_RIGHT_ARROW_CODE = BASE_SYMBOLS_CODE + 10;
-    public static final int[] SYMBOL_MLD64_CODES = {BASE_SYMBOLS_CODE + 11, BASE_SYMBOLS_CODE + 12, BASE_SYMBOLS_CODE + 13};
-    public static final int[] SYMBOL_MLD128_CODES = {BASE_SYMBOLS_CODE + 11, BASE_SYMBOLS_CODE + 14, BASE_SYMBOLS_CODE + 15};
+    public static final int[] SYMBOL_MLA64_CODES = {BASE_SYMBOLS_CODE + 11, BASE_SYMBOLS_CODE + 12, BASE_SYMBOLS_CODE + 13};
+    public static final int[] SYMBOL_MLA128_CODES = {BASE_SYMBOLS_CODE + 11, BASE_SYMBOLS_CODE + 14, BASE_SYMBOLS_CODE + 15};
 
     private byte[] charset;
 

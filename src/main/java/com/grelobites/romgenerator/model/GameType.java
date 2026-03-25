@@ -7,10 +7,10 @@ public enum GameType {
     LOWER_UPPER_ROM(2, 32, "Lower and Upper ROM"),
     RAM64(4, 64, "64K"),
     RAM128(8, 128, "128K"),
-    RAM64_MLD(0x84, 64, "MLA 64K"),
-    RAM128_MLD(0x88, 128, "MLA 128K");
+    RAM64_MLA(0x84, 64, "MLA 64K"),
+    RAM128_MLA(0x88, 128, "MLA 128K");
 
-    private static final int MLD_MASK = 0x80;
+    private static final int MLA_MASK = 0x80;
 
     private int typeId;
     private int sizeInKBytes;
@@ -34,8 +34,8 @@ public enum GameType {
         return sizeInKBytes;
     }
 
-    public boolean isMLD() {
-        return (typeId & 0x80) != 0;
+    public boolean isMLA() {
+        return (typeId & MLA_MASK) != 0;
     }
 
     public static GameType byTypeId(int id) {
@@ -47,7 +47,7 @@ public enum GameType {
         throw new IllegalArgumentException("Unknown typeid " + id);
     }
 
-    public static boolean isMLD(GameType gameType) {
-        return (gameType.typeId & MLD_MASK) != 0;
+    public static boolean isMLA(GameType gameType) {
+        return gameType.isMLA();
     }
 }

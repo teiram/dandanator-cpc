@@ -1,6 +1,5 @@
 package com.grelobites.romgenerator.model;
 
-import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.util.ImageUtil;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.compress.zx7.Zx7InputStream;
@@ -14,26 +13,25 @@ import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
-public class MLDGame extends BaseGame implements RamGame {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MLDGame.class);
+public class MLAGame extends BaseGame implements RamGame {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MLAGame.class);
 
     private HardwareMode hardwareMode;
     private Image screenshot;
-    private MLDInfo mldInfo;
+    private MLAInfo mlaInfo;
     private IntegerProperty size;
 
     private TrainerList trainerList;
 
-    public MLDGame(MLDInfo mldInfo, byte[] data) {
-        super(mldInfo.getGameType(), Collections.singletonList(data));
-        this.mldInfo = mldInfo;
+    public MLAGame(MLAInfo mlaInfo, byte[] data) {
+        super(mlaInfo.getGameType(), Collections.singletonList(data));
+        this.mlaInfo = mlaInfo;
         this.size = new SimpleIntegerProperty(super.getSize());
-        hardwareMode = mldInfo.getHardwareMode();
-        if (mldInfo.getMldPokeAddress() != 0xffff) {
-            this.trainerList = parseTrainers(mldInfo, data);
+        hardwareMode = mlaInfo.getHardwareMode();
+        if (mlaInfo.getMlaPokeAddress() != 0xffff) {
+            this.trainerList = parseTrainers(mlaInfo, data);
         }
     }
 
@@ -42,37 +40,37 @@ public class MLDGame extends BaseGame implements RamGame {
         return false;
     }
 
-    public MLDInfo initializeMldInfo() {
-        if (mldInfo == null) {
-            mldInfo = MLDInfo.fromGameByteArray(data)
+    public MLAInfo initializeMlaInfo() {
+        if (mlaInfo == null) {
+            mlaInfo = MLAInfo.fromGameByteArray(data)
                     .orElseThrow(
-                            ()-> new IllegalArgumentException("Unable to extract MLD data from file"));
+                            ()-> new IllegalArgumentException("Unable to extract MLA data from file"));
         }
-        return mldInfo;
+        return mlaInfo;
     }
 
-    public MLDInfo getMLDInfo() {
-        return mldInfo;
+    public MLAInfo getMLAInfo() {
+        return mlaInfo;
     }
 
     public Image getScreenshot() {
         if (screenshot == null) {
             try {
-                if (mldInfo.getCompressedScreenOffset() != 0) {
-                    LOGGER.debug("Getting screenshot from data with length {} on offset {}", data.get(0).length, mldInfo.getCompressedScreenOffset());
+                if (mlaInfo.getCompressedScreenOffset() != 0) {
+                    LOGGER.debug("Getting screenshot from data with length {} on offset {}", data.get(0).length, mlaInfo.getCompressedScreenOffset());
                     byte[] screenData = Util.fromInputStream(
                             new Zx7InputStream(
                                 new ByteArrayInputStream(
                                     data.get(0),
-                                    mldInfo.getCompressedScreenOffset(),
-                                    mldInfo.getCompressedScreenSize()
+                                    mlaInfo.getCompressedScreenOffset(),
+                                    mlaInfo.getCompressedScreenSize()
                             )));
                     screenshot = ImageUtil
                             .scrLoader(ImageUtil.newScreenshot(),
-                                    MLDInfo.MLD_DEFAULT_SCREENMODE,
+                                    MLAInfo.MLA_DEFAULT_SCREENMODE,
                                     screenData,
                                     CrtcDisplayData.DEFAULT_VALUE,
-                                    ImageUtil.embeddedPaletteMLD(screenData));
+                                    ImageUtil.embeddedPaletteMLA(screenData));
 
 
                 }
@@ -98,37 +96,37 @@ public class MLDGame extends BaseGame implements RamGame {
         this.screenshot = screenshot;
     }
 
-    public MLDInfo getMldInfo() {
-        return mldInfo;
+    public MLAInfo getMlaInfo() {
+        return mlaInfo;
     }
 
-    public void setMldInfo(MLDInfo mldInfo) {
-        this.mldInfo = mldInfo;
+    public void setMlaInfo(MLAInfo mlaInfo) {
+        this.mlaInfo = mlaInfo;
     }
 
     public void relocate(int slot) {
-        LOGGER.debug("Relocating MLD game " + this + " with " + getSlotCount()
+        LOGGER.debug("Relocating MLA game " + this + " with " + getSlotCount()
                 + " slots to slot " + slot + ". Current base slot is "
-                + mldInfo.getBaseSlot());
+                + mlaInfo.getBaseSlot());
 
-        int headerSlot = mldInfo.getHeaderSlot();
+        int headerSlot = mlaInfo.getHeaderSlot();
         byte[] headerSlotData = getSlot(headerSlot);
-        headerSlotData[MLDInfo.MLD_HEADER_OFFSET] = (byte) slot;
+        headerSlotData[MLAInfo.MLA_HEADER_OFFSET] = (byte) slot;
 
-        int tableOffset = mldInfo.getTableOffset();
+        int tableOffset = mlaInfo.getTableOffset();
         byte[] slotData = getSlot(0);
-        for (int i = 0; i < mldInfo.getTableRows(); i++) {
-            int offset = tableOffset + mldInfo.getRowSlotOffset();
-            int correctedValue = (slotData[offset] & 0x7F) - mldInfo.getBaseSlot();
+        for (int i = 0; i < mlaInfo.getTableRows(); i++) {
+            int offset = tableOffset + mlaInfo.getRowSlotOffset();
+            int correctedValue = (slotData[offset] & 0x7F) - mlaInfo.getBaseSlot();
             int newValue = (correctedValue + slot) | (slotData[offset] & 0x80);
             LOGGER.debug("Patching position 0x"
                     + Integer.toHexString(offset & 0xffff) + " from value 0x"
                     + Integer.toHexString(slotData[offset] & 0xff)
                     + " to 0x" + Integer.toHexString(newValue & 0xff));
             slotData[offset] = (byte) newValue;
-            tableOffset += mldInfo.getTableRowSize();
+            tableOffset += mlaInfo.getTableRowSize();
         }
-        mldInfo.setBaseSlot(slot);
+        mlaInfo.setBaseSlot(slot);
     }
 
     @Override
@@ -144,11 +142,11 @@ public class MLDGame extends BaseGame implements RamGame {
         this.size.set(size);
     }
 
-    private TrainerList parseTrainers(MLDInfo mldInfo, byte[] gameData) {
+    private TrainerList parseTrainers(MLAInfo mlaInfo, byte[] gameData) {
         TrainerList trainerList = new TrainerList(this);
         ByteBuffer byteBuffer = ByteBuffer.wrap(gameData);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        byteBuffer.position(mldInfo.getMldPokeAddress());
+        byteBuffer.position(mlaInfo.getMlaPokeAddress());
         int numTrainers = byteBuffer.get() & 0xff;
         for (int i = 0; i < numTrainers; i++) {
             int numPokes = byteBuffer.get() & 0xff;
@@ -172,10 +170,10 @@ public class MLDGame extends BaseGame implements RamGame {
 
     @Override
     public String toString() {
-        return "MLDGame{" +
-                " name=" + name +
+        return "MLAGame {" +
+                "name=" + name +
                 ", hardwareMode=" + hardwareMode +
-                ", mldInfo=" + mldInfo +
+                ", mlaInfo=" + mlaInfo +
                 '}';
     }
 

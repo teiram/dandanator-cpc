@@ -59,7 +59,7 @@ public class GameMapperV2 implements GameMapper {
         }
     }
 
-    private static void addMldGameData(PositionAwareInputStream is, GameMapperV2 mapper)
+    private static void addMlaGameData(PositionAwareInputStream is, GameMapperV2 mapper)
             throws IOException {
         int initSlot = is.read();
         int start = is.getAsLittleEndian();
@@ -91,8 +91,8 @@ public class GameMapperV2 implements GameMapper {
         mapper.currentRasterInterrupt = is.read();
         is.skip(1); //Active ROMS
         is.skip(V2Constants.GAME_LAUNCHCODE_SIZE);
-        if (GameType.isMLD(mapper.gameType)) {
-            addMldGameData(is, mapper);
+        if (GameType.isMLA(mapper.gameType)) {
+            addMlaGameData(is, mapper);
         } else {
             addGameSlots(is, mapper);
         }
@@ -125,7 +125,7 @@ public class GameMapperV2 implements GameMapper {
         return gameSlots;
     }
 
-    private byte[] getMLDGameData() {
+    private byte[] getMLAGameData() {
         //MLA games have only one block
         GameBlock block = blocks.get(0);
         return Arrays.copyOf(block.data, block.data.length);
@@ -171,15 +171,15 @@ public class GameMapperV2 implements GameMapper {
                     snapshotGame.setAutoboot(autoboot);
                     game = snapshotGame;
                     break;
-                case RAM128_MLD:
-                case RAM64_MLD:
-                    byte[] gameData = getMLDGameData();
-                    Optional<MLDInfo> mldInfo = MLDInfo.fromGameByteArray(Collections.singletonList(gameData));
-                    if (mldInfo.isPresent()) {
-                        game = new MLDGame(mldInfo.get(), gameData);
+                case RAM128_MLA:
+                case RAM64_MLA:
+                    byte[] gameData = getMLAGameData();
+                    Optional<MLAInfo> mlaInfo = MLAInfo.fromGameByteArray(Collections.singletonList(gameData));
+                    if (mlaInfo.isPresent()) {
+                        game = new MLAGame(mlaInfo.get(), gameData);
                         game.setAutoboot(autoboot);
                     } else {
-                        LOGGER.error("Unable to restore MLDGame from ROMSet. No MLDInfo found");
+                        LOGGER.error("Unable to restore MLAGame from ROMSet. No MLAInfo found");
                     }
                     break;
                 default:

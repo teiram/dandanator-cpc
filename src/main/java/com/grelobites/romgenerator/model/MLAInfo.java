@@ -8,34 +8,34 @@ import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Optional;
 
-public class MLDInfo {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MLDInfo.class);
+public class MLAInfo {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MLAInfo.class);
 
-    private static final String MLD_SIGNATURE = "MLA";
-    public static final int MLD_HEADER_OFFSET = 16362;
-    private static final int MLD_SIGNATURE_OFFSET = 16380;
-    private static final int MLD_HEADER_SIZE = 22;
-    public static final int MLD_DEFAULT_SCREENMODE = 0;
+    private static final String MLA_SIGNATURE = "MLA";
+    public static final int MLA_HEADER_OFFSET = 16362;
+    private static final int MLA_SIGNATURE_OFFSET = 16380;
+    private static final int MLA_HEADER_SIZE = 22;
+    public static final int MLA_DEFAULT_SCREENMODE = 0;
 
     private int headerSlot;
     private int baseSlot;
-    private int mldType;
+    private int mlaType;
     private int tableOffset;
     private int tableRowSize;
     private int tableRows;
     private int rowSlotOffset;
     private int compressedScreenOffset;
     private int compressedScreenSize;
-    private int mldVersion;
+    private int mlaVersion;
 
-    private int mldPokeAddress;
+    private int mlaPokeAddress;
 
-    public int getMldType() {
-        return mldType;
+    public int getMlaType() {
+        return mlaType;
     }
 
-    public void setMldType(int mldType) {
-        this.mldType = mldType;
+    public void setMlaType(int mlaType) {
+        this.mlaType = mlaType;
     }
 
     public int getHeaderSlot() {
@@ -94,31 +94,31 @@ public class MLDInfo {
         this.rowSlotOffset = rowSlotOffset;
     }
 
-    public int getMldVersion() {
-        return mldVersion;
+    public int getMlaVersion() {
+        return mlaVersion;
     }
 
-    public void setMldVersion(int mldVersion) {
-        this.mldVersion = mldVersion;
+    public void setMlaVersion(int mlaVersion) {
+        this.mlaVersion = mlaVersion;
     }
 
-    public int getMldPokeAddress() {
-        return mldPokeAddress;
+    public int getMlaPokeAddress() {
+        return mlaPokeAddress;
     }
 
-    public void setMldPokeAddress(int mldPokeAddress) {
-        this.mldPokeAddress = mldPokeAddress;
+    public void setMlaPokeAddress(int mlaPokeAddress) {
+        this.mlaPokeAddress = mlaPokeAddress;
     }
 
     public GameType getGameType() {
-        return GameType.byTypeId((mldType));
+        return GameType.byTypeId((mlaType));
     }
 
     public HardwareMode getHardwareMode() {
         switch (getGameType()) {
-            case RAM64_MLD:
+            case RAM64_MLA:
                 return HardwareMode.HW_CPC464;
-            case RAM128_MLD:
+            case RAM128_MLA:
                 return HardwareMode.HW_CPC6128;
             default:
                 return HardwareMode.HW_UNKNOWN;
@@ -133,37 +133,37 @@ public class MLDInfo {
         this.baseSlot = baseSlot;
     }
 
-    private static Optional<MLDInfo> fromGameSlotByteArray(byte[] data) {
-        LOGGER.debug("Got signature as " + new String(data, MLD_SIGNATURE_OFFSET, MLD_SIGNATURE.length()));
-        if (MLD_SIGNATURE.equals(new String(data, MLD_SIGNATURE_OFFSET, MLD_SIGNATURE.length()))) {
-            ByteBuffer buffer = ByteBuffer.wrap(data, MLD_HEADER_OFFSET, MLD_HEADER_SIZE);
+    private static Optional<MLAInfo> fromGameSlotByteArray(byte[] data) {
+        LOGGER.debug("Got signature as " + new String(data, MLA_SIGNATURE_OFFSET, MLA_SIGNATURE.length()));
+        if (MLA_SIGNATURE.equals(new String(data, MLA_SIGNATURE_OFFSET, MLA_SIGNATURE.length()))) {
+            ByteBuffer buffer = ByteBuffer.wrap(data, MLA_HEADER_OFFSET, MLA_HEADER_SIZE);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
-            MLDInfo mldInfo = new MLDInfo();
-            mldInfo.setBaseSlot(buffer.get() & 0xff);
-            mldInfo.setMldType(buffer.get() & 0xff);
-            mldInfo.setMldPokeAddress(buffer.getShort() & 0xffff);
+            MLAInfo mlaInfo = new MLAInfo();
+            mlaInfo.setBaseSlot(buffer.get() & 0xff);
+            mlaInfo.setMlaType(buffer.get() & 0xff);
+            mlaInfo.setMlaPokeAddress(buffer.getShort() & 0xffff);
             buffer.get();
             buffer.getShort(); //Skip five bytes
-            mldInfo.setTableOffset(buffer.getShort() & 0xffff);
-            mldInfo.setTableRowSize(buffer.getShort() & 0xffff);
-            mldInfo.setTableRows(buffer.getShort() & 0xffff);
-            mldInfo.setRowSlotOffset(buffer.get() & 0xff);
-            mldInfo.setCompressedScreenOffset(buffer.getShort() & 0xffff);
-            mldInfo.setCompressedScreenSize(buffer.getShort() & 0xffff);
-            LOGGER.debug("MLDInfo is {}", mldInfo);
-            return Optional.of(mldInfo);
+            mlaInfo.setTableOffset(buffer.getShort() & 0xffff);
+            mlaInfo.setTableRowSize(buffer.getShort() & 0xffff);
+            mlaInfo.setTableRows(buffer.getShort() & 0xffff);
+            mlaInfo.setRowSlotOffset(buffer.get() & 0xff);
+            mlaInfo.setCompressedScreenOffset(buffer.getShort() & 0xffff);
+            mlaInfo.setCompressedScreenSize(buffer.getShort() & 0xffff);
+            LOGGER.debug("MLAInfo is {}", mlaInfo);
+            return Optional.of(mlaInfo);
         } else {
             return Optional.empty();
         }
     }
 
-    public static Optional<MLDInfo> fromGameByteArray(List<byte[]> data) {
+    public static Optional<MLAInfo> fromGameByteArray(List<byte[]> data) {
         LOGGER.debug("Analyzing game with " + data.size() + " slots");
         for (int i = 0; i < data.size(); i++) {
-            Optional<MLDInfo> mldInfoOpt = fromGameSlotByteArray(data.get(i));
-            if (mldInfoOpt.isPresent()) {
-                mldInfoOpt.get().setHeaderSlot(i);
-                return mldInfoOpt;
+            Optional<MLAInfo> mlaInfoOpt = fromGameSlotByteArray(data.get(i));
+            if (mlaInfoOpt.isPresent()) {
+                mlaInfoOpt.get().setHeaderSlot(i);
+                return mlaInfoOpt;
             }
         }
         return Optional.empty();
@@ -171,16 +171,16 @@ public class MLDInfo {
 
     @Override
     public String toString() {
-        return "MLDInfo{" +
-                "mldType=" + Integer.toHexString(mldType & 0xFF) +
-                ", mldPokeAddress=0x" + Integer.toHexString(mldPokeAddress) +
+        return "MLAInfo{" +
+                "mlaType=0x" + Integer.toHexString(mlaType & 0xFF) +
+                ", mlaPokeAddress=0x" + Integer.toHexString(mlaPokeAddress) +
                 ", tableOffset=0x" + Integer.toHexString(tableOffset) +
                 ", tableRowSize=" + tableRowSize +
                 ", tableRows=" + tableRows +
                 ", rowSlotOffset=" + rowSlotOffset +
                 ", compressedScreenOffset=" + compressedScreenOffset +
                 ", compressedScreenSize=" + compressedScreenSize +
-                ", mldVersion=" + mldVersion +
+                ", mlaVersion=" + mlaVersion +
                 ", headerSlot=" + headerSlot +
                 ", baseSlot=" + baseSlot +
                 '}';

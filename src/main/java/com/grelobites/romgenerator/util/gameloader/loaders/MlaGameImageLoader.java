@@ -2,8 +2,8 @@ package com.grelobites.romgenerator.util.gameloader.loaders;
 
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.model.Game;
-import com.grelobites.romgenerator.model.MLDGame;
-import com.grelobites.romgenerator.model.MLDInfo;
+import com.grelobites.romgenerator.model.MLAGame;
+import com.grelobites.romgenerator.model.MLAInfo;
 import com.grelobites.romgenerator.util.Util;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoader;
 import org.slf4j.Logger;
@@ -14,8 +14,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 
-public class MldGameImageLoader implements GameImageLoader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MldGameImageLoader.class);
+public class MlaGameImageLoader implements GameImageLoader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MlaGameImageLoader.class);
 
     @Override
     public Game load(InputStream is) throws IOException {
@@ -26,18 +26,18 @@ public class MldGameImageLoader implements GameImageLoader {
             gameData = Util.paddedByteArray(gameData, 0, slots * Constants.SLOT_SIZE,(byte) 0xFF);
         }
         final byte[] gameImage = gameData;
-        return MLDInfo.fromGameByteArray(Collections.singletonList(gameImage))
-                .map(f -> new MLDGame(f, gameImage))
+        return MLAInfo.fromGameByteArray(Collections.singletonList(gameImage))
+                .map(f -> new MLAGame(f, gameImage))
                 .orElseThrow(() -> new IllegalArgumentException("Unable to extract MLA data from stream"));
     }
 
     @Override
     public void save(Game game, OutputStream os) throws IOException {
-        MLDGame mldGame = (MLDGame) game;
+        MLAGame mlaGame = (MLAGame) game;
         //Save the game always reallocated to sector 0
-        mldGame.relocate(0);
-        for (int i = 0; i < mldGame.getSlotCount(); i++) {
-            os.write(mldGame.getSlot(i));
+        mlaGame.relocate(0);
+        for (int i = 0; i < mlaGame.getSlotCount(); i++) {
+            os.write(mlaGame.getSlot(i));
         }
     }
 

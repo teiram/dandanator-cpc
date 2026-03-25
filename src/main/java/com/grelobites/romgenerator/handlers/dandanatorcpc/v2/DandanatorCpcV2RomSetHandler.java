@@ -11,7 +11,6 @@ import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.util.*;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandler;
 import com.grelobites.romgenerator.util.romsethandler.RomSetHandlerType;
-import com.grelobites.romgenerator.view.util.DialogUtil;
 import com.grelobites.romgenerator.view.util.DirectoryAwareFileChooser;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
@@ -182,11 +181,11 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         } else {
             blocks = game.getData();
         }
-        //For MLD games we encode the number of slots in the first CBlock. The rest set to FF
-        if (game instanceof MLDGame) {
+        //For MLA games we encode the number of slots in the first CBlock. The rest set to FF
+        if (game instanceof MLAGame) {
             int requiredSlots = game.getSize() / Constants.SLOT_SIZE;
             offsets.backwardsOffset -= game.getSize();
-            LOGGER.debug("Writing MLD CBlock with offset {}, requiredSlots {}", offsets.backwardsOffset, requiredSlots);
+            LOGGER.debug("Writing MLA CBlock with offset {}, requiredSlots {}", offsets.backwardsOffset, requiredSlots);
             gameCBlocks.write(offsets.backwardsOffset / Constants.SLOT_SIZE);
             gameCBlocks.write(asLittleEndianWord(Constants.B_00));
             gameCBlocks.write(asLittleEndianWord(requiredSlots));
@@ -388,9 +387,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
         }
     }
 
-    private void dumpMLDGameData(OutputStream os, Game game, int currentSlot) throws IOException {
-        MLDGame mldGame = (MLDGame) game;
-        mldGame.relocate(currentSlot);
+    private void dumpMLAGameData(OutputStream os, Game game, int currentSlot) throws IOException {
+        MLAGame mlaGame = (MLAGame) game;
+        mlaGame.relocate(currentSlot);
         for (int i = 0; i < game.getSlotCount(); i++) {
             os.write(game.getSlot(i));
         }
@@ -520,9 +519,9 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
             ByteArrayOutputStream uncompressedStream = new ByteArrayOutputStream();
             for (int i = games.size() - 1; i >= 0; i--) {
                 Game game = games.get(i);
-                if (game instanceof MLDGame) {
+                if (game instanceof MLAGame) {
                     int gameSlots = game.getSize() / Constants.SLOT_SIZE;
-                    dumpMLDGameData(uncompressedStream, game, currentSlot);
+                    dumpMLAGameData(uncompressedStream, game, currentSlot);
                     currentSlot += gameSlots;
                 } else {
                     dumpUncompressedGameData(uncompressedStream, game);
@@ -684,10 +683,10 @@ public class DandanatorCpcV2RomSetHandler extends DandanatorCpcRomSetHandlerSupp
                 return ExtendedCharSet.SYMBOL_64K_CODES;
             case RAM128:
                 return ExtendedCharSet.SYMBOL_128K_CODES;
-            case RAM64_MLD:
-                return ExtendedCharSet.SYMBOL_MLD64_CODES;
-            case RAM128_MLD:
-                return ExtendedCharSet.SYMBOL_MLD128_CODES;
+            case RAM64_MLA:
+                return ExtendedCharSet.SYMBOL_MLA64_CODES;
+            case RAM128_MLA:
+                return ExtendedCharSet.SYMBOL_MLA128_CODES;
             default:
                 return ExtendedCharSet.SYMBOL_64K_CODES;
         }

@@ -2,9 +2,7 @@ package com.grelobites.romgenerator.util;
 
 import com.grelobites.romgenerator.Constants;
 import com.grelobites.romgenerator.handlers.dandanatorcpc.DandanatorCpcConstants;
-import com.grelobites.romgenerator.model.Game;
-import com.grelobites.romgenerator.model.GameHeader;
-import com.grelobites.romgenerator.model.SnapshotGame;
+import com.grelobites.romgenerator.model.*;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoader;
 import com.grelobites.romgenerator.util.gameloader.GameImageLoaderFactory;
 import com.grelobites.romgenerator.util.gameloader.GameImageType;
@@ -69,18 +67,25 @@ public class GameUtil {
                 .toString();
     }
 
-    public static int getGamePokeSizeUsage(Game game) {
+    public static Optional<TrainerList> getGameTrainerList(Game game) {
         if (game instanceof SnapshotGame) {
-            SnapshotGame snapshotGame = (SnapshotGame) game;
-            return snapshotGame.getTrainerList().getChildren().stream()
-                    .flatMapToInt(g -> IntStream.builder()
-                            .add(DandanatorCpcConstants.POKE_NAME_SIZE)
-                            .add(1) //Number of pokes byte
-                            .add(g.getChildren().size() * DandanatorCpcConstants.POKE_ENTRY_SIZE)
-                            .build()).sum();
+            return Optional.of(((SnapshotGame) game).getTrainerList());
+        } else if (game instanceof MLAGame) {
+            return Optional.of(((MLAGame) game).getTrainerList());
         } else {
-            return 0;
+            return Optional.empty();
         }
+    }
+
+    public static int getGamePokeSizeUsage(Game game) {
+        Optional<TrainerList> trainerList = getGameTrainerList(game);
+        return trainerList.map(list -> list.getChildren().stream()
+                .flatMapToInt(g -> IntStream.builder()
+                        .add(DandanatorCpcConstants.POKE_NAME_SIZE)
+                        .add(1) //Number of pokes byte
+                        .add(g.getChildren().size() * DandanatorCpcConstants.POKE_ENTRY_SIZE)
+                        .build()).sum())
+                .orElse(0);
     }
 
     public static double getOverallPokeUsage(ObservableList<Game> gameList) {
@@ -114,9 +119,9 @@ public class GameUtil {
         }
     }
 
-    public static void exportGameAsMLD(Game selectedGame, File saveFile) throws IOException {
+    public static void exportGameAsMLA(Game selectedGame, File saveFile) throws IOException {
         try (FileOutputStream fos = new FileOutputStream(saveFile)) {
-            GameImageLoaderFactory.getLoader(GameImageType.MLD)
+            GameImageLoaderFactory.getLoader(GameImageType.MLA)
                     .save(selectedGame, fos);
         }
     }

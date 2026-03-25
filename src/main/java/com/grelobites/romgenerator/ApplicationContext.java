@@ -19,7 +19,6 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
@@ -239,7 +238,7 @@ public class ApplicationContext {
             chooser.setTitle(LocaleUtil.i18n("exportCurrentGame"));
             if (game.getType() == GameType.ROM) {
                 chooser.setInitialFileName(game.getName() + ".rom");
-            } else if (game.getType().isMLD()) {
+            } else if (game.getType().isMLA()) {
                 chooser.setInitialFileName(game.getName() + ".mla");
             } else {
                 chooser.setInitialFileName(game.getName() + ".sna");
@@ -249,8 +248,8 @@ public class ApplicationContext {
                 try {
                     if (game.getType() == GameType.ROM) {
                         GameUtil.exportGameAsRom(game, saveFile);
-                    } else if (game.getType().isMLD()) {
-                        GameUtil.exportGameAsMLD(game, saveFile);
+                    } else if (game.getType().isMLA()) {
+                        GameUtil.exportGameAsMLA(game, saveFile);
                     } else {
                         GameUtil.exportGameAsSNA(game, saveFile);
                     }

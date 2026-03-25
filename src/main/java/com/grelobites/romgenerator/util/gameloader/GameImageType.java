@@ -5,7 +5,7 @@ import com.grelobites.romgenerator.util.gameloader.loaders.*;
 public enum GameImageType {
     SNA(SNAGameImageLoader.class, "sna"),
     ROM(RomGameImageLoader.class, "rom"),
-    MLD(MldGameImageLoader.class, "mla"),
+    MLA(MlaGameImageLoader.class, "mla"),
     CDT(CdtGameImageLoader.class, "cdt"),
     DSK(DskGameImageLoader.class, "dsk"),
     BAS(BasGameImageLoader.class, "bas");

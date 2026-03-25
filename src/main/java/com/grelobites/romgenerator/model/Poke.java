@@ -1,6 +1,7 @@
 package com.grelobites.romgenerator.model;
 
 import com.grelobites.romgenerator.util.GameUtil;
+import com.grelobites.romgenerator.util.Util;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
@@ -99,7 +100,7 @@ public class Poke implements PokeViewable {
             try {
                 originalValue = GameUtil.getGameAddressValue(getOwner(), address);
             } catch (Exception e) {
-                LOGGER.warn("Unable to get original value from game address", e);
+                LOGGER.warn("Unable to get original value from game address 0x{}", Integer.toHexString(address & 0xffff));
             }
         }
         return originalValue;

@@ -14,6 +14,7 @@ import com.grelobites.romgenerator.view.util.DialogUtil;
 import com.grelobites.romgenerator.view.util.PokeEntityTreeCell;
 import com.grelobites.romgenerator.view.util.RecursiveTreeItem;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.Event;
@@ -36,7 +37,6 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -234,6 +234,10 @@ public class DandanatorCpcFrameController {
             }
         });
 
+        importPokesButton.disableProperty().bind(Bindings.createBooleanBinding(() ->
+                applicationContext.getSelectedGame() instanceof SnapshotGame,
+                applicationContext.selectedGameProperty())
+                .not());
         importPokesButton.setOnAction(c -> {
             try {
                 getWinApePokesStage().show();
@@ -323,7 +327,7 @@ public class DandanatorCpcFrameController {
                 gameCompressedAttribute.selectedProperty().unbindBidirectional(snapshotGame.compressedProperty());
                 pokeView.setRoot(null);
                 gameCompressedAttribute.selectedProperty().removeListener(getCurrentGameCompressedChangeListener());
-            } else if (game instanceof MLDGame) {
+            } else if (game instanceof MLAGame) {
                 pokeView.setRoot(null);
             }
         }
@@ -352,16 +356,16 @@ public class DandanatorCpcFrameController {
                     compressedSize.textProperty().bind(getGameSizeProperty(game).asString());
                 });
                 snapshotGame.compressedProperty().addListener(getCurrentGameCompressedChangeListener());
-            } else if (game instanceof MLDGame) {
-                MLDGame mldGame = (MLDGame) game;
-                pokeView.setRoot(new RecursiveTreeItem<>(mldGame.getTrainerList(), PokeViewable::getChildren,
+            } else if (game instanceof MLAGame) {
+                MLAGame mlaGame = (MLAGame) game;
+                pokeView.setRoot(new RecursiveTreeItem<>(mlaGame.getTrainerList(), PokeViewable::getChildren,
                         this::computePokeChange));
             }
         }
     }
 
     private void computePokeChange(PokeViewable f) {
-        LOGGER.debug("New poke ocupation is " + GameUtil.getOverallPokeUsage(applicationContext.getGameList()));
+        LOGGER.debug("New poke occupation is " + GameUtil.getOverallPokeUsage(applicationContext.getGameList()));
         double pokeUsage = GameUtil.getOverallPokeUsage(applicationContext.getGameList());
         pokesCurrentSizeBar.setProgress(pokeUsage);
         String pokeUsageDetailString = String.format(LocaleUtil.i18n("pokeUsageDetail"),
@@ -396,9 +400,9 @@ public class DandanatorCpcFrameController {
                     } else {
                         removeAllGamePokesButton.setDisable(true);
                     }
-                } else if (newGame instanceof MLDGame) {
-                    MLDGame mldGame = (MLDGame) newGame;
-                    if (mldGame.getTrainerList() != null) {
+                } else if (newGame instanceof MLAGame) {
+                    MLAGame mlaGame = (MLAGame) newGame;
+                    if (mlaGame.getTrainerList() != null) {
                         pokesTab.setDisable(false);
                         removeAllGamePokesButton.setDisable(true);
                         addPokeButton.setDisable(true);

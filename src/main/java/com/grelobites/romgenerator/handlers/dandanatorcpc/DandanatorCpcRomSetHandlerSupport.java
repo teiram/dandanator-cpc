@@ -55,21 +55,12 @@ public class DandanatorCpcRomSetHandlerSupport {
         return result;
     }
 
-    private static Optional<TrainerList> getGameTrainerList(Game game) {
-        if (game instanceof SnapshotGame) {
-            return Optional.of(((SnapshotGame) game).getTrainerList());
-        } else if (game instanceof MLDGame) {
-            return Optional.of(((MLDGame) game).getTrainerList());
-        } else {
-            return Optional.empty();
-        }
-    }
     protected static int getGamePokeCount(Game game) {
-        return getGameTrainerList(game).map(f -> f.getChildren().size()).orElse(0);
+        return GameUtil.getGameTrainerList(game).map(f -> f.getChildren().size()).orElse(0);
     }
 
     protected static int pokeRequiredSize(Game game) {
-        Optional<TrainerList> trainerList = getGameTrainerList(game);
+        Optional<TrainerList> trainerList = GameUtil.getGameTrainerList(game);
         if (trainerList.isPresent()) {
             int headerSize = 25; //Fixed size required per trainer (Poke count(1) + name(24))
             //Sum of all the addressValues * 3 (address(2) + value(1))
@@ -82,7 +73,7 @@ public class DandanatorCpcRomSetHandlerSupport {
     }
 
     protected static void dumpGamePokeData(OutputStream os, Game game) throws IOException {
-        Optional<TrainerList> trainerList = getGameTrainerList(game);
+        Optional<TrainerList> trainerList = GameUtil.getGameTrainerList(game);
         if (trainerList.isPresent()) {
             int index = 1;
             for (PokeViewable trainer : trainerList.get().getChildren()) {

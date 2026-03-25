@@ -254,7 +254,7 @@ public class ImageUtil {
         }
     }
 
-    public static byte[] embeddedPaletteMLD(byte[] screen) {
+    public static byte[] embeddedPaletteMLA(byte[] screen) {
         if (screen.length == Constants.CPC_SCREEN_SIZE + Constants.CPC_PALETTE_SIZE) {
             byte[] palette = new byte[Constants.CPC_PALETTE_SIZE];
             for (int i = 0; i < Constants.CPC_PALETTE_SIZE; i++) {
